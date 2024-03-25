@@ -2,11 +2,11 @@
   "name": "langtail-node",
   "version": "1.0.0",
   "description": "",
-  "main": "./dist/index.js",
+  "main": "./dist/LangtailNode.js",
   "scripts": {
     "test": "vitest",
     "ts": "tsc --noEmit",
-    "build": "tsup src/index.ts --format cjs,esm --dts --sourcemap",
+    "build": "tsup src/LangtailNode.ts --format cjs,esm --dts --sourcemap",
     "prepublishOnly": "npm run build"
   },
   "keywords": [],
@@ -22,13 +22,13 @@
     "vitest": "^1.4.0",
     "zod": "^3.22.4"
   },
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "module": "./dist/LangtailNode.mjs",
+  "types": "./dist/LangtailNode.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.mjs",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/LangtailNode.js",
+      "import": "./dist/LangtailNode.mjs",
+      "types": "./dist/LangtailNode.d.ts"
     }
   },
   "files": [
