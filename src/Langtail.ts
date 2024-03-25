@@ -7,4 +7,6 @@ export class Langtail {
     this.apiKey = apiKey
     this.baseUrl = baseUrl
   }
+
+  // TODO implement deployed prompt calls
 }

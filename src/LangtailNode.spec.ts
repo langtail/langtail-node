@@ -1,4 +1,4 @@
-import { LangtailNode, baseURL } from "./langtailNode"
+import { LangtailNode, baseURL } from "./LangtailNode"
 import "dotenv/config"
 import { describe, expect, it } from "vitest"
 import z from "zod"
