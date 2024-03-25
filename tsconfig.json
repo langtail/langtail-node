@@ -12,7 +12,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     /* JavaScript Support */
-
+    "noImplicitAny": false,
     /* Emit */
     "noEmit": true, // Do not emit output files, tsup takes care of the build
     /* Interop Constraints */
