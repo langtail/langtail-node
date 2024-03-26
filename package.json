@@ -7,7 +7,7 @@
     "test": "vitest",
     "ts": "tsc --noEmit",
     "format": "prettier --write .",
-    "build": "tsup src/LangtailNode.ts --format cjs,esm --dts --sourcemap",
+    "build": "tsup",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -22,13 +22,13 @@
   "authors": [],
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.11.28",
+    "@types/node": "^20.11.30",
     "dotenv": "^16.4.5",
     "nock": "^13.5.4",
-    "openai": "^4.29.1",
     "prettier": "^3.2.5",
+    "openai": "^4.29.2",
     "tsup": "^8.0.2",
-    "typescript": "^5.4.2",
+    "typescript": "^5.4.3",
     "vitest": "^1.4.0",
     "zod": "^3.22.4"
   },
@@ -47,5 +47,17 @@
   "dependencies": {
     "undici": "^6.10.1",
     "openai": "^4.29.1"
+  },
+  "tsup": {
+    "dts": true,
+    "sourcemap": true,
+    "format": [
+      "cjs",
+      "esm"
+    ],
+    "clean": true,
+    "entryPoints": [
+      "src/LangtailNode.ts"
+    ]
   }
 }

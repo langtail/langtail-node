@@ -14,26 +14,29 @@ import { Stream } from "openai/src/streaming"
 
 export const baseURL = "https://proxy.langtail.com/v1"
 
+export interface ILangtailExtraProps {
+  doNotRecord?: boolean
+  metadata?: Record<string, any>
+}
+
 export class LangtailNode {
   completions: LangtailCompletion
   chat: {
     completions: {
       create(
-        body: ChatCompletionCreateParamsNonStreaming & {
-          doNotRecord?: boolean
-        },
+        body: ChatCompletionCreateParamsNonStreaming & ILangtailExtraProps,
         options?: Core.RequestOptions,
       ): APIPromise<ChatCompletion>
       create(
-        body: ChatCompletionCreateParamsStreaming & { doNotRecord?: boolean },
+        body: ChatCompletionCreateParamsStreaming & ILangtailExtraProps,
         options?: Core.RequestOptions,
       ): APIPromise<Stream<ChatCompletionChunk>>
       create(
-        body: ChatCompletionCreateParamsBase & { doNotRecord?: boolean },
+        body: ChatCompletionCreateParamsBase & ILangtailExtraProps,
         options?: Core.RequestOptions,
       ): APIPromise<Stream<ChatCompletionChunk> | ChatCompletion>
       create(
-        body: ChatCompletionCreateParams & { doNotRecord?: boolean },
+        body: ChatCompletionCreateParams & ILangtailExtraProps,
         options?: Core.RequestOptions,
       ): APIPromise<ChatCompletion> | APIPromise<Stream<ChatCompletionChunk>>
     }
