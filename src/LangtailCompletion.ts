@@ -4,10 +4,9 @@ import {
 } from "openai/resources/chat/completions"
 import { ChatCompletionChunk } from "openai/resources/chat/completions"
 import { Response, fetch } from "undici"
-import { z } from "zod"
-import { openAIStreamingResponseSchema } from "./dataSchema"
 import { Stream } from "openai/streaming"
 import { ILangtailExtraProps } from "./LangtailNode"
+import { Fetch } from "openai/core"
 
 export type Environment =
   | "preview"
@@ -23,14 +22,15 @@ interface LangtailPromptVariables {} // TODO use this when generating schema for
 type StreamResponseType = Stream<ChatCompletionChunk>
 
 type OpenAIResponseWithHttp = ChatCompletion & {
-  httpResponse: Response
+  httpResponse: Response | globalThis.Response
 }
 
 type Options = {
   apiKey: string
   baseURL?: string | undefined
   organization?: string | undefined
-  project?: string | undefined
+  project?: string | undefined,
+  fetch?: Fetch
 }
 
 interface IRequestParams extends ILangtailExtraProps {
@@ -76,14 +76,20 @@ export class LangtailCompletion {
   request(options: IRequestParams): Promise<OpenAIResponseWithHttp>
   request(options: IRequestParamsStream): Promise<StreamResponseType>
   async request({ prompt, environment, ...rest }) {
-    const options = {
+    const fetchInit = {
       method: "POST",
       headers: { "X-API-Key": this.apiKey, "content-type": "application/json" },
       body: JSON.stringify({ stream: false, ...rest }),
     }
     const promptPath = this.createPromptPath(prompt, environment)
 
-    const res = await fetch(promptPath, options)
+    let res: Response | globalThis.Response
+
+    if (this.options.fetch) {
+      res = await this.options.fetch(promptPath, fetchInit)
+    } else {
+      res = await fetch(promptPath, fetchInit)
+    }
 
     if (!res.ok) {
       throw new Error(

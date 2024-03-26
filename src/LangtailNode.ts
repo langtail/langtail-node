@@ -49,7 +49,8 @@ export class LangtailNode {
     baseURL?: string
     doNotRecord?: boolean
     organization?: string
-    project?: string
+    project?: string,
+    fetch: Core.Fetch
   }) {
     const organization = options?.organization
 
@@ -62,8 +63,8 @@ export class LangtailNode {
     const optionsToPass = {
       baseURL: baseURL,
       apiKey,
+      fetch: options?.fetch,
     }
-    console.log(options)
 
     const defaultHeaders: Record<string, string> = {}
     if (options?.doNotRecord) {
@@ -106,3 +107,4 @@ export class LangtailNode {
 }
 
 export { LangtailNode as Langtail }
+export {LangtailCompletion}

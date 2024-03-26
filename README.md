@@ -52,6 +52,21 @@ const deployedPrompCompletion = await lt.completions.request({
 
 Of course this assumes that you have already deployed your prompt to `staging` environment. If not, you will get an error thrown an error: `Error: Failed to fetch prompt: 404 {"error":"Prompt deployment not found"}`
 
+## LangtailCompletion
+
+If you only need deployed prompts, you can import just `LangtailCompletion` like this:
+```ts
+import { LangtailCompletion } from "@langtail/node"
+
+const lt = new LangtailCompletion({
+  apiKey: "<LANGTAIL_API_KEY>",
+  organization: "<ORGANIZATION_SLUG>",
+})
+// usage
+const deployedPrompCompletion = await lt.request({...})
+```
+this way whole `LangtailNode` can get tree shaked away,
+
 ## Streaming responses
 
 both chat.completions.create and completions.request support streaming responses. All you need to enable it is `{ stream: true }` flag like this:
@@ -63,3 +78,7 @@ const deployedPrompCompletion = await lt.completions.request({
   stream: true,
 }) // results in an openAI ChatCompletion
 ```
+
+Full API reference is in [API.md](API.md)
+
+We support the same [runtimes as OpenAI](https://github.com/openai/openai-node?tab=readme-ov-file#requirements).
