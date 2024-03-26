@@ -3,7 +3,7 @@
   "ignorePaths": [],
   "dictionaryDefinitions": [],
   "dictionaries": [],
-  "words": ["Langtail"],
+  "words": ["Langtail", "undici"],
   "ignoreWords": [],
   "import": []
 }

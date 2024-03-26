@@ -1,27 +1,10 @@
 import { LangtailNode, baseURL } from "./LangtailNode"
 import "dotenv/config"
 import { describe, expect, it } from "vitest"
-import z from "zod"
 import nock from "nock"
+import { openAIStreamingResponseSchema } from "./dataSchema"
 
 const lt = new LangtailNode()
-
-// Define the schema for the data
-const choiceSchema = z.object({
-  index: z.number(),
-  delta: z.any(), // Adjust based on the actual shape of delta
-  logprobs: z.null(),
-  finish_reason: z.string().nullable(),
-})
-
-const dataSchema = z.object({
-  id: z.string(),
-  object: z.literal("chat.completion.chunk"),
-  created: z.number(),
-  model: z.string(),
-  system_fingerprint: z.string(),
-  choices: z.array(choiceSchema),
-})
 
 describe("LangtailNode", () => {
   it("should support streaming", async () => {
@@ -44,7 +27,7 @@ describe("LangtailNode", () => {
 
       partCount++
 
-      dataSchema.parse(part)
+      openAIStreamingResponseSchema.parse(part)
     }
 
     expect(partCount > 1).toBe(true)
