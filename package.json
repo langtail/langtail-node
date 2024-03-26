@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "./dist/LangtailNode.js",
+  "packageManager": "^pnpm@6.32.4",
+  "engines": {
+    "node": ">18"
+  },
   "scripts": {
     "test": "vitest",
     "ts": "tsc --noEmit",
@@ -45,8 +49,8 @@
     "dist"
   ],
   "dependencies": {
-    "undici": "^6.10.1",
-    "openai": "^4.29.1"
+    "undici": "^6.10.2",
+    "openai": "^4.29.2"
   },
   "tsup": {
     "dts": true,
