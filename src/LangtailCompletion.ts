@@ -1,22 +1,26 @@
-import { ChatCompletion, ChatCompletionAssistantMessageParam } from "openai/resources/chat/completions"
+import {
+  ChatCompletion,
+  ChatCompletionAssistantMessageParam,
+} from "openai/resources/chat/completions"
+import { ChatCompletionChunk } from "openai/resources/chat/completions"
 import { Response, fetch } from "undici"
 import { z } from "zod"
 import { openAIStreamingResponseSchema } from "./dataSchema"
 import { Stream } from "openai/streaming"
+import { ILangtailExtraProps } from "./LangtailNode"
 
 export type Environment =
   | "preview"
   | "staging"
   | "production"
   | {
-    name: string
-    version: string
-  }
+      name: string
+      version: string
+    }
 
-interface LangtailPromptVariables { } // TODO use this when generating schema for deployed prompts
+interface LangtailPromptVariables {} // TODO use this when generating schema for deployed prompts
 
-type StreamResponseType = Stream<z.infer<typeof openAIStreamingResponseSchema>>
-
+type StreamResponseType = Stream<ChatCompletionChunk>
 
 type OpenAIResponseWithHttp = ChatCompletion & {
   httpResponse: Response
@@ -27,6 +31,17 @@ type Options = {
   baseURL?: string | undefined
   organization?: string | undefined
   project?: string | undefined
+}
+
+interface IRequestParams extends ILangtailExtraProps {
+  prompt: string
+  environment: Environment
+  variables?: Record<string, any>
+  messages?: ChatCompletionAssistantMessageParam[]
+}
+
+interface IRequestParamsStream extends IRequestParams {
+  stream: boolean
 }
 
 export class LangtailCompletion {
@@ -42,7 +57,10 @@ export class LangtailCompletion {
   }
 
   createPromptPath(prompt: string, environment: Environment) {
-    const envPath = typeof environment === "string" ? environment : `${environment.name}/${environment.version}`
+    const envPath =
+      typeof environment === "string"
+        ? environment
+        : `${environment.name}/${environment.version}`
     if (this.options.organization && this.options.project) {
       return `${this.options.organization}/${this.options.project}/${prompt}/${envPath}`
     }
@@ -50,24 +68,13 @@ export class LangtailCompletion {
       return `${this.options.project}/${prompt}/${envPath}`
     }
     const urlPath = `${prompt}/${envPath}`
-    return urlPath.startsWith("/") ? this.baseUrl + urlPath : `${this.baseUrl}/${urlPath}`
+    return urlPath.startsWith("/")
+      ? this.baseUrl + urlPath
+      : `${this.baseUrl}/${urlPath}`
   }
 
-  request(options: {
-    prompt: string
-    environment: Environment
-    variables?: Record<string, any>
-    doNotRecord?: boolean
-    messages?: ChatCompletionAssistantMessageParam[]
-  }): Promise<OpenAIResponseWithHttp>
-  request(options: {
-    prompt: string
-    environment: Environment
-    variables?: Record<string, any>
-    doNotRecord?: boolean
-    stream?: boolean
-    messages?: ChatCompletionAssistantMessageParam[]
-  }): Promise<StreamResponseType>
+  request(options: IRequestParams): Promise<OpenAIResponseWithHttp>
+  request(options: IRequestParamsStream): Promise<StreamResponseType>
   async request({ prompt, environment, ...rest }) {
     const options = {
       method: "POST",
