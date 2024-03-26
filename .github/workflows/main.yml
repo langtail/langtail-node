@@ -46,6 +46,6 @@ jobs:
         run: pnpm ts
 
       - name: run tests
-        env: 
+        env:
           LANGTAIL_API_KEY: ${{secrets.LANGTAIL_API_KEY}}
         run: pnpm test

@@ -1,6 +1,6 @@
 import OpenAI from "openai"
 import * as Core from "openai/core"
-import { Langtail } from "./Langtail"
+import { LangtailCompletion } from "./LangtailCompletion"
 import { ChatCompletionCreateParamsStreaming } from "openai/resources/index"
 import {
   ChatCompletion,
@@ -15,7 +15,7 @@ import { Stream } from "openai/src/streaming"
 export const baseURL = "https://proxy.langtail.com/v1"
 
 export class LangtailNode {
-  langtail: Langtail
+  completions: LangtailCompletion
   chat: {
     completions: {
       create(
@@ -46,6 +46,7 @@ export class LangtailNode {
     baseURL?: string
     doNotRecord?: boolean
     organization?: string
+    project?: string
   }) {
     const organization = options?.organization
 
@@ -73,12 +74,11 @@ export class LangtailNode {
       ...optionsToPass,
     })
 
-    this.langtail = new Langtail({
+    this.completions = new LangtailCompletion({
       apiKey,
-      baseURL,
+      organization: options?.organization,
+      project: options?.project,
     })
-
-    // this.completions = function deployedCompletion() {} // TODO implement deployed prompts
 
     this.chat = {
       completions: {
@@ -101,3 +101,5 @@ export class LangtailNode {
     return this
   }
 }
+
+export { LangtailNode as Langtail }
