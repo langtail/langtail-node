@@ -15,4 +15,3 @@ export const openAIStreamingResponseSchema = z.object({
   system_fingerprint: z.string(),
   choices: z.array(choiceStreamedSchema),
 })
-

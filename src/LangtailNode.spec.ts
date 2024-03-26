@@ -16,15 +16,12 @@ describe("LangtailNode", () => {
       stream: true,
       model: "gpt-3.5-turbo",
 
-      // prompt: "<prompt-slug>",
-      // metadata: {
-      //   "custom-field": 1
-      // },
+      metadata: {
+        "custom-field": 1,
+      },
     })
     let partCount = 0
     for await (const part of proxyCompletion) {
-      // process.stdout.write(part.choices[0]?.delta?.content || '')
-
       partCount++
 
       openAIStreamingResponseSchema.parse(part)
@@ -49,21 +46,5 @@ describe("LangtailNode", () => {
       doNotRecord: true,
     })
     // if we had some API for logs we could assert on that too
-  })
-
-  it.todo("should invoke deployed prompt", async () => {
-    // const deployedCompletion = await lt.prompts.chat.create({
-    //   deploymentUrl: "<full-URL>",
-    //   variables: {
-    //     varName: "<value>",
-    //   },
-    //   // Optional:
-    //   // All OpenAI fields (temperature, top_p, tools,...)
-    //   messages: [{ role: "user", content: "My message" }],
-    //   doNotRecord: false,
-    //   metadata: {
-    //     "custom-field": 1
-    //   },
-    // });
   })
 })

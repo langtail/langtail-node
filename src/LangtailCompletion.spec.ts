@@ -7,7 +7,8 @@ import { openAIStreamingResponseSchema } from "./dataSchema"
 const lt = new LangtailCompletion({
   apiKey: process.env.LANGTAIL_API_KEY!,
 })
-const prompt = 'do-not-delete-api-key-used-on-ci-iSNqij/ci-tests-project/short-story-teller'
+const prompt =
+  "do-not-delete-api-key-used-on-ci-iSNqij/ci-tests-project/short-story-teller"
 describe(
   "LangtailCompletion",
   () => {
@@ -20,7 +21,9 @@ describe(
         },
       })
 
-      expect(completion.choices[0].message.content?.includes("Bebop")).toBe(true)
+      expect(completion.choices[0].message.content?.includes("Bebop")).toBe(
+        true,
+      )
       expect(completion.choices.length).toBeGreaterThan(0)
       expect(completion.httpResponse.status).toBe(200)
     })
@@ -46,7 +49,7 @@ describe(
 
     it("should not record", async () => {
       nock(lt.baseUrl)
-        .post("/formpilot-Iwwc-q/capajs-project/bbb/staging")
+        .post(`/${prompt}`)
         .reply(200, function (uri, req) {
           expect(this.req.headers["x-langtail-do-not-record"][0]).toBe("true")
         })
