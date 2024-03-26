@@ -1,5 +1,9 @@
 # @langtail/node
 
+[![CI check](https://github.com/langtail/langtail-node/workflows/CI%20check/badge.svg)](https://github.com/langtail/langtail-node/actions?query=workflow:"CI+check")
+[![GitHub tag](https://img.shields.io/github/tag/langtail/langtail-node?include_prereleases=&sort=semver&color=blue)](https://github.com/langtail/langtail-node/releases/)
+[![License](https://img.shields.io/badge/License-MIT-blue)](#license)
+
 langtail node.js SDK
 
 ## Install
