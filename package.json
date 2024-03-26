@@ -1,22 +1,32 @@
 {
-  "name": "langtail-node",
+  "name": "@langtail/node",
   "version": "1.0.0",
   "description": "",
   "main": "./dist/LangtailNode.js",
   "scripts": {
     "test": "vitest",
     "ts": "tsc --noEmit",
+    "format": "prettier --write .",
     "build": "tsup src/LangtailNode.ts --format cjs,esm --dts --sourcemap",
     "prepublishOnly": "npm run build"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "openai",
+    "langtail",
+    "nlp",
+    "ai",
+    "natural language processing",
+    "gpt-3",
+    "gpt-4"
+  ],
+  "authors": [],
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.11.28",
     "dotenv": "^16.4.5",
     "nock": "^13.5.4",
     "openai": "^4.29.1",
+    "prettier": "^3.2.5",
     "tsup": "^8.0.2",
     "typescript": "^5.4.2",
     "vitest": "^1.4.0",
@@ -34,7 +44,8 @@
   "files": [
     "dist"
   ],
-  "peerDependencies": {
+  "dependencies": {
+    "undici": "^6.10.1",
     "openai": "^4.29.1"
   }
 }
