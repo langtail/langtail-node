@@ -7,8 +7,7 @@ import { openAIStreamingResponseSchema } from "./dataSchema"
 const lt = new LangtailCompletion({
   apiKey: process.env.LANGTAIL_API_KEY!,
 })
-const prompt =
-  "do-not-delete-api-key-used-on-ci-iSNqij/ci-tests-project/short-story-teller"
+const prompt = "short-story-teller"
 describe(
   "LangtailCompletion",
   () => {
@@ -22,6 +21,22 @@ describe(
       })
 
       expect(completion.choices[0].message.content?.includes("Bebop")).toBe(
+        true,
+      )
+      expect(completion.choices.length).toBeGreaterThan(0)
+      expect(completion.httpResponse.status).toBe(200)
+    })
+
+    it("should make a single request with variables using the project-prompt path", async () => {
+      const completion = await lt.request({
+        prompt: "short-story-teller",
+        environment: "staging",
+        variables: {
+          about: "Aragorn",
+        },
+      })
+
+      expect(completion.choices[0].message.content?.includes("Aragorn")).toBe(
         true,
       )
       expect(completion.choices.length).toBeGreaterThan(0)

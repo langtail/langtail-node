@@ -29,7 +29,7 @@ type Options = {
   apiKey: string
   baseURL?: string | undefined
   organization?: string | undefined
-  project?: string | undefined,
+  project?: string | undefined
   fetch?: Fetch
 }
 
@@ -61,13 +61,18 @@ export class LangtailCompletion {
       typeof environment === "string"
         ? environment
         : `${environment.name}/${environment.version}`
+    if (prompt.includes("/")) {
+      throw new Error(
+        "prompt should not include / character, either omit organization/project or use just the prompt name.",
+      )
+    }
+
     if (this.options.organization && this.options.project) {
-      return `${this.options.organization}/${this.options.project}/${prompt}/${envPath}`
+      // user supplied organization and project in constructor
+      return `${this.baseUrl}/${this.options.organization}/${this.options.project}/${prompt}/${envPath}`
     }
-    if (this.options.project) {
-      return `${this.options.project}/${prompt}/${envPath}`
-    }
-    const urlPath = `${prompt}/${envPath}`
+
+    const urlPath = `project-prompt/${prompt}/${envPath}`
     return urlPath.startsWith("/")
       ? this.baseUrl + urlPath
       : `${this.baseUrl}/${urlPath}`

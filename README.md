@@ -21,7 +21,6 @@ import { Langtail } from "@langtail/node"
 
 const lt = new Langtail({
   apiKey: "<LANGTAIL_API_KEY>",
-  organization: "<ORGANIZATION_SLUG>",
 })
 
 const rawCompletion = await lt.chat.completions.create({
@@ -38,11 +37,13 @@ const rawCompletion = await lt.chat.completions.create({
 })
 ```
 
-Completion from an existing prompt can be called like this:
+### Deployed prompts
+
+Completion from a deployed prompt can be called like this:
 
 ```ts
-const deployedPromptCompletion = await lt.completions.request({
-  prompt: "<PROJECT_SLUG>/<PROMPT>",
+const deployedPrompCompletion = await lt.completions.request({
+  prompt: "<PROMPT_SLUG>",
   environment: "staging",
   variables: {
     about: "cowboy Bebop",
@@ -60,22 +61,35 @@ If you only need deployed prompts, you can import just `LangtailCompletion` like
 import { LangtailCompletion } from "@langtail/node"
 
 const lt = new LangtailCompletion({
-  apiKey: "<LANGTAIL_API_KEY>",
-  organization: "<ORGANIZATION_SLUG>",
+  apiKey: "<LANGTAIL_API_KEY>"
 })
 // usage
 const deployedPromptCompletion = await lt.request({...})
 ```
 
-this way whole `LangtailNode` can get tree shaked away,
+this way whole `LangtailNode` can get tree shaked away.
+
+You can also initialize LangtailCompletion with organization and project slugs like so:
+
+```ts
+import { Langtail } from "@langtail/node"
+
+const lt = new Langtail({
+  apiKey: "<LANGTAIL_API_KEY>",
+  organization: "<ORGANIZATION_SLUG>",
+  project: "<PROJECT_SLUG>",
+})
+```
+
+which is necessary if your API key is organization wide.
 
 ## Streaming responses
 
 both chat.completions.create and completions.request support streaming responses. All you need to enable it is `{ stream: true }` flag like this:
 
 ```ts
-const deployedPromptCompletion = await lt.completions.request({
-  prompt: "<PROJECT_SLUG>/<PROMPT>",
+const deployedPrompCompletion = await lt.completions.request({
+  prompt: "<PROMPT_SLUG>",
   environment: "staging",
   stream: true,
 }) // results in an openAI ChatCompletion

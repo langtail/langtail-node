@@ -30,7 +30,7 @@
     "dotenv": "^16.4.5",
     "nock": "^13.5.4",
     "prettier": "^3.2.5",
-    "openai": "^4.29.2",
+    "openai": "^4.30.0",
     "tsup": "^8.0.2",
     "typescript": "^5.4.3",
     "vitest": "^1.4.0",
@@ -50,7 +50,7 @@
   ],
   "dependencies": {
     "undici": "^6.10.2",
-    "openai": "^4.29.2"
+    "openai": "^4.30.0"
   },
   "tsup": {
     "dts": true,
