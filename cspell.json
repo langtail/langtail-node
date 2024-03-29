@@ -3,7 +3,11 @@
   "ignorePaths": [],
   "dictionaryDefinitions": [],
   "dictionaries": [],
-  "words": ["Langtail", "undici"],
+  "words": [
+    "Aragorn",
+    "Langtail",
+    "undici"
+  ],
   "ignoreWords": [],
   "import": []
 }
