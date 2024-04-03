@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "",
   "main": "./dist/LangtailNode.js",
-  "packageManager": "^pnpm@6.32.4",
+  "packageManager": "^pnpm@8.15.6",
   "engines": {
     "node": ">18"
   },
@@ -23,7 +23,9 @@
     "gpt-3",
     "gpt-4"
   ],
-  "authors": [],
+  "authors": [
+    "Langtail <hi@langtail.com>"
+  ],
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.12.3",
