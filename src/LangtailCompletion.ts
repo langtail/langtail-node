@@ -36,6 +36,7 @@ type Options = {
 interface IRequestParams extends ILangtailExtraProps {
   prompt: string
   environment: Environment
+  version?: string
   variables?: Record<string, any>
   messages?: ChatCompletionAssistantMessageParam[]
 }
@@ -56,7 +57,15 @@ export class LangtailCompletion {
     this.options = options
   }
 
-  createPromptPath(prompt: string, environment: Environment) {
+  createPromptPath({
+    prompt,
+    environment,
+    version,
+  }: {
+    prompt: string
+    environment: Environment
+    version?: string
+  }) {
     const envPath =
       typeof environment === "string"
         ? environment
@@ -66,24 +75,34 @@ export class LangtailCompletion {
         "prompt should not include / character, either omit workspace/project or use just the prompt name.",
       )
     }
+    const versionQueryParam = version ? `?=v${version}` : ""
 
     if (this.options.workspace && this.options.project) {
-      const url = `${this.baseUrl}/${this.options.workspace}/${this.options.project}/${prompt}/${envPath}`
+      const url = `${this.baseUrl}/${this.options.workspace}/${this.options.project}/${prompt}/${envPath}${versionQueryParam}`
       // user supplied workspace and project in constructor
-      console.log("url:", url)
+
       return url
+    }
+
+    if (this.options.project) {
+      return `${this.options.project}/${prompt}/${envPath}/${versionQueryParam}`
     }
 
     const urlPath = `project-prompt/${prompt}/${envPath}`
     return urlPath.startsWith("/")
-      ? this.baseUrl + urlPath
-      : `${this.baseUrl}/${urlPath}`
+      ? this.baseUrl + urlPath + versionQueryParam
+      : `${this.baseUrl}/${urlPath}${versionQueryParam}`
   }
 
   request(options: IRequestParams): Promise<OpenAIResponseWithHttp>
-  // @ts-expect-error
+
   request(options: IRequestParamsStream): Promise<StreamResponseType>
-  async request({ prompt, environment, doNotRecord, ...rest }) {
+  async request({
+    prompt,
+    environment,
+    doNotRecord,
+    ...rest
+  }: IRequestParams | IRequestParamsStream) {
     const fetchInit = {
       method: "POST",
       headers: {
@@ -93,7 +112,11 @@ export class LangtailCompletion {
       },
       body: JSON.stringify({ stream: false, ...rest }),
     }
-    const promptPath = this.createPromptPath(prompt, environment)
+    const promptPath = this.createPromptPath({
+      prompt,
+      environment,
+      version: rest.version,
+    })
 
     let res: Response | globalThis.Response
 
@@ -109,7 +132,7 @@ export class LangtailCompletion {
       )
     }
 
-    if (rest.stream) {
+    if ("stream" in rest && rest.stream) {
       if (!res.body) {
         throw new Error("No body in response")
       }
