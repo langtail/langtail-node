@@ -69,19 +69,19 @@ const deployedPromptCompletion = await lt.request({...})
 
 this way whole `LangtailNode` can get tree shaked away.
 
-You can also initialize LangtailCompletion with organization and project slugs like so:
+You can also initialize LangtailCompletion with workspace and project slugs like so:
 
 ```ts
 import { Langtail } from "@langtail/node"
 
 const lt = new Langtail({
   apiKey: "<LANGTAIL_API_KEY>",
-  organization: "<ORGANIZATION_SLUG>",
+  workspace: "<WORKSPACE_SLUG>",
   project: "<PROJECT_SLUG>",
 })
 ```
 
-which is necessary if your API key is organization wide.
+which is necessary if your API key is workspace wide.
 
 ## Streaming responses
 

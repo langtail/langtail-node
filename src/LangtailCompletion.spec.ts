@@ -3,11 +3,14 @@ import { describe, expect, it } from "vitest"
 import nock from "nock"
 import { LangtailCompletion } from "./LangtailCompletion"
 import { openAIStreamingResponseSchema } from "./dataSchema"
+import { MockAgent } from "undici"
 
 const lt = new LangtailCompletion({
   apiKey: process.env.LANGTAIL_API_KEY!,
 })
+
 const prompt = "short-story-teller"
+
 describe(
   "LangtailCompletion",
   () => {
@@ -63,19 +66,44 @@ describe(
     })
 
     it("should not record", async () => {
-      nock(lt.baseUrl)
-        .post(`/${prompt}`)
-        .reply(200, function (uri, req) {
-          expect(this.req.headers["x-langtail-do-not-record"][0]).toBe("true")
-        })
-      await lt.request({
+      //full deployed prompt path "do-not-delete-api-key-used-on-ci-iSNqij/ci-tests-project/short-story-teller/staging"
+      const ltWithProject = new LangtailCompletion({
+        apiKey: process.env.LANGTAIL_API_KEY!,
+        workspace: "do-not-delete-api-key-used-on-ci-iSNqij",
+        project: "ci-tests-project",
+        fetch: async (url, init) => {
+          expect(init?.headers?.["x-langtail-do-not-record"]).toBe("true")
+
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              choices: [
+                {
+                  message: {
+                    content: "This is a test",
+                  },
+                },
+              ],
+            }),
+          } as any
+        },
+      })
+
+      const agent = new MockAgent()
+      agent.disableNetConnect()
+
+      const res = await ltWithProject.request({
         prompt,
         environment: "staging",
         variables: {
           about: "napoleon",
         },
+        doNotRecord: true,
       })
-      // if we had some API for logs we could assert on that too
+
+      expect(res.httpResponse.status).toBe(200)
+      // TODO when we have some API for logs we could assert on that too that the log record does not have any payload
     })
   },
   { timeout: 20000 },

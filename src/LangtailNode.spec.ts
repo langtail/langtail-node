@@ -30,8 +30,8 @@ describe("LangtailNode", () => {
     expect(partCount > 1).toBe(true)
   })
 
-  it("should not record", async () => {
-    nock(baseURL)
+  it("should not record", async (t) => {
+    nock(baseURL) // nock works by intercepting requests at the network level, if open AI switches to undici we will need to intercept differently
       .post("/chat/completions")
       .reply(200, function (uri, req) {
         expect(this.req.headers["x-langtail-do-not-record"][0]).toBe("true")
@@ -45,6 +45,8 @@ describe("LangtailNode", () => {
       model: "gpt-3.5-turbo",
       doNotRecord: true,
     })
+
+    expect(nock.pendingMocks()).toEqual([])
     // if we had some API for logs we could assert on that too
   })
 })

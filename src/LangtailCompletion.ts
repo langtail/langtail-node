@@ -28,7 +28,7 @@ type OpenAIResponseWithHttp = ChatCompletion & {
 type Options = {
   apiKey: string
   baseURL?: string | undefined
-  organization?: string | undefined
+  workspace?: string | undefined
   project?: string | undefined
   fetch?: Fetch
 }
@@ -63,13 +63,15 @@ export class LangtailCompletion {
         : `${environment.name}/${environment.version}`
     if (prompt.includes("/")) {
       throw new Error(
-        "prompt should not include / character, either omit organization/project or use just the prompt name.",
+        "prompt should not include / character, either omit workspace/project or use just the prompt name.",
       )
     }
 
-    if (this.options.organization && this.options.project) {
-      // user supplied organization and project in constructor
-      return `${this.baseUrl}/${this.options.organization}/${this.options.project}/${prompt}/${envPath}`
+    if (this.options.workspace && this.options.project) {
+      const url = `${this.baseUrl}/${this.options.workspace}/${this.options.project}/${prompt}/${envPath}`
+      // user supplied workspace and project in constructor
+      console.log("url:", url)
+      return url
     }
 
     const urlPath = `project-prompt/${prompt}/${envPath}`
@@ -79,11 +81,16 @@ export class LangtailCompletion {
   }
 
   request(options: IRequestParams): Promise<OpenAIResponseWithHttp>
+  // @ts-expect-error
   request(options: IRequestParamsStream): Promise<StreamResponseType>
-  async request({ prompt, environment, ...rest }) {
+  async request({ prompt, environment, doNotRecord, ...rest }) {
     const fetchInit = {
       method: "POST",
-      headers: { "X-API-Key": this.apiKey, "content-type": "application/json" },
+      headers: {
+        "X-API-Key": this.apiKey,
+        "content-type": "application/json",
+        "x-langtail-do-not-record": doNotRecord ? "true" : "false",
+      },
       body: JSON.stringify({ stream: false, ...rest }),
     }
     const promptPath = this.createPromptPath(prompt, environment)

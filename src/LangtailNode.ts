@@ -49,7 +49,7 @@ export class LangtailNode {
     baseURL?: string
     doNotRecord?: boolean
     organization?: string
-    project?: string,
+    project?: string
     fetch: Core.Fetch
   }) {
     const organization = options?.organization
@@ -80,7 +80,7 @@ export class LangtailNode {
 
     this.completions = new LangtailCompletion({
       apiKey,
-      organization: options?.organization,
+      workspace: options?.organization,
       project: options?.project,
     })
 
@@ -107,4 +107,4 @@ export class LangtailNode {
 }
 
 export { LangtailNode as Langtail }
-export {LangtailCompletion}
+export { LangtailCompletion }
