@@ -41,7 +41,7 @@ const rawCompletion = await lt.chat.completions.create({
 Completion from an existing prompt can be called like this:
 
 ```ts
-const deployedPrompCompletion = await lt.completions.request({
+const deployedPromptCompletion = await lt.completions.request({
   prompt: "<PROJECT_SLUG>/<PROMPT>",
   environment: "staging",
   variables: {
@@ -55,6 +55,7 @@ Of course this assumes that you have already deployed your prompt to `staging` e
 ## LangtailCompletion
 
 If you only need deployed prompts, you can import just `LangtailCompletion` like this:
+
 ```ts
 import { LangtailCompletion } from "@langtail/node"
 
@@ -63,8 +64,9 @@ const lt = new LangtailCompletion({
   organization: "<ORGANIZATION_SLUG>",
 })
 // usage
-const deployedPrompCompletion = await lt.request({...})
+const deployedPromptCompletion = await lt.request({...})
 ```
+
 this way whole `LangtailNode` can get tree shaked away,
 
 ## Streaming responses
@@ -72,7 +74,7 @@ this way whole `LangtailNode` can get tree shaked away,
 both chat.completions.create and completions.request support streaming responses. All you need to enable it is `{ stream: true }` flag like this:
 
 ```ts
-const deployedPrompCompletion = await lt.completions.request({
+const deployedPromptCompletion = await lt.completions.request({
   prompt: "<PROJECT_SLUG>/<PROMPT>",
   environment: "staging",
   stream: true,
