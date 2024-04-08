@@ -45,7 +45,7 @@ interface IRequestParamsStream extends IRequestParams {
   stream: boolean
 }
 
-export class LangtailCompletion {
+export class LangtailPrompts {
   apiKey: string
   baseUrl: string
   options: Options
@@ -94,10 +94,10 @@ export class LangtailCompletion {
       : `${this.baseUrl}/${urlPath}${versionQueryParam}`
   }
 
-  request(options: IRequestParams): Promise<OpenAIResponseWithHttp>
+  invoke(options: IRequestParams): Promise<OpenAIResponseWithHttp>
 
-  request(options: IRequestParamsStream): Promise<StreamResponseType>
-  async request({
+  invoke(options: IRequestParamsStream): Promise<StreamResponseType>
+  async invoke({
     prompt,
     environment,
     doNotRecord,

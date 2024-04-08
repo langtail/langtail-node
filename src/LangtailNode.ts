@@ -1,6 +1,6 @@
 import OpenAI from "openai"
 import * as Core from "openai/core"
-import { LangtailCompletion } from "./LangtailCompletion"
+import { LangtailPrompts } from "./LangtailPrompts"
 import { ChatCompletionCreateParamsStreaming } from "openai/resources/index"
 import {
   ChatCompletion,
@@ -20,7 +20,7 @@ export interface ILangtailExtraProps {
 }
 
 export class LangtailNode {
-  completions: LangtailCompletion
+  prompts: LangtailPrompts
   chat: {
     completions: {
       create(
@@ -78,7 +78,7 @@ export class LangtailNode {
       ...optionsToPass,
     })
 
-    this.completions = new LangtailCompletion({
+    this.prompts = new LangtailPrompts({
       apiKey,
       workspace: options?.organization,
       project: options?.project,
@@ -107,4 +107,4 @@ export class LangtailNode {
 }
 
 export { LangtailNode as Langtail }
-export { LangtailCompletion }
+export { LangtailPrompts as LangtailPrompts }
