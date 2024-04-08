@@ -3,7 +3,7 @@
   "version": "0.0.2",
   "description": "",
   "main": "./dist/LangtailNode.js",
-  "packageManager": "^pnpm@8.15.6",
+  "packageManager": "pnpm@8.15.6",
   "engines": {
     "node": ">18"
   },
