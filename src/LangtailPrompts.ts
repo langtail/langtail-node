@@ -8,15 +8,6 @@ import { Stream } from "openai/streaming"
 import { ILangtailExtraProps } from "./LangtailNode"
 import { Fetch } from "openai/core"
 
-export type Environment =
-  | "preview"
-  | "staging"
-  | "production"
-  | {
-      name: string
-      version: string
-    }
-
 interface LangtailPromptVariables {} // TODO use this when generating schema for deployed prompts
 
 type StreamResponseType = Stream<ChatCompletionChunk>
@@ -35,7 +26,7 @@ type Options = {
 
 interface IRequestParams extends ILangtailExtraProps {
   prompt: string
-  environment: Environment
+  environment: string
   version?: string
   variables?: Record<string, any>
   messages?: ChatCompletionAssistantMessageParam[]
@@ -63,13 +54,9 @@ export class LangtailPrompts {
     version,
   }: {
     prompt: string
-    environment: Environment
+    environment: string
     version?: string
   }) {
-    const envPath =
-      typeof environment === "string"
-        ? environment
-        : `${environment.name}/${environment.version}`
     if (prompt.includes("/")) {
       throw new Error(
         "prompt should not include / character, either omit workspace/project or use just the prompt name.",
@@ -78,17 +65,17 @@ export class LangtailPrompts {
     const versionQueryParam = version ? `?=v${version}` : ""
 
     if (this.options.workspace && this.options.project) {
-      const url = `${this.baseUrl}/${this.options.workspace}/${this.options.project}/${prompt}/${envPath}${versionQueryParam}`
+      const url = `${this.baseUrl}/${this.options.workspace}/${this.options.project}/${prompt}/${environment}${versionQueryParam}`
       // user supplied workspace and project in constructor
 
       return url
     }
 
     if (this.options.project) {
-      return `${this.options.project}/${prompt}/${envPath}/${versionQueryParam}`
+      return `${this.options.project}/${prompt}/${environment}/${versionQueryParam}`
     }
 
-    const urlPath = `project-prompt/${prompt}/${envPath}`
+    const urlPath = `project-prompt/${prompt}/${environment}`
     return urlPath.startsWith("/")
       ? this.baseUrl + urlPath + versionQueryParam
       : `${this.baseUrl}/${urlPath}${versionQueryParam}`
