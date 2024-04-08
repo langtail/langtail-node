@@ -58,7 +58,7 @@ The constructor accepts an options object with the following properties:
 This method accepts two parameters:
 
 - `prompt`: A string representing the prompt.
-- `environment`: Langtail environment name (preview / staging / production).
+- `environment`: An `Environment` object.
 
 It returns a string representing the URL path for the prompt.
 

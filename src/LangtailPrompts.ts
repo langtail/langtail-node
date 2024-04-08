@@ -8,6 +8,11 @@ import { Stream } from "openai/streaming"
 import { ILangtailExtraProps } from "./LangtailNode"
 import { Fetch } from "openai/core"
 
+export type Environment =
+  | "preview"
+  | "staging"
+  | "production"
+
 interface LangtailPromptVariables {} // TODO use this when generating schema for deployed prompts
 
 type StreamResponseType = Stream<ChatCompletionChunk>
@@ -26,7 +31,7 @@ type Options = {
 
 interface IRequestParams extends ILangtailExtraProps {
   prompt: string
-  environment: string
+  environment: Environment
   version?: string
   variables?: Record<string, any>
   messages?: ChatCompletionAssistantMessageParam[]
@@ -54,7 +59,7 @@ export class LangtailPrompts {
     version,
   }: {
     prompt: string
-    environment: string
+    environment: Environment
     version?: string
   }) {
     if (prompt.includes("/")) {
