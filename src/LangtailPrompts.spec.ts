@@ -13,6 +13,38 @@ const prompt = "short-story-teller"
 describe(
   "LangtailPrompts",
   () => {
+    describe("createPromptPath", () => {
+      it("should return the correct path for project prompt", () => {
+        const path = lt.createPromptPath({
+          prompt: "prompt",
+          environment: "staging",
+          version: "6vy19bmp",
+        })
+
+        expect(path).toBe(
+          "https://api.langtail.com/project-prompt/prompt/staging?v=6vy19bmp",
+        )
+      })
+
+      it("should return the correct path when workspace and project are provided", () => {
+        const ltProject = new LangtailPrompts({
+          apiKey: process.env.LANGTAIL_API_KEY!,
+          project: "ci-tests-project",
+          workspace: "some-workspace",
+        })
+
+        const path = ltProject.createPromptPath({
+          prompt: "prompt",
+          environment: "staging",
+          version: "6vy19bmp",
+        })
+
+        expect(path).toBe(
+          "https://api.langtail.com/some-workspace/ci-tests-project/prompt/staging?v=6vy19bmp",
+        )
+      })
+    })
+
     it("should support a simple prompt with variables", async () => {
       const completion = await lt.invoke({
         prompt,
