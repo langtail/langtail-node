@@ -51,6 +51,7 @@ jobs:
         run: pnpm test
 
       - name: run build
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: pnpm build
 
       - uses: JS-DevTools/npm-publish@v3
