@@ -41,7 +41,7 @@ const rawCompletion = await lt.chat.completions.create({
 
 ### Deployed prompts
 
-Completion from a deployed prompt can be called with ``:
+Completion from a deployed prompt can be called with `lt.prompts.invoke`:
 
 ```ts
 const deployedPrompCompletion = await lt.prompts.invoke({
