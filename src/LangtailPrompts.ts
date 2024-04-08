@@ -3,7 +3,7 @@ import {
   ChatCompletionAssistantMessageParam,
 } from "openai/resources/chat/completions"
 import { ChatCompletionChunk } from "openai/resources/chat/completions"
-import { Response } from "undici"
+
 import { Stream } from "openai/streaming"
 import { ILangtailExtraProps } from "./LangtailNode"
 import { Fetch } from "openai/core"

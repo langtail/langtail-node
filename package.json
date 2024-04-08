@@ -51,8 +51,7 @@
     "dist"
   ],
   "dependencies": {
-    "openai": "^4.33.0",
-    "undici": "^6.12.0"
+    "openai": "^4.33.0"
   },
   "tsup": {
     "dts": true,

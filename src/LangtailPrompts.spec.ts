@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import nock from "nock"
 import { LangtailPrompts } from "./LangtailPrompts"
 import { openAIStreamingResponseSchema } from "./dataSchema"
-import { MockAgent } from "undici"
 
 const lt = new LangtailPrompts({
   apiKey: process.env.LANGTAIL_API_KEY!,
@@ -89,9 +88,6 @@ describe(
           } as any
         },
       })
-
-      const agent = new MockAgent()
-      agent.disableNetConnect()
 
       const res = await ltWithProject.invoke({
         prompt,
