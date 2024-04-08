@@ -50,6 +50,9 @@ jobs:
           LANGTAIL_API_KEY: ${{secrets.LANGTAIL_API_KEY}}
         run: pnpm test
 
+      - name: run build
+        run: pnpm build
+
       - uses: JS-DevTools/npm-publish@v3
         name: Publish package
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
