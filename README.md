@@ -14,7 +14,9 @@ npm i @langtail/node
 
 ## Usage
 
-basic completion without any prompt:
+### openAI chat completion
+
+basic completion without any prompt. This just wraps openAI api and adds a few extra parameters you can use to affect how the request gets logged in langtail.
 
 ```ts
 import { Langtail } from "@langtail/node"
@@ -39,10 +41,10 @@ const rawCompletion = await lt.chat.completions.create({
 
 ### Deployed prompts
 
-Completion from a deployed prompt can be called like this:
+Completion from a deployed prompt can be called with ``:
 
 ```ts
-const deployedPrompCompletion = await lt.completions.request({
+const deployedPrompCompletion = await lt.prompts.invoke({
   prompt: "<PROMPT_SLUG>",
   environment: "staging",
   variables: {
@@ -61,10 +63,16 @@ In case you only need deployed prompts, you can import just `LangtailPrompts` li
 import { LangtailPrompts } from "@langtail/node"
 
 const lt = new LangtailPrompts({
-  apiKey: "<LANGTAIL_API_KEY>"
+  apiKey: "<LANGTAIL_API_KEY>",
 })
 // usage
-const deployedPromptCompletion = await lt.request({...})
+const deployedPromptCompletion = await lt.invoke({
+  prompt: "<PROMPT_SLUG>",
+  environment: "staging",
+  variables: {
+    about: "cowboy Bebop",
+  },
+})
 ```
 
 this way whole `LangtailNode` can get tree shaken away.
@@ -85,14 +93,14 @@ which is necessary if your API key is workspace wide. For a project api key this
 
 ## Streaming responses
 
-both chat.completions.create and completions.request support streaming responses. All you need to enable it is `{ stream: true }` flag like this:
+both chat.prompts.create and prompts.invoke support streaming responses. All you need to enable it is `{ stream: true }` flag like this:
 
 ```ts
-const deployedPrompCompletion = await lt.completions.request({
+const deployedPrompCompletion = await lt.prompts.invoke({
   prompt: "<PROMPT_SLUG>",
   environment: "staging",
-  stream: true,
-}) // results in an openAI ChatCompletion
+  stream: true, // changes result to be a streaming OpenAI response
+}) // results in an openAI Stream<ChatCompletionChunk>
 ```
 
 Full API reference is in [API.md](API.md)
