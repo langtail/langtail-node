@@ -15,7 +15,7 @@ The constructor accepts an options object with the following properties:
 
 ### Properties
 
-- `completions`: An instance of the `LangtailCompletion` class.
+- `completions`: An instance of the `LangtailPrompts` class.
 - `chat`: An object containing a `completions` object with a `create` method.
 
 ### Methods
@@ -33,9 +33,7 @@ It returns a promise that resolves to a `ChatCompletion` or a `Stream<ChatComple
 
 - Throws an error if the `apiKey` is not provided in the options object or as an environment variable.
 
-
-
-## LangtailCompletion
+## LangtailPrompts
 
 ### Constructor
 

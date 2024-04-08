@@ -53,23 +53,23 @@ const deployedPrompCompletion = await lt.completions.request({
 
 Of course this assumes that you have already deployed your prompt to `staging` environment. If not, you will get an error thrown an error: `Error: Failed to fetch prompt: 404 {"error":"Prompt deployment not found"}`
 
-## LangtailCompletion
+## LangtailPrompts
 
-If you only need deployed prompts, you can import just `LangtailCompletion` like this:
+In case you only need deployed prompts, you can import just `LangtailPrompts` like this:
 
 ```ts
-import { LangtailCompletion } from "@langtail/node"
+import { LangtailPrompts } from "@langtail/node"
 
-const lt = new LangtailCompletion({
+const lt = new LangtailPrompts({
   apiKey: "<LANGTAIL_API_KEY>"
 })
 // usage
 const deployedPromptCompletion = await lt.request({...})
 ```
 
-this way whole `LangtailNode` can get tree shaked away.
+this way whole `LangtailNode` can get tree shaken away.
 
-You can also initialize LangtailCompletion with workspace and project slugs like so:
+You can initialize LangtailPrompts with workspace and project slugs like so:
 
 ```ts
 import { Langtail } from "@langtail/node"
@@ -81,7 +81,7 @@ const lt = new Langtail({
 })
 ```
 
-which is necessary if your API key is workspace wide.
+which is necessary if your API key is workspace wide. For a project api key this is not necessary.
 
 ## Streaming responses
 

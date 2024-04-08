@@ -1,21 +1,21 @@
 import "dotenv/config"
 import { describe, expect, it } from "vitest"
 import nock from "nock"
-import { LangtailCompletion } from "./LangtailCompletion"
+import { LangtailPrompts } from "./LangtailPrompts"
 import { openAIStreamingResponseSchema } from "./dataSchema"
 import { MockAgent } from "undici"
 
-const lt = new LangtailCompletion({
+const lt = new LangtailPrompts({
   apiKey: process.env.LANGTAIL_API_KEY!,
 })
 
 const prompt = "short-story-teller"
 
 describe(
-  "LangtailCompletion",
+  "LangtailPrompts",
   () => {
     it("should support a simple prompt with variables", async () => {
-      const completion = await lt.request({
+      const completion = await lt.invoke({
         prompt,
         environment: "staging",
         variables: {
@@ -31,7 +31,7 @@ describe(
     })
 
     it("should make a single request with variables using the project-prompt path", async () => {
-      const completion = await lt.request({
+      const completion = await lt.invoke({
         prompt: "short-story-teller",
         environment: "staging",
         variables: {
@@ -47,7 +47,7 @@ describe(
     })
 
     it("should support streaming", async () => {
-      const proxyCompletion = await lt.request({
+      const proxyCompletion = await lt.invoke({
         prompt,
         environment: "staging",
         variables: {
@@ -67,7 +67,7 @@ describe(
 
     it("should not record", async () => {
       //full deployed prompt path "do-not-delete-api-key-used-on-ci-iSNqij/ci-tests-project/short-story-teller/staging"
-      const ltWithProject = new LangtailCompletion({
+      const ltWithProject = new LangtailPrompts({
         apiKey: process.env.LANGTAIL_API_KEY!,
         workspace: "do-not-delete-api-key-used-on-ci-iSNqij",
         project: "ci-tests-project",
@@ -93,7 +93,7 @@ describe(
       const agent = new MockAgent()
       agent.disableNetConnect()
 
-      const res = await ltWithProject.request({
+      const res = await ltWithProject.invoke({
         prompt,
         environment: "staging",
         variables: {
