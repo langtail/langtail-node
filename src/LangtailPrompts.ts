@@ -62,7 +62,7 @@ export class LangtailPrompts {
         "prompt should not include / character, either omit workspace/project or use just the prompt name.",
       )
     }
-    const versionQueryParam = version ? `?=v${version}` : ""
+    const versionQueryParam = version ? `?v=${version}` : ""
 
     if (this.options.workspace && this.options.project) {
       const url = `${this.baseUrl}/${this.options.workspace}/${this.options.project}/${prompt}/${environment}${versionQueryParam}`
