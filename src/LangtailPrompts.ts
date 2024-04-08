@@ -3,7 +3,7 @@ import {
   ChatCompletionAssistantMessageParam,
 } from "openai/resources/chat/completions"
 import { ChatCompletionChunk } from "openai/resources/chat/completions"
-import { Response, fetch } from "undici"
+import { Response } from "undici"
 import { Stream } from "openai/streaming"
 import { ILangtailExtraProps } from "./LangtailNode"
 import { Fetch } from "openai/core"
@@ -136,7 +136,6 @@ export class LangtailPrompts {
       if (!res.body) {
         throw new Error("No body in response")
       }
-      // @ts-expect-error
       return Stream.fromSSEResponse(res, new AbortController())
     }
 
