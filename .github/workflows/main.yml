@@ -2,6 +2,8 @@ name: CI check
 on:
   push:
     branches: [main]
+    tags:
+      - "*"
   pull_request:
     branches: [main]
 
@@ -50,12 +52,46 @@ jobs:
           LANGTAIL_API_KEY: ${{secrets.LANGTAIL_API_KEY}}
         run: pnpm test
 
-      - name: run build
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: pnpm build
+  publish:
+    runs-on: ubuntu-latest
+    name: Publish to NPM
+    needs: build
+    if: github.event_name == 'create' && github.event.ref_type == 'tag'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: current
+
+      - uses: pnpm/action-setup@v3
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: 8
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: |
+          echo "::set-output name=pnpm_cache_dir::$(pnpm store path)"
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies and build
+        run: |
+          pnpm install
+          pnpm build
 
       - uses: JS-DevTools/npm-publish@v3
         name: Publish package
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           token: ${{ secrets.NPM_TOKEN }}
