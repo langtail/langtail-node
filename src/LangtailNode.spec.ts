@@ -15,7 +15,7 @@ describe("LangtailNode", () => {
       ],
       stream: true,
       model: "gpt-3.5-turbo",
-
+      doNotRecord: false,
       metadata: {
         "custom-field": 1,
       },
@@ -35,6 +35,26 @@ describe("LangtailNode", () => {
       .post("/chat/completions")
       .reply(200, function (uri, req) {
         expect(this.req.headers["x-langtail-do-not-record"][0]).toBe("true")
+        expect(this.req.headers["x-langtail-metadata-custom-field"][0]).toBe(
+          "1",
+        )
+
+        // check that body has no metadata or doNotRecord
+        expect(req).toMatchInlineSnapshot(`
+          {
+            "messages": [
+              {
+                "content": "You are a helpful assistant.",
+                "role": "system",
+              },
+              {
+                "content": "What is the weather like?",
+                "role": "user",
+              },
+            ],
+            "model": "gpt-3.5-turbo",
+          }
+        `)
       })
     await lt.chat.completions.create({
       messages: [
@@ -44,6 +64,9 @@ describe("LangtailNode", () => {
 
       model: "gpt-3.5-turbo",
       doNotRecord: true,
+      metadata: {
+        "custom-field": 1,
+      },
     })
 
     expect(nock.pendingMocks()).toEqual([])

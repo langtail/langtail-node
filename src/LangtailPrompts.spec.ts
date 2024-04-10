@@ -1,6 +1,6 @@
 import "dotenv/config"
 import { describe, expect, it } from "vitest"
-import nock from "nock"
+
 import { LangtailPrompts } from "./LangtailPrompts"
 import { openAIStreamingResponseSchema } from "./dataSchema"
 
@@ -104,6 +104,7 @@ describe(
         project: "ci-tests-project",
         fetch: async (url, init) => {
           expect(init?.headers?.["x-langtail-do-not-record"]).toBe("true")
+          expect(init?.headers?.["x-langtail-metadata-custom-field"]).toBe(1)
 
           return {
             ok: true,
@@ -128,6 +129,9 @@ describe(
           about: "napoleon",
         },
         doNotRecord: true,
+        metadata: {
+          "custom-field": 1,
+        },
       })
 
       expect(res.httpResponse.status).toBe(200)

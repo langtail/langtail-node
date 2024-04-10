@@ -1,6 +1,6 @@
 {
   "name": "@langtail/node",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "",
   "main": "./dist/LangtailNode.js",
   "packageManager": "pnpm@8.15.6",
@@ -29,12 +29,12 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.12.5",
+    "@types/node": "^20.12.7",
     "dotenv": "^16.4.5",
     "nock": "14.0.0-beta.5",
     "prettier": "^3.2.5",
     "tsup": "^8.0.2",
-    "typescript": "^5.4.4",
+    "typescript": "^5.4.5",
     "vitest": "^1.4.0",
     "zod": "^3.22.4"
   },
