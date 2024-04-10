@@ -8,10 +8,7 @@ import { Stream } from "openai/streaming"
 import { ILangtailExtraProps } from "./LangtailNode"
 import { Fetch } from "openai/core"
 
-export type Environment =
-  | "preview"
-  | "staging"
-  | "production"
+export type Environment = "preview" | "staging" | "production"
 
 interface LangtailPromptVariables {} // TODO use this when generating schema for deployed prompts
 
@@ -93,14 +90,23 @@ export class LangtailPrompts {
     prompt,
     environment,
     doNotRecord,
+    metadata,
     ...rest
   }: IRequestParams | IRequestParamsStream) {
+    const metadataHeaders = metadata
+      ? Object.entries(metadata).reduce((acc, [key, value]) => {
+          acc[`x-langtail-metadata-${key}`] = value
+          return acc
+        }, {})
+      : {}
+
     const fetchInit = {
       method: "POST",
       headers: {
         "X-API-Key": this.apiKey,
         "content-type": "application/json",
         "x-langtail-do-not-record": doNotRecord ? "true" : "false",
+        ...metadataHeaders,
       },
       body: JSON.stringify({ stream: false, ...rest }),
     }

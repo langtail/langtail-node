@@ -1,7 +1,10 @@
 import OpenAI from "openai"
 import * as Core from "openai/core"
 import { LangtailPrompts } from "./LangtailPrompts"
-import { ChatCompletionCreateParamsStreaming } from "openai/resources/index"
+import {
+  ChatCompletionCreateParamsStreaming,
+  Completions,
+} from "openai/resources/index"
 import {
   ChatCompletion,
   ChatCompletionChunk,
@@ -50,7 +53,7 @@ export class LangtailNode {
     doNotRecord?: boolean
     organization?: string
     project?: string
-    fetch: Core.Fetch
+    fetch?: Core.Fetch
   }) {
     const organization = options?.organization
 
@@ -87,15 +90,32 @@ export class LangtailNode {
     this.chat = {
       completions: {
         // @ts-expect-error
-        create: (params, options) => {
+        create: (
+          params: ChatCompletionCreateParamsBase & ILangtailExtraProps,
+          options: Core.RequestOptions = {},
+        ) => {
           if (params.doNotRecord) {
-            options = options ?? {}
             options.headers = {
               ["x-langtail-do-not-record"]: "true",
               ...options?.headers,
             }
-            delete params.doNotRecord // openAI does not support this parameter
           }
+          delete params.doNotRecord // openAI does not support these parameters
+
+          if (params.metadata) {
+            const metadataHeaders = Object.entries(params.metadata).reduce(
+              (acc, [key, value]) => {
+                acc[`x-langtail-metadata-${key}`] = value
+                return acc
+              },
+              {},
+            )
+            options.headers = {
+              ...metadataHeaders,
+              ...options?.headers,
+            }
+          }
+          delete params.metadata
 
           return this._open_ai.chat.completions.create(params, options)
         },
