@@ -13,15 +13,7 @@ This will install all the required dependencies and build output files to `dist/
 
 ## Using the repository from source
 
-If you’d like to use the repository from source, you can either install from git or link to a cloned repository:
-
-To install via git:
-
-```bash
-npm install git+ssh://git@github.com:langtail/langtail-node.git
-```
-
-Alternatively, to link a local copy of the repo:
+You can link a local copy of the repo:
 
 ```bash
 # Clone
