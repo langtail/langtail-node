@@ -1,3 +1,7 @@
+# 0.2.1
+
+- Small README update - move short description above CI badges
+
 # 0.2.0
 
 - Rename to just `langtail` NPM package
