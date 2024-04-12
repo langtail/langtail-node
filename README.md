@@ -1,15 +1,15 @@
-# @langtail/node
+# langtail SDK
 
 [![CI check](https://github.com/langtail/langtail-node/workflows/CI%20check/badge.svg)](https://github.com/langtail/langtail-node/actions?query=workflow:"CI+check")
 [![GitHub tag](https://img.shields.io/github/tag/langtail/langtail-node?include_prereleases=&sort=semver&color=blue)](https://github.com/langtail/langtail-node/releases/)
 [![License](https://img.shields.io/badge/License-MIT-blue)](#license)
 
-langtail node.js SDK
+Langtail Typescript SDK
 
 ## Install
 
 ```bash
-npm i @langtail/node
+npm i langtail
 ```
 
 ## Usage
@@ -19,7 +19,7 @@ npm i @langtail/node
 basic completion without any prompt. This just wraps openAI api and adds a few extra parameters you can use to affect how the request gets logged in langtail.
 
 ```ts
-import { Langtail } from "@langtail/node"
+import { Langtail } from "langtail"
 
 const lt = new Langtail({
   apiKey: "<LANGTAIL_API_KEY>",
@@ -60,7 +60,7 @@ Of course this assumes that you have already deployed your prompt to `staging` e
 In case you only need deployed prompts, you can import just `LangtailPrompts` like this:
 
 ```ts
-import { LangtailPrompts } from "@langtail/node"
+import { LangtailPrompts } from "langtail"
 
 const lt = new LangtailPrompts({
   apiKey: "<LANGTAIL_API_KEY>",
@@ -80,7 +80,7 @@ this way whole `LangtailNode` can get tree shaken away.
 You can initialize LangtailPrompts with workspace and project slugs like so:
 
 ```ts
-import { Langtail } from "@langtail/node"
+import { Langtail } from "langtail"
 
 const lt = new Langtail({
   apiKey: "<LANGTAIL_API_KEY>",
