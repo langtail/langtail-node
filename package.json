@@ -35,7 +35,7 @@
     "prettier": "^3.2.5",
     "tsup": "^8.0.2",
     "typescript": "^5.4.5",
-    "vitest": "^1.4.0",
+    "vitest": "^1.5.0",
     "zod": "^3.22.4"
   },
   "module": "./dist/LangtailNode.mjs",
@@ -51,7 +51,7 @@
     "dist"
   ],
   "dependencies": {
-    "openai": "^4.33.0"
+    "openai": "^4.33.1"
   },
   "tsup": {
     "dts": true,
