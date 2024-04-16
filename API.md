@@ -7,11 +7,11 @@
 The constructor accepts an options object with the following properties:
 
 - `apiKey`: The API key for Langtail. This is required.
-- `baseURL`: The base URL for the Langtail API. This is optional.
-- `doNotRecord`: A boolean indicating whether to record the API calls. This is optional.
-- `organization`: The organization ID. This is optional.
-- `project`: The project ID. This is optional.
-- `fetch`: The fetch function to use for making HTTP requests. [It is passed to openAI client under the hood](https://github.com/openai/openai-node?tab=readme-ov-file#customizing-the-fetch-client). This is optional.
+- `baseURL`(optional): The base URL for the Langtail API.
+- `doNotRecord`(optional): A boolean indicating whether to record the API calls.
+- `organization`(optional): The organization ID.
+- `project`(optional): The project ID.
+- `fetch`(optional): The fetch function to use for making HTTP requests. [It is passed to openAI client under the hood](https://github.com/openai/openai-node?tab=readme-ov-file#customizing-the-fetch-client).
 
 ### Properties
 
@@ -40,16 +40,16 @@ It returns a promise that resolves to a `ChatCompletion` or a `Stream<ChatComple
 The constructor accepts an options object with the following properties:
 
 - `apiKey`: The API key for Langtail. This is required.
-- `baseURL`: The base URL for the Langtail API. This is optional.
-- `organization`: The organization ID. This is optional.
-- `project`: The project ID. This is optional.
-- `fetch`: The fetch function to use for making HTTP requests. [It is passed to openAI client under the hood](https://github.com/openai/openai-node?tab=readme-ov-file#customizing-the-fetch-client). This is optional.
+- `baseURL`(optional): The base URL for the Langtail API.
+- `organization`(optional): The organization ID.
+- `project`(optional): The project ID.
+- `fetch`(optional): The fetch function to use for making HTTP requests. [It is passed to openAI client under the hood](https://github.com/openai/openai-node?tab=readme-ov-file#customizing-the-fetch-client).
 
 ### Properties
 
 - `apiKey`: The API key for Langtail.
-- `baseUrl`: The base URL for the Langtail API.
-- `options`: An object containing the options for the Langtail API.
+- `baseUrl`(optional): The base URL for the Langtail API.
+- `options`(optional): An object containing the options for the Langtail API.
 
 ### Methods
 
@@ -58,7 +58,7 @@ The constructor accepts an options object with the following properties:
 This method accepts two parameters:
 
 - `prompt`: A string representing the prompt.
-- `environment`: An `Environment` object.
+- `environment`(optional): An `Environment` string identifier. Accepts values: `"preview" | "staging" | "production"`. Defaults to `production`
 
 It returns a string representing the URL path for the prompt.
 
