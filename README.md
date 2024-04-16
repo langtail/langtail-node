@@ -45,7 +45,7 @@ Completion from a deployed prompt can be called with `lt.prompts.invoke`:
 
 ```ts
 const deployedPrompCompletion = await lt.prompts.invoke({
-  prompt: "<PROMPT_SLUG>",
+  prompt: "<PROMPT_SLUG>", // required
   environment: "staging",
   variables: {
     about: "cowboy Bebop",

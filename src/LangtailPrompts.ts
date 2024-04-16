@@ -10,7 +10,7 @@ import { Fetch } from "openai/core"
 
 export type Environment = "preview" | "staging" | "production"
 
-interface LangtailPromptVariables {} // TODO use this when generating schema for deployed prompts
+interface LangtailPromptVariables { } // TODO use this when generating schema for deployed prompts
 
 type StreamResponseType = Stream<ChatCompletionChunk>
 
@@ -28,7 +28,7 @@ type Options = {
 
 interface IRequestParams extends ILangtailExtraProps {
   prompt: string
-  environment: Environment
+  environment?: Environment
   version?: string
   variables?: Record<string, any>
   messages?: ChatCompletionAssistantMessageParam[]
@@ -95,9 +95,9 @@ export class LangtailPrompts {
   }: IRequestParams | IRequestParamsStream) {
     const metadataHeaders = metadata
       ? Object.entries(metadata).reduce((acc, [key, value]) => {
-          acc[`x-langtail-metadata-${key}`] = value
-          return acc
-        }, {})
+        acc[`x-langtail-metadata-${key}`] = value
+        return acc
+      }, {})
       : {}
 
     const fetchInit = {
@@ -112,7 +112,7 @@ export class LangtailPrompts {
     }
     const promptPath = this.createPromptPath({
       prompt,
-      environment,
+      environment: environment ?? "production",
       version: rest.version,
     })
 
