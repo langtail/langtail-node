@@ -14,6 +14,8 @@ import {
 } from "openai/resources/chat/completions"
 import { APIPromise } from "openai/core"
 import { Stream } from "openai/src/streaming"
+import { userAgent } from "./userAgent"
+
 
 export const baseURL = "https://proxy.langtail.com/v1"
 
@@ -97,6 +99,7 @@ export class LangtailNode {
           if (params.doNotRecord) {
             options.headers = {
               ["x-langtail-do-not-record"]: "true",
+              'user-agent': userAgent,
               ...options?.headers,
             }
           }
