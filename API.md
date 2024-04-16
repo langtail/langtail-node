@@ -1,4 +1,4 @@
-# Full API reference
+# API reference
 
 ## LangtailNode
 
@@ -25,7 +25,7 @@ The constructor accepts an options object with the following properties:
 This method accepts two parameters:
 
 - `body`: An object that can be of type `ChatCompletionCreateParamsNonStreaming & ILangtailExtraProps`, `ChatCompletionCreateParamsStreaming & ILangtailExtraProps`, `ChatCompletionCreateParamsBase & ILangtailExtraProps`, or `ChatCompletionCreateParams & ILangtailExtraProps`.
-- `options`: An optional `Core.RequestOptions` object.
+- `options`(optional): OpenAI `Core.RequestOptions` object
 
 It returns a promise that resolves to a `ChatCompletion` or a `Stream<ChatCompletionChunk>` depending whether you are using streaming or not.
 
@@ -62,7 +62,7 @@ This method accepts two parameters:
 
 It returns a string representing the URL path for the prompt.
 
-#### request
+#### invoke
 
 This method accepts an `IRequestParams` or `IRequestParamsStream` object and returns a promise that resolves to an `OpenAIResponseWithHttp` or a `StreamResponseType` depending on whether you use streaming or not.
 

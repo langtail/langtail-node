@@ -7,6 +7,7 @@ import { ChatCompletionChunk } from "openai/resources/chat/completions"
 import { Stream } from "openai/streaming"
 import { ILangtailExtraProps } from "./LangtailNode"
 import { Fetch } from "openai/core"
+import { userAgent } from "./userAgent"
 
 export type Environment = "preview" | "staging" | "production"
 
@@ -104,6 +105,7 @@ export class LangtailPrompts {
       method: "POST",
       headers: {
         "X-API-Key": this.apiKey,
+        'user-agent': userAgent,
         "content-type": "application/json",
         "x-langtail-do-not-record": doNotRecord ? "true" : "false",
         ...metadataHeaders,

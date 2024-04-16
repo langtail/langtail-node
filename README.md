@@ -44,7 +44,7 @@ const rawCompletion = await lt.chat.completions.create({
 Completion from a deployed prompt can be called with `lt.prompts.invoke`:
 
 ```ts
-const deployedPrompCompletion = await lt.prompts.invoke({
+const deployedPromptCompletion = await lt.prompts.invoke({
   prompt: "<PROMPT_SLUG>", // required
   environment: "staging",
   variables: {
@@ -96,7 +96,7 @@ which is necessary if your API key is workspace wide. For a project api key this
 both chat.prompts.create and prompts.invoke support streaming responses. All you need to enable it is `{ stream: true }` flag like this:
 
 ```ts
-const deployedPrompCompletion = await lt.prompts.invoke({
+const deployedPromptCompletion = await lt.prompts.invoke({
   prompt: "<PROMPT_SLUG>",
   environment: "staging",
   stream: true, // changes result to be a streaming OpenAI response
