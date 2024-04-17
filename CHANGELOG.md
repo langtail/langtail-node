@@ -1,3 +1,8 @@
+# 0.2.2
+
+- invoke `environment` parameter now defaults to production
+- start sending user-agent header #10
+
 # 0.2.1
 
 - Small README update - move short description above CI badges
