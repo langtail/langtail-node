@@ -94,7 +94,6 @@ export interface PlaygroundMessage extends Message {
 export interface PlaygroundState {
   state: ChatState
   chatInput: Record<string, string>
-  chatPlaygroundHistory: PlaygroundMessage[]
 }
 
 export const ContentItemTextSchema = z.object({
