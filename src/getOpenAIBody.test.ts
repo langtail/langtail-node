@@ -37,7 +37,6 @@ describe("getOpenAIBody", () => {
           template: [],
         },
         chatInput: {},
-        chatPlaygroundHistory: [],
       },
       parsedBody,
     )

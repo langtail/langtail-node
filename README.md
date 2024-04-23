@@ -111,7 +111,7 @@ We support the same [runtimes as OpenAI](https://github.com/openai/openai-node?t
 
 You can avoid langtail API all together by constructing your prompt locally and calling your provider like openAI directly.
 
-let's suppose you have a prompt called `joke-teller` deployed on staging in langtail. You can get it's
+let's suppose you have a prompt called `joke-teller` deployed on staging in langtail. You can `get` it's template and all the playground config by calling `get` method like this:
 
 ```ts
 import { LangtailPrompts } from "langtail"
@@ -120,14 +120,14 @@ const lt = new LangtailPrompts({
   apiKey: "<LANGTAIL_API_KEY>",
 })
 
-const playgroundState = await ltLocal.get({
+const playgroundState = await lt.get({
   prompt: "<PROMPT_SLUG>",
   environment: "preview",
   version: "<PROMPT_VERSION>", // optional
 })
 ```
 
-this will return something like depending on how your prompt configured when it was deployed:
+`get` will return something like this depending on how your prompt configured when it was deployed:
 
 ```
           {
@@ -159,8 +159,10 @@ this will return something like depending on how your prompt configured when it 
           }
 ```
 
+render your template and builds the final open AI compatible payload:
+
 ```ts
-const openAiBody = ltLocal.build(playgroundState, {
+const openAiBody = lt.build(playgroundState, {
   stream: true,
   variables: {
     topic: "iron man",
