@@ -54,7 +54,7 @@ export class LangtailPrompts {
     this.options = options
   }
 
-  createPromptPath({
+  _createPromptPath({
     prompt,
     environment,
     version,
@@ -120,7 +120,7 @@ export class LangtailPrompts {
       },
       body: JSON.stringify({ stream: false, ...rest }),
     }
-    const promptPath = this.createPromptPath({
+    const promptPath = this._createPromptPath({
       prompt,
       environment: environment ?? "production",
       version: rest.version,
@@ -161,7 +161,7 @@ export class LangtailPrompts {
     environment: Environment
     version?: string
   }): Promise<PlaygroundState> {
-    const promptPath = this.createPromptPath({ prompt, environment, version })
+    const promptPath = this._createPromptPath({ prompt, environment, version })
 
     const res = await fetch(promptPath, {
       headers: {

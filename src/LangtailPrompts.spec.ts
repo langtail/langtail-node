@@ -15,7 +15,7 @@ describe(
   () => {
     describe("createPromptPath", () => {
       it("should return the correct path for project prompt", () => {
-        const path = lt.createPromptPath({
+        const path = lt._createPromptPath({
           prompt: "prompt",
           environment: "staging",
           version: "6vy19bmp",
@@ -33,7 +33,7 @@ describe(
           workspace: "some-workspace",
         })
 
-        const path = ltProject.createPromptPath({
+        const path = ltProject._createPromptPath({
           prompt: "prompt",
           environment: "staging",
           version: "6vy19bmp",
@@ -43,7 +43,7 @@ describe(
           "https://api.langtail.com/some-workspace/ci-tests-project/prompt/staging?v=6vy19bmp",
         )
 
-        const pathForPromptConfig = ltProject.createPromptPath({
+        const pathForPromptConfig = ltProject._createPromptPath({
           prompt: "prompt",
           environment: "staging",
           version: "6vy19bmp",

@@ -53,16 +53,6 @@ The constructor accepts an options object with the following properties:
 
 ### Methods
 
-#### createPromptPath
-
-This method accepts one parameter with these fields:
-
-- `prompt`: A string representing the prompt.
-- `environment`(optional): An `Environment` string identifier. Accepts values: `"preview" | "staging" | "production"`. Defaults to `production`
-- `version`(optional): string for version. Necessary for preview environment
-
-It returns a string representing the URL path for the prompt.
-
 #### invoke
 
 This method accepts an `IRequestParams` or `IRequestParamsStream` object and returns a promise that resolves to an `OpenAIResponseWithHttp` or a `StreamResponseType` depending on whether you use streaming or not.
