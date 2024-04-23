@@ -168,7 +168,6 @@ describe(
             "chatInput": {
               "optionalExtra": "",
             },
-            "chatPlaygroundHistory": [],
             "state": {
               "args": {
                 "frequency_penalty": 0,
