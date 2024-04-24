@@ -109,32 +109,22 @@ export const ContentItemImageSchema = z.object({
   }),
 }) satisfies z.ZodType<ContentItemImage>
 
-export const PlaygroundContentItemImageSchema = ContentItemImageSchema.augment({
-  // NOTE: this is used to uniquely identify the image in the playground
-  // For image upload we do optimistic base64 immediately and then replace it with the real url
-  _id: z.string().optional(),
-})
-
-export const ContentArraySchema = z.array(
+const ContentArraySchema = z.array(
   z.union([ContentItemTextSchema, ContentItemImageSchema]),
 ) satisfies z.ZodType<ContentArray>
 
-export const PlaygroundContentArraySchema = z.array(
-  z.union([ContentItemTextSchema, PlaygroundContentItemImageSchema]),
-) satisfies z.ZodType<ContentArray>
-
-export const FunctionCallSchema = z.object({
+const FunctionCallSchema = z.object({
   name: z.string(),
   arguments: z.string(),
 })
 
-export const ToolCallSchema = z.object({
+const ToolCallSchema = z.object({
   id: z.string(),
   type: z.literal("function"),
   function: FunctionCallSchema,
 }) satisfies z.ZodType<ToolCall>
 
-export const ToolChoiceSchema = z.union([
+const ToolChoiceSchema = z.union([
   z.literal("auto"),
   z.literal("none"),
   z.object({
@@ -160,83 +150,3 @@ export const MessageSchema = z.object({
   tool_choice: ToolChoiceSchema.optional(),
   tool_call_id: z.string().optional(),
 }) satisfies z.ZodType<Message>
-
-export const ToolMessageSchema = z.object({
-  role: z.literal("tool"),
-  content: z.string(),
-  tool_call_id: z.string(),
-  name: z.string().optional(),
-})
-
-export const ArrayMessageSchema = z.array(MessageSchema)
-
-const FunctionSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  parameters: z.record(z.unknown()),
-  id: z.string().optional(),
-}) satisfies z.ZodType<Functions>
-
-const ToolSchema = z.object({
-  type: z.literal("function"),
-  function: FunctionSchema,
-}) satisfies z.ZodType<Tools>
-
-// Historically, in playground we had most parameters as
-const ModelParameterSchema = z.object({
-  model: z.string(),
-  temperature: z.number(),
-  max_tokens: z.number(),
-  top_p: z.number(),
-  stop: z.array(z.string()).optional(),
-  presence_penalty: z.number(),
-  frequency_penalty: z.number(),
-  stream: z.boolean().optional().default(true),
-  jsonmode: z.boolean().optional().default(false),
-  seed: z.number().nullable().optional(),
-}) satisfies z.ZodType<ModelParameter>
-
-// This is used to validate log playground and request overrides
-export const ModelParameterWithPlaygroundDefaults = z.object({
-  model: ModelParameterSchema.shape.model,
-  temperature: ModelParameterSchema.shape.temperature.default(0.5),
-  max_tokens: z
-    .number()
-    .transform((v) => (v !== undefined && (v > 0 || v === -1) ? v : 800))
-    .default(800),
-  top_p: z.number().default(1),
-  stop: z
-    .array(z.string())
-    .optional()
-    .transform((s) => (s?.length ? s : undefined)),
-  presence_penalty: z.number().default(0),
-  frequency_penalty: z.number().default(0),
-  stream: ModelParameterSchema.shape.stream,
-  jsonmode: ModelParameterSchema.shape.jsonmode,
-  seed: ModelParameterSchema.shape.seed,
-})
-
-export const ArrayToolsSchema = z.array(ToolSchema)
-export const ArrayFunctionsSchema = z.array(FunctionSchema)
-
-export const ToolsToFunctionsSchema = ArrayToolsSchema.transform((tools) => {
-  return tools.map((tool) => FunctionSchema.parse(tool.function))
-})
-
-export const FunctionsToToolsSchema = ArrayFunctionsSchema.transform(
-  (functions) => {
-    return functions.map((fn) =>
-      ToolSchema.parse({ type: "function", function: fn }),
-    )
-  },
-)
-
-export const transformFunctionsToTools = (state: ChatState) => {
-  if (!state.functions || !state.functions.length) return state
-
-  return {
-    ...state,
-    functions: [],
-    tools: state.functions ? FunctionsToToolsSchema.parse(state.functions) : [],
-  }
-}
