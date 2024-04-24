@@ -7,7 +7,7 @@ settings:
 dependencies:
   '@asteasolutions/zod-to-openapi':
     specifier: ^7.0.0
-    version: 7.0.0(zod@3.23.0)
+    version: 7.0.0(zod@3.23.4)
   '@langtail/handlebars-evalless':
     specifier: ^0.0.1
     version: 0.0.1
@@ -18,14 +18,14 @@ dependencies:
     specifier: ^4.7.8
     version: 4.7.8
   openai:
-    specifier: ^4.38.2
-    version: 4.38.2
+    specifier: ^4.38.3
+    version: 4.38.3
   query-string:
     specifier: ^9.0.0
     version: 9.0.0
   zod:
-    specifier: ^3.23.0
-    version: 3.23.0
+    specifier: ^3.23.4
+    version: 3.23.4
 
 devDependencies:
   '@types/node':
@@ -52,13 +52,13 @@ devDependencies:
 
 packages:
 
-  /@asteasolutions/zod-to-openapi@7.0.0(zod@3.23.0):
+  /@asteasolutions/zod-to-openapi@7.0.0(zod@3.23.4):
     resolution: {integrity: sha512-rJRKHD2m6nUb/9ZheeN8nqOURX24WTzY8Sex1ZKT0Kpx+xfpRcD0fTD6vEeXNHGaDGxzu65Jj/jb2x6nLTjcMw==}
     peerDependencies:
       zod: ^3.20.2
     dependencies:
       openapi3-ts: 4.3.1
-      zod: 3.23.0
+      zod: 3.23.4
     dev: false
 
   /@esbuild/aix-ppc64@0.19.12:
@@ -1243,8 +1243,8 @@ packages:
       mimic-fn: 4.0.0
     dev: true
 
-  /openai@4.38.2:
-    resolution: {integrity: sha512-M16ehj0D84Gjq5cjvBzXRb5X+UvtWlxPDRAWAWMC0EN+6nHqnULIn5fWWeiexDPup25FeSZYv/ldp8KefcZVJQ==}
+  /openai@4.38.3:
+    resolution: {integrity: sha512-mIL9WtrFNOanpx98mJ+X/wkoepcxdqqu0noWFoNQHl/yODQ47YM7NEYda7qp8JfjqpLFVxY9mQhshoS/Fqac0A==}
     hasBin: true
     dependencies:
       '@types/node': 18.19.24
@@ -1875,6 +1875,6 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
-  /zod@3.23.0:
-    resolution: {integrity: sha512-OFLT+LTocvabn6q76BTwVB0hExEBS0IduTr3cqZyMqEDbOnYmcU+y0tUAYbND4uwclpBGi4I4UUBGzylWpjLGA==}
+  /zod@3.23.4:
+    resolution: {integrity: sha512-/AtWOKbBgjzEYYQRNfoGKHObgfAZag6qUJX1VbHo2PRBgS+wfWagEY2mizjfyAPcGesrJOcx/wcl0L9WnVrHFw==}
     dev: false

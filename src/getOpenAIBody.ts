@@ -122,3 +122,5 @@ export function getOpenAIBody(
   }
   return openAIbody
 }
+
+export type ChatCompletionCreateParams = OpenAI.Chat.ChatCompletionCreateParams
