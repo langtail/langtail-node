@@ -68,7 +68,9 @@
     ],
     "clean": true,
     "entryPoints": [
-      "src/LangtailNode.ts"
+      "src/LangtailNode.ts",
+      "src/template.ts",
+      "src/getOpenAIBody.ts"
     ]
   }
 }
