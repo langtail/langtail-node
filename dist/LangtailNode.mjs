@@ -12,7 +12,7 @@ import { Stream } from "openai/streaming";
 // package.json
 var package_default = {
   name: "langtail",
-  version: "0.3.0-beta.0",
+  version: "0.3.0-beta.1",
   description: "",
   main: "./dist/LangtailNode.js",
   packageManager: "pnpm@8.15.6",

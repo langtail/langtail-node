@@ -30,10 +30,17 @@ type Options = {
   fetch?: Fetch
 }
 
-interface IRequestParams extends ILangtailExtraProps {
+interface IPromptIdProps extends ILangtailExtraProps {
   prompt: string
+  /**
+   * The environment to fetch the prompt from. Defaults to "production".
+   * @default "production"
+   **/
   environment?: Environment
   version?: string
+}
+
+interface IRequestParams extends IPromptIdProps {
   variables?: Record<string, any>
   messages?: ChatCompletionAssistantMessageParam[]
 }
@@ -158,10 +165,18 @@ export class LangtailPrompts {
     version,
   }: {
     prompt: string
-    environment: Environment
+    /**
+     * The environment to fetch the prompt from. Defaults to "production".
+     * @default "production"
+     **/
+    environment?: Environment
     version?: string
   }): Promise<PlaygroundState> {
-    const promptPath = this._createPromptPath({ prompt, environment, version })
+    const promptPath = this._createPromptPath({
+      prompt,
+      environment: environment ?? "production",
+      version,
+    })
 
     const res = await fetch(promptPath, {
       headers: {
