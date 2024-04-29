@@ -1,6 +1,6 @@
 {
   "name": "langtail",
-  "version": "0.3.0-beta.1",
+  "version": "0.3.0-beta.2",
   "description": "",
   "main": "./dist/LangtailNode.js",
   "packageManager": "pnpm@8.15.6",
@@ -47,8 +47,7 @@
     }
   },
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.0.0",

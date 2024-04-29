@@ -66,7 +66,9 @@ export const bothBodySchema = langtailBodySchema.merge(openAiBodySchema)
 export type IncomingBodyType = z.infer<typeof bothBodySchema>
 export type OpenAiBodyType = z.infer<typeof openAiBodySchema>
 
-// TODO remove this from our prompt-API when this is merged so that we don't have this code duplicated
+/**
+ * Get the body for the OpenAI API request. Used in the langtail prompt API. // TODO remove this from our prompt-API when this is merged so that we don't have this code duplicated
+ */
 export function getOpenAIBody(
   completionConfig: PlaygroundState,
   parsedBody: IncomingBodyType,
