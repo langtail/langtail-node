@@ -1,11 +1,16 @@
-import * as handlebarsEvalles from "@langtail/handlebars-evalless"
+import handlebarsEvalles from "@langtail/handlebars-evalless"
 import vanillaHandlebars from "handlebars"
 
 import { handlebarsDateHelper, operatorHelpers } from "./handlebars-helpers"
 import { JSONValue } from "./jsonType"
 import { ContentArray } from "./schemas"
 
-const handlebars = handlebarsEvalles.default
+// @ts-expect-error handlebarsEvalles sometimes has issues with CJS/ESM interop so we need to use the default export
+const handlebars: typeof Handlebars = handlebarsEvalles.registerHelper
+  ? handlebarsEvalles
+  : // @ts-expect-error handlebarsEvalles
+    handlebarsEvalles.default
+
 handlebars.registerHelper("$date", handlebarsDateHelper)
 handlebars.registerHelper(operatorHelpers)
 const Visitor = vanillaHandlebars.Visitor
