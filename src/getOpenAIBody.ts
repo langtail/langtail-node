@@ -2,7 +2,7 @@ import type OpenAI from "openai"
 import { z } from "zod"
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi"
 
-import { MessageSchema, PlaygroundState } from "./schemas"
+import { MessageSchema, PlaygroundState, ToolSchema } from "./schemas"
 import { compileLTTemplate } from "./template"
 
 extendZodWithOpenApi(z)
@@ -33,9 +33,20 @@ export const openAiBodySchema = z.object({
     description: "A seed is used  to generate reproducible results",
     example: 123,
   }),
-
+  max_tokens: z.number().optional(),
+  temperature: z.number().optional(),
+  top_p: z.number().optional(),
+  presence_penalty: z.number().optional(),
+  frequency_penalty: z.number().optional(),
+  model: z.string().optional(),
+  tools: z.array(ToolSchema).optional(),
+  template: z.array(MessageSchema).optional(),
   variables: z.record(z.string(), z.string()).optional(),
-
+  response_format: z
+    .object({
+      type: z.enum(["json_object"]),
+    })
+    .optional(),
   messages: z
     .array(MessageSchema)
     .optional()
@@ -67,37 +78,31 @@ export function getOpenAIBody(
       const needsCompilation =
         typeof item.content === "string" ? item.content?.includes("{{") : true
 
+      const variables = Object.assign(
+        completionConfig.chatInput,
+        parsedBody.variables ?? {},
+      )
       return {
         ...item,
         content:
           item.content &&
           (needsCompilation
-            ? compileLTTemplate(
-                item.content,
-                parsedBody.variables as Record<string, string>,
-              )
+            ? compileLTTemplate(item.content, variables)
             : item.content),
       }
     }),
     ...(parsedBody.messages ?? []),
   ]
   const openAIbody: OpenAI.Chat.ChatCompletionCreateParams = {
-    model: completionArgs.model,
-    max_tokens:
-      completionArgs.max_tokens == -1 ? undefined : completionArgs.max_tokens,
-    temperature: completionArgs.temperature,
+    model: parsedBody.model ?? completionArgs.model,
+    temperature: parsedBody.temperature ?? completionArgs.temperature,
     // @ts-expect-error
     messages: inputMessages,
-    top_p: completionArgs.top_p,
-    presence_penalty: completionArgs.presence_penalty,
-    frequency_penalty: completionArgs.frequency_penalty,
-    ...(completionArgs.jsonmode
-      ? {
-          response_format: {
-            type: "json_object",
-          },
-        }
-      : {}),
+    top_p: parsedBody.top_p ?? completionArgs.top_p,
+    presence_penalty:
+      parsedBody.presence_penalty ?? completionArgs.presence_penalty,
+    frequency_penalty:
+      parsedBody.frequency_penalty ?? completionArgs.frequency_penalty,
     ...(parsedBody.seed || completionArgs.seed
       ? {
           seed: parsedBody.seed ?? completionArgs.seed,
@@ -107,6 +112,20 @@ export function getOpenAIBody(
       ? { stop: completionArgs.stop }
       : {}),
   }
+
+  if (parsedBody.max_tokens || completionArgs.max_tokens) {
+    openAIbody.max_tokens = parsedBody.max_tokens ?? completionArgs.max_tokens
+    if (parsedBody.max_tokens === -1) {
+      delete openAIbody.max_tokens
+    }
+  }
+
+  if (completionArgs.jsonmode || parsedBody.response_format) {
+    openAIbody.response_format = parsedBody.response_format ?? {
+      type: "json_object",
+    }
+  }
+
   if (
     completionConfig.state.functions &&
     completionConfig.state.functions.length > 0
@@ -118,6 +137,16 @@ export function getOpenAIBody(
     openAIbody.tools = completionConfig.state.tools.map((tool) => {
       const { id: _, ...rest } = tool.function
       return { ...tool, function: rest }
+    })
+  }
+  if (parsedBody.tools && parsedBody.tools.length > 0) {
+    openAIbody.tools = parsedBody.tools
+  }
+
+  if (parsedBody.response_format?.type === "json_object") {
+    openAIbody.messages.push({
+      role: "system",
+      content: "format: JSON",
     })
   }
   return openAIbody

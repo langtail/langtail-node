@@ -43,4 +43,163 @@ describe("getOpenAIBody", () => {
 
     expect(openAIbody).toEqual(expectedOpenAIbody)
   })
+
+  it("should extend variables from playground", () => {
+    const completionConfig = {
+      state: {
+        type: "chat" as const,
+        args: {
+          model: "gpt-3.5-turbo",
+          max_tokens: 100,
+          temperature: 0.8,
+          top_p: 1,
+          presence_penalty: 0,
+          frequency_penalty: 0,
+          jsonmode: false,
+          seed: null,
+          stop: [],
+        },
+        template: [
+          {
+            role: "user" as const,
+            content: "{{key}} {{willGetOverwritten}}",
+          },
+        ],
+      },
+      chatInput: {
+        willGetOverwritten: "original",
+      },
+    }
+    const openAIbody = getOpenAIBody(completionConfig, {
+      variables: {},
+      messages: [],
+    })
+
+    expect(openAIbody).toMatchInlineSnapshot(`
+      {
+        "frequency_penalty": 0,
+        "max_tokens": 100,
+        "messages": [
+          {
+            "content": " original",
+            "role": "user",
+          },
+        ],
+        "model": "gpt-3.5-turbo",
+        "presence_penalty": 0,
+        "temperature": 0.8,
+        "top_p": 1,
+      }
+    `)
+
+    const openAIbody2 = getOpenAIBody(completionConfig, {
+      variables: {
+        willGetOverwritten: "overwritten",
+        key: "value",
+      },
+    })
+
+    expect(openAIbody2).toMatchInlineSnapshot(`
+      {
+        "frequency_penalty": 0,
+        "max_tokens": 100,
+        "messages": [
+          {
+            "content": "value overwritten",
+            "role": "user",
+          },
+        ],
+        "model": "gpt-3.5-turbo",
+        "presence_penalty": 0,
+        "temperature": 0.8,
+        "top_p": 1,
+      }
+    `)
+  })
+
+  it("should override parameters from the playground with the ones in parsedBody", () => {
+    const completionConfig = {
+      state: {
+        type: "chat" as const,
+        args: {
+          model: "gpt-3.5-turbo",
+          max_tokens: 100,
+          temperature: 0.8,
+          top_p: 1,
+          presence_penalty: 0,
+          frequency_penalty: 0,
+          jsonmode: false,
+          seed: 123,
+          stop: [],
+        },
+        template: [
+          {
+            role: "system" as const,
+            content: "tell me a story",
+          },
+        ],
+      },
+      chatInput: {},
+    }
+
+    const openAIbody = getOpenAIBody(completionConfig, {
+      variables: {},
+      messages: [],
+      max_tokens: 200,
+      model: "gpt-4-turbo",
+      frequency_penalty: 0.5,
+      presence_penalty: 0.5,
+      temperature: 0.5,
+      top_p: 0.5,
+      seed: 123,
+      response_format: {
+        type: "json_object",
+      },
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "functionName",
+            description: "functionDescription",
+            parameters: {},
+          },
+        },
+      ]
+    })
+
+    expect(openAIbody).toMatchInlineSnapshot(`
+      {
+        "frequency_penalty": 0.5,
+        "max_tokens": 200,
+        "messages": [
+          {
+            "content": "tell me a story",
+            "role": "system",
+          },
+          {
+            "content": "format: JSON",
+            "role": "system",
+          },
+        ],
+        "model": "gpt-4-turbo",
+        "presence_penalty": 0.5,
+        "response_format": {
+          "type": "json_object",
+        },
+        "seed": 123,
+        "temperature": 0.5,
+        "tools": [
+          {
+            "function": {
+              "description": "functionDescription",
+              "name": "functionName",
+              "parameters": {},
+            },
+            "type": "function",
+          },
+        ],
+        "top_p": 0.5,
+      }
+    `)
+  })
 })

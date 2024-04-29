@@ -150,3 +150,15 @@ export const MessageSchema = z.object({
   tool_choice: ToolChoiceSchema.optional(),
   tool_call_id: z.string().optional(),
 }) satisfies z.ZodType<Message>
+
+const FunctionSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  parameters: z.record(z.unknown()),
+  id: z.string().optional(),
+}) satisfies z.ZodType<Functions>
+
+export const ToolSchema = z.object({
+  type: z.literal("function"),
+  function: FunctionSchema,
+}) satisfies z.ZodType<Tools>
