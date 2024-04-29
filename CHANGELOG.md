@@ -1,3 +1,7 @@
+# 0.3.0
+
+- add ability to `get` and `build` to run langtail prompts without using a proxy
+
 # 0.2.2
 
 - invoke `environment` parameter now defaults to production
