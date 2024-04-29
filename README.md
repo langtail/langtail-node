@@ -106,3 +106,97 @@ const deployedPromptCompletion = await lt.prompts.invoke({
 Full API reference is in [API.md](API.md)
 
 We support the same [runtimes as OpenAI](https://github.com/openai/openai-node?tab=readme-ov-file#requirements).
+
+### proxyless usage
+
+You can avoid langtail API all together by constructing your prompt locally and calling your provider like openAI directly.
+
+let's suppose you have a prompt called `joke-teller` deployed on staging in langtail. You can `get` it's template and all the playground config by calling `get` method like this:
+
+```ts
+import { LangtailPrompts } from "langtail"
+
+const lt = new LangtailPrompts({
+  apiKey: "<LANGTAIL_API_KEY>",
+})
+
+const playgroundState = await lt.get({
+  prompt: "<PROMPT_SLUG>",
+  environment: "preview",
+  version: "<PROMPT_VERSION>", // optional
+})
+```
+
+`get` will return something like this depending on how your prompt configured when it was deployed:
+
+```
+          {
+            "chatInput": {
+              "optionalExtra": "",
+            },
+            "state": {
+              "args": {
+                "frequency_penalty": 0,
+                "jsonmode": false,
+                "max_tokens": 800,
+                "model": "gpt-3.5-turbo",
+                "presence_penalty": 0,
+                "stop": [],
+                "stream": true,
+                "temperature": 0.5,
+                "top_p": 1,
+              },
+              "functions": [],
+              "template": [
+                {
+                  "content": "I want you to tell me a joke. Topic of the joke: {{topic}}",
+                  "role": "system",
+                },
+              ],
+              "tools": [],
+              "type": "chat",
+            },
+          }
+```
+
+render your template and builds the final open AI compatible payload:
+
+```ts
+const openAiBody = lt.build(playgroundState, {
+  stream: true,
+  variables: {
+    topic: "iron man",
+  },
+})
+```
+
+openAiBody now contains this object:
+
+```js
+{
+            "frequency_penalty": 0,
+            "max_tokens": 800,
+            "messages": [
+              {
+                "content": "I want you to tell me a joke. Topic of the joke: iron man",
+                "role": "system",
+              },
+            ],
+            "model": "gpt-3.5-turbo",
+            "presence_penalty": 0,
+            "temperature": 0.5,
+            "top_p": 1,
+          }
+```
+
+Notice that your langtail template was replaced with a variable passed in. You can directly call openAI SDK with this object:
+
+```ts
+import OpenAI from "openai"
+
+const openai = new OpenAI()
+
+const joke = await openai.chat.completions.create(openAiBody)
+```
+
+This way you are still using langtail prompts without exposing potentially sensitive data in your variables.

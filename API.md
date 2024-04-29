@@ -53,18 +53,19 @@ The constructor accepts an options object with the following properties:
 
 ### Methods
 
-#### createPromptPath
-
-This method accepts two parameters:
-
-- `prompt`: A string representing the prompt.
-- `environment`(optional): An `Environment` string identifier. Accepts values: `"preview" | "staging" | "production"`. Defaults to `production`
-
-It returns a string representing the URL path for the prompt.
-
 #### invoke
 
 This method accepts an `IRequestParams` or `IRequestParamsStream` object and returns a promise that resolves to an `OpenAIResponseWithHttp` or a `StreamResponseType` depending on whether you use streaming or not.
+
+### get
+
+This method accepts one parameter with these fields:
+
+- `prompt`: A string representing the prompt.
+- `environment`(optional): An `Environment` string identifier. Accepts values: `"preview" | "staging" | "production"`. Defaults to `production`
+- `version`(optional): string for version. Necessary for preview environment
+
+Returns playground state defined here: https://github.com/langtail/langtail-node/blob/48e2690749e26d61c2e43b1bf6ac92e7d4fef48b/src/schemas.ts#L94
 
 ### Exceptions
 
