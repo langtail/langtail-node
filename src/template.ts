@@ -1,12 +1,14 @@
-import handlebars from "@langtail/handlebars-evalless"
-import { Visitor } from "handlebars"
+import * as handlebarsEvalles from "@langtail/handlebars-evalless"
+import vanillaHandlebars from "handlebars"
 
 import { handlebarsDateHelper, operatorHelpers } from "./handlebars-helpers"
 import { JSONValue } from "./jsonType"
 import { ContentArray } from "./schemas"
 
+const handlebars = handlebarsEvalles.default
 handlebars.registerHelper("$date", handlebarsDateHelper)
 handlebars.registerHelper(operatorHelpers)
+const Visitor = vanillaHandlebars.Visitor
 
 /*
  * This class is used to wrap the input object to be used in handlebars templates. Without this JSON objects are rendered as [object Object]

@@ -1,6 +1,6 @@
 {
   "name": "langtail",
-  "version": "0.3.0-beta.2",
+  "version": "0.3.0",
   "description": "",
   "main": "./dist/LangtailNode.js",
   "packageManager": "pnpm@8.15.6",
@@ -44,6 +44,11 @@
       "require": "./dist/LangtailNode.js",
       "import": "./dist/LangtailNode.mjs",
       "types": "./dist/LangtailNode.d.ts"
+    },
+    "./dist/getOpenAIBody": {
+      "require": "./dist/getOpenAIBody.js",
+      "import": "./dist/getOpenAIBody.mjs",
+      "types": "./dist/getOpenAIBody.d.ts"
     }
   },
   "files": [
