@@ -44,7 +44,7 @@ var import_streaming = require("openai/streaming");
 // package.json
 var package_default = {
   name: "langtail",
-  version: "0.2.2",
+  version: "0.3.0-beta.0",
   description: "",
   main: "./dist/LangtailNode.js",
   packageManager: "pnpm@8.15.6",
@@ -79,7 +79,7 @@ var package_default = {
     prettier: "^3.2.5",
     tsup: "^8.0.2",
     typescript: "^5.4.5",
-    vitest: "^1.5.0"
+    vitest: "^1.5.2"
   },
   module: "./dist/LangtailNode.mjs",
   types: "./dist/LangtailNode.d.ts",
@@ -99,7 +99,7 @@ var package_default = {
     "@langtail/handlebars-evalless": "^0.0.1",
     "date-fns": "^3.6.0",
     handlebars: "^4.7.8",
-    openai: "^4.38.3",
+    openai: "^4.38.5",
     "query-string": "^9.0.0",
     zod: "^3.23.4"
   },

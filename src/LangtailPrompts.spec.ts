@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import { LangtailPrompts } from "./LangtailPrompts"
 import { openAIStreamingResponseSchema } from "./dataSchema"
-
+console.log(process.env.LANGTAIL_API_KEY)
 const lt = new LangtailPrompts({
   apiKey: process.env.LANGTAIL_API_KEY!,
 })
@@ -151,9 +151,9 @@ describe(
       })
     })
 
-    describe.only("build", () => {
+    describe("build", () => {
       const ltLocal = new LangtailPrompts({
-        baseURL: "http://localhost:8788",
+        // baseURL: "https://api-staging.langtail.com",
         apiKey: process.env.LANGTAIL_API_KEY!,
       })
 
@@ -161,7 +161,7 @@ describe(
         const playgroundState = await ltLocal.get({
           prompt: "optional-var-test",
           environment: "preview",
-          version: "2qeecdkz",
+          version: "c8hrwdiz",
         })
         expect(playgroundState).toMatchInlineSnapshot(`
           {
