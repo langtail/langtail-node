@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import { LangtailPrompts } from "./LangtailPrompts"
 import { openAIStreamingResponseSchema } from "./dataSchema"
-console.log(process.env.LANGTAIL_API_KEY)
+
 const lt = new LangtailPrompts({
   apiKey: process.env.LANGTAIL_API_KEY!,
 })
