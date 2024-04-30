@@ -16,7 +16,6 @@ import { APIPromise } from "openai/core"
 import { Stream } from "openai/src/streaming"
 import { userAgent } from "./userAgent"
 
-
 export const baseURL = "https://proxy.langtail.com/v1"
 
 export interface ILangtailExtraProps {
@@ -49,17 +48,18 @@ export class LangtailNode {
 
   private _open_ai: OpenAI
 
-  constructor(options?: {
+  constructor(clientOptions?: {
     apiKey: string
     baseURL?: string
     doNotRecord?: boolean
     organization?: string
     project?: string
     fetch?: Core.Fetch
+    onResponse?: (response: ChatCompletion) => void
   }) {
-    const organization = options?.organization
+    const organization = clientOptions?.organization
 
-    const apiKey = options?.apiKey || process.env.LANGTAIL_API_KEY
+    const apiKey = clientOptions?.apiKey || process.env.LANGTAIL_API_KEY
     if (!apiKey) {
       throw new Error(
         "apiKey is required. You can pass it as an option or set the LANGTAIL_API_KEY environment variable.",
@@ -68,11 +68,11 @@ export class LangtailNode {
     const optionsToPass = {
       baseURL: baseURL,
       apiKey,
-      fetch: options?.fetch,
+      fetch: clientOptions?.fetch,
     }
 
     const defaultHeaders: Record<string, string> = {}
-    if (options?.doNotRecord) {
+    if (clientOptions?.doNotRecord) {
       defaultHeaders["x-langtail-do-not-record"] = "true"
     }
     this._open_ai = new OpenAI({
@@ -85,21 +85,21 @@ export class LangtailNode {
 
     this.prompts = new LangtailPrompts({
       apiKey,
-      workspace: options?.organization,
-      project: options?.project,
+      workspace: clientOptions?.organization,
+      project: clientOptions?.project,
     })
 
     this.chat = {
       completions: {
         // @ts-expect-error
-        create: (
+        create: async (
           params: ChatCompletionCreateParamsBase & ILangtailExtraProps,
           options: Core.RequestOptions = {},
         ) => {
           if (params.doNotRecord) {
             options.headers = {
               ["x-langtail-do-not-record"]: "true",
-              'user-agent': userAgent,
+              "user-agent": userAgent,
               ...options?.headers,
             }
           }
@@ -120,7 +120,19 @@ export class LangtailNode {
           }
           delete params.metadata
 
-          return this._open_ai.chat.completions.create(params, options)
+          const res = await this._open_ai.chat.completions.create(
+            params,
+            options,
+          )
+
+          if (clientOptions?.onResponse) {
+            if (res instanceof Stream) {
+              // not supported
+            } else {
+              clientOptions.onResponse(res as ChatCompletion)
+            }
+          }
+          return res
         },
       },
     }

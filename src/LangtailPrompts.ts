@@ -28,6 +28,7 @@ type Options = {
   workspace?: string | undefined
   project?: string | undefined
   fetch?: Fetch
+  onResponse?: (response: ChatCompletion) => void
 }
 
 interface IPromptIdProps extends ILangtailExtraProps {
@@ -155,6 +156,9 @@ export class LangtailPrompts {
     }
 
     const result = (await res.json()) as OpenAIResponseWithHttp
+    if (this.options.onResponse) {
+      this.options.onResponse(result)
+    }
     result.httpResponse = res
     return result
   }
