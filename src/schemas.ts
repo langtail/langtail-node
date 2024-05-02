@@ -8,6 +8,17 @@ export interface ChatState {
   args: ModelParameter
 }
 
+type ToolChoiceType =
+  | {
+      type: "function"
+      function: {
+        name: string
+      }
+    }
+  | "auto"
+  | "none"
+  | "required"
+
 export type ModelParameter = {
   model: string
   temperature: number
@@ -19,6 +30,7 @@ export type ModelParameter = {
   stream?: boolean
   jsonmode?: boolean
   seed?: number | null
+  tool_choice?: ToolChoiceType
 }
 
 export interface Functions {
@@ -72,15 +84,7 @@ export interface Message {
     arguments: string
   }
   tool_calls?: ToolCall[]
-  tool_choice?:
-    | {
-        type: "function"
-        function: {
-          name: string
-        }
-      }
-    | "auto"
-    | "none"
+  tool_choice?: ToolChoiceType
   tool_call_id?: string
   // NOTE: dynamic property calculated by the client for the diff view
   hash?: string
@@ -124,8 +128,9 @@ const ToolCallSchema = z.object({
   function: FunctionCallSchema,
 }) satisfies z.ZodType<ToolCall>
 
-const ToolChoiceSchema = z.union([
+export const ToolChoiceSchema = z.union([
   z.literal("auto"),
+  z.literal("required"),
   z.literal("none"),
   z.object({
     type: z.literal("function"),

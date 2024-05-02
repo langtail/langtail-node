@@ -12,6 +12,7 @@ The constructor accepts an options object with the following properties:
 - `organization`(optional): The organization ID.
 - `project`(optional): The project ID.
 - `fetch`(optional): The fetch function to use for making HTTP requests. [It is passed to openAI client under the hood](https://github.com/openai/openai-node?tab=readme-ov-file#customizing-the-fetch-client).
+- `onResponse`(optional): A callback that is called with the response object before it is returned. It can be used for logging or debugging purposes.
 
 ### Properties
 
@@ -44,6 +45,7 @@ The constructor accepts an options object with the following properties:
 - `organization`(optional): The organization ID.
 - `project`(optional): The project ID.
 - `fetch`(optional): The fetch function to use for making HTTP requests. [It is passed to openAI client under the hood](https://github.com/openai/openai-node?tab=readme-ov-file#customizing-the-fetch-client).
+- `onResponse`(optional): A callback that is called with the response object before it is returned. It can be used for logging or debugging purposes.
 
 ### Properties
 

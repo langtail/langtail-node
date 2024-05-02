@@ -200,6 +200,7 @@ describe(
           variables: {
             optionalExtra: "This is an optional extra",
           },
+          
         })
 
         expect(openAiBody).toMatchInlineSnapshot(`

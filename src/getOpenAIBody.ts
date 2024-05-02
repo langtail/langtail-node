@@ -2,7 +2,12 @@ import type OpenAI from "openai"
 import { z } from "zod"
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi"
 
-import { MessageSchema, PlaygroundState, ToolSchema } from "./schemas"
+import {
+  MessageSchema,
+  PlaygroundState,
+  ToolChoiceSchema,
+  ToolSchema,
+} from "./schemas"
 import { compileLTTemplate } from "./template"
 
 extendZodWithOpenApi(z)
@@ -42,6 +47,7 @@ export const openAiBodySchema = z.object({
   tools: z.array(ToolSchema).optional(),
   template: z.array(MessageSchema).optional(),
   variables: z.record(z.string(), z.string()).optional(),
+  tool_choice: ToolChoiceSchema.optional(),
   response_format: z
     .object({
       type: z.enum(["json_object"]),
@@ -126,6 +132,11 @@ export function getOpenAIBody(
     openAIbody.response_format = parsedBody.response_format ?? {
       type: "json_object",
     }
+  }
+
+  const toolChoice = parsedBody.tool_choice ?? completionArgs.tool_choice
+  if (toolChoice) {
+    openAIbody.tool_choice = toolChoice
   }
 
   if (

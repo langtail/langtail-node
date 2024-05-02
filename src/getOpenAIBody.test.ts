@@ -152,6 +152,12 @@ describe("getOpenAIBody", () => {
       temperature: 0.5,
       top_p: 0.5,
       seed: 123,
+      tool_choice: {
+        type: "function",
+        function: {
+          name: "functionName",
+        },
+      },
       response_format: {
         type: "json_object",
       },
@@ -164,7 +170,7 @@ describe("getOpenAIBody", () => {
             parameters: {},
           },
         },
-      ]
+      ],
     })
 
     expect(openAIbody).toMatchInlineSnapshot(`
@@ -188,6 +194,12 @@ describe("getOpenAIBody", () => {
         },
         "seed": 123,
         "temperature": 0.5,
+        "tool_choice": {
+          "function": {
+            "name": "functionName",
+          },
+          "type": "function",
+        },
         "tools": [
           {
             "function": {
