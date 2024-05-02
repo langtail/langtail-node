@@ -1,4 +1,4 @@
-# langtail SDK
+# Langtail SDK
 
 Typescript SDK for Langtail.
 
@@ -14,7 +14,7 @@ npm i langtail
 
 ## Usage
 
-### openAI chat completion
+### OpenAI chat completion
 
 basic completion without any prompt. This just wraps openAI api and adds a few extra parameters you can use to affect how the request gets logged in langtail.
 
@@ -107,7 +107,7 @@ Full API reference is in [API.md](API.md)
 
 We support the same [runtimes as OpenAI](https://github.com/openai/openai-node?tab=readme-ov-file#requirements).
 
-### proxyless usage
+### Proxyless usage
 
 You can avoid langtail API all together by constructing your prompt locally and calling your provider like openAI directly.
 
