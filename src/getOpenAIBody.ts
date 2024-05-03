@@ -81,8 +81,9 @@ export function getOpenAIBody(
 ) {
   const completionArgs = completionConfig.state.args
 
+  const template = parsedBody.template ?? completionConfig.state.template
   const inputMessages = [
-    ...completionConfig.state.template.map((item) => {
+    ...template.map((item) => {
       const needsCompilation =
         typeof item.content === "string" ? item.content?.includes("{{") : true
 
@@ -104,7 +105,6 @@ export function getOpenAIBody(
   const openAIbody: OpenAI.Chat.ChatCompletionCreateParams = {
     model: parsedBody.model ?? completionArgs.model,
     temperature: parsedBody.temperature ?? completionArgs.temperature,
-    // @ts-expect-error
     messages: inputMessages,
     top_p: parsedBody.top_p ?? completionArgs.top_p,
     presence_penalty:

@@ -212,6 +212,33 @@ describe("getOpenAIBody", () => {
         ],
         "top_p": 0.5,
       }
-    `)
+    `) // format: JSON is added to messages because response_format is set to json_object
+
+    const openAIbodyTemplated = getOpenAIBody(completionConfig, {
+      template: [
+        {
+          role: "system",
+          content: "tell me a joke",
+        },
+      ],
+    })
+
+    expect(openAIbodyTemplated).toMatchInlineSnapshot(`
+      {
+        "frequency_penalty": 0,
+        "max_tokens": 100,
+        "messages": [
+          {
+            "content": "tell me a joke",
+            "role": "system",
+          },
+        ],
+        "model": "gpt-3.5-turbo",
+        "presence_penalty": 0,
+        "seed": 123,
+        "temperature": 0.8,
+        "top_p": 1,
+      }
+    `) // template is overridden by the one in parsedBody
   })
 })
