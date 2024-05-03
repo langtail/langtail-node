@@ -100,12 +100,17 @@ export class LangtailPrompts {
       : `${this.baseUrl}/${urlPath}?${queryParams}`
   }
 
-  invoke(options: IRequestParams): Promise<OpenAIResponseWithHttp>
+  invoke(
+    options: IRequestParams & OpenAiBodyType,
+  ): Promise<OpenAIResponseWithHttp>
 
-  invoke(options: IRequestParamsStream): Promise<StreamResponseType>
+  invoke(
+    options: IRequestParamsStream & OpenAiBodyType,
+  ): Promise<StreamResponseType>
   async invoke({
     prompt,
     environment,
+    version,
     doNotRecord,
     metadata,
     ...rest
@@ -131,7 +136,7 @@ export class LangtailPrompts {
     const promptPath = this._createPromptPath({
       prompt,
       environment: environment ?? "production",
-      version: rest.version,
+      version: version,
     })
 
     let res: Response | globalThis.Response
