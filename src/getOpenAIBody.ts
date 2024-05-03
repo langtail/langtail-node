@@ -2,7 +2,12 @@ import type OpenAI from "openai"
 import { z } from "zod"
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi"
 
-import { MessageSchema, PlaygroundState, ToolSchema } from "./schemas"
+import {
+  MessageSchema,
+  PlaygroundState,
+  ToolChoiceSchema,
+  ToolSchema,
+} from "./schemas"
 import { compileLTTemplate } from "./template"
 
 extendZodWithOpenApi(z)
@@ -40,8 +45,10 @@ export const openAiBodySchema = z.object({
   frequency_penalty: z.number().optional(),
   model: z.string().optional(),
   tools: z.array(ToolSchema).optional(),
+  stop: z.union([z.string(), z.array(z.string())]).optional(),
   template: z.array(MessageSchema).optional(),
   variables: z.record(z.string(), z.string()).optional(),
+  tool_choice: ToolChoiceSchema.optional(),
   response_format: z
     .object({
       type: z.enum(["json_object"]),
@@ -75,8 +82,9 @@ export function getOpenAIBody(
 ) {
   const completionArgs = completionConfig.state.args
 
+  const template = parsedBody.template ?? completionConfig.state.template
   const inputMessages = [
-    ...completionConfig.state.template.map((item) => {
+    ...template.map((item) => {
       const needsCompilation =
         typeof item.content === "string" ? item.content?.includes("{{") : true
 
@@ -98,7 +106,6 @@ export function getOpenAIBody(
   const openAIbody: OpenAI.Chat.ChatCompletionCreateParams = {
     model: parsedBody.model ?? completionArgs.model,
     temperature: parsedBody.temperature ?? completionArgs.temperature,
-    // @ts-expect-error
     messages: inputMessages,
     top_p: parsedBody.top_p ?? completionArgs.top_p,
     presence_penalty:
@@ -126,6 +133,15 @@ export function getOpenAIBody(
     openAIbody.response_format = parsedBody.response_format ?? {
       type: "json_object",
     }
+  }
+
+  if (completionArgs.stop || parsedBody.stop) { 
+    openAIbody.stop = parsedBody.stop ?? completionArgs.stop
+  }
+
+  const toolChoice = parsedBody.tool_choice ?? completionArgs.tool_choice
+  if (toolChoice) {
+    openAIbody.tool_choice = toolChoice
   }
 
   if (

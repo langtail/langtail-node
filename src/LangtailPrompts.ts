@@ -28,6 +28,7 @@ type Options = {
   workspace?: string | undefined
   project?: string | undefined
   fetch?: Fetch
+  onResponse?: (response: ChatCompletion) => void
 }
 
 interface IPromptIdProps extends ILangtailExtraProps {
@@ -42,7 +43,6 @@ interface IPromptIdProps extends ILangtailExtraProps {
 
 interface IRequestParams extends IPromptIdProps {
   variables?: Record<string, any>
-  messages?: ChatCompletionAssistantMessageParam[]
 }
 
 interface IRequestParamsStream extends IRequestParams {
@@ -99,12 +99,14 @@ export class LangtailPrompts {
       : `${this.baseUrl}/${urlPath}?${queryParams}`
   }
 
-  invoke(options: IRequestParams): Promise<OpenAIResponseWithHttp>
-
+  invoke(
+    options: Omit<IRequestParams, "stream">,
+  ): Promise<OpenAIResponseWithHttp>
   invoke(options: IRequestParamsStream): Promise<StreamResponseType>
   async invoke({
     prompt,
     environment,
+    version,
     doNotRecord,
     metadata,
     ...rest
@@ -130,7 +132,7 @@ export class LangtailPrompts {
     const promptPath = this._createPromptPath({
       prompt,
       environment: environment ?? "production",
-      version: rest.version,
+      version: version,
     })
 
     let res: Response | globalThis.Response
@@ -155,6 +157,9 @@ export class LangtailPrompts {
     }
 
     const result = (await res.json()) as OpenAIResponseWithHttp
+    if (this.options.onResponse) {
+      this.options.onResponse(result)
+    }
     result.httpResponse = res
     return result
   }

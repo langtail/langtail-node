@@ -200,6 +200,7 @@ describe(
           variables: {
             optionalExtra: "This is an optional extra",
           },
+          
         })
 
         expect(openAiBody).toMatchInlineSnapshot(`
@@ -216,6 +217,7 @@ describe(
             ],
             "model": "gpt-3.5-turbo",
             "presence_penalty": 0,
+            "stop": [],
             "temperature": 0.5,
             "top_p": 1,
           }

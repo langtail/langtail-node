@@ -17,6 +17,7 @@ describe("getOpenAIBody", () => {
       top_p: 1,
       presence_penalty: 0,
       frequency_penalty: 0,
+      stop: [],
     }
 
     const openAIbody = getOpenAIBody(
@@ -87,6 +88,7 @@ describe("getOpenAIBody", () => {
         ],
         "model": "gpt-3.5-turbo",
         "presence_penalty": 0,
+        "stop": [],
         "temperature": 0.8,
         "top_p": 1,
       }
@@ -111,6 +113,7 @@ describe("getOpenAIBody", () => {
         ],
         "model": "gpt-3.5-turbo",
         "presence_penalty": 0,
+        "stop": [],
         "temperature": 0.8,
         "top_p": 1,
       }
@@ -152,6 +155,13 @@ describe("getOpenAIBody", () => {
       temperature: 0.5,
       top_p: 0.5,
       seed: 123,
+      stop: ["stop1", "stop2"],
+      tool_choice: {
+        type: "function",
+        function: {
+          name: "functionName",
+        },
+      },
       response_format: {
         type: "json_object",
       },
@@ -164,7 +174,7 @@ describe("getOpenAIBody", () => {
             parameters: {},
           },
         },
-      ]
+      ],
     })
 
     expect(openAIbody).toMatchInlineSnapshot(`
@@ -187,7 +197,17 @@ describe("getOpenAIBody", () => {
           "type": "json_object",
         },
         "seed": 123,
+        "stop": [
+          "stop1",
+          "stop2",
+        ],
         "temperature": 0.5,
+        "tool_choice": {
+          "function": {
+            "name": "functionName",
+          },
+          "type": "function",
+        },
         "tools": [
           {
             "function": {
@@ -200,6 +220,34 @@ describe("getOpenAIBody", () => {
         ],
         "top_p": 0.5,
       }
-    `)
+    `) // format: JSON is added to messages because response_format is set to json_object
+
+    const openAIbodyTemplated = getOpenAIBody(completionConfig, {
+      template: [
+        {
+          role: "system",
+          content: "tell me a joke",
+        },
+      ],
+    })
+
+    expect(openAIbodyTemplated).toMatchInlineSnapshot(`
+      {
+        "frequency_penalty": 0,
+        "max_tokens": 100,
+        "messages": [
+          {
+            "content": "tell me a joke",
+            "role": "system",
+          },
+        ],
+        "model": "gpt-3.5-turbo",
+        "presence_penalty": 0,
+        "seed": 123,
+        "stop": [],
+        "temperature": 0.8,
+        "top_p": 1,
+      }
+    `) // template is overridden by the one in parsedBody
   })
 })
