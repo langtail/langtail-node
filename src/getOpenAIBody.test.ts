@@ -17,6 +17,7 @@ describe("getOpenAIBody", () => {
       top_p: 1,
       presence_penalty: 0,
       frequency_penalty: 0,
+      stop: [],
     }
 
     const openAIbody = getOpenAIBody(
@@ -87,6 +88,7 @@ describe("getOpenAIBody", () => {
         ],
         "model": "gpt-3.5-turbo",
         "presence_penalty": 0,
+        "stop": [],
         "temperature": 0.8,
         "top_p": 1,
       }
@@ -111,6 +113,7 @@ describe("getOpenAIBody", () => {
         ],
         "model": "gpt-3.5-turbo",
         "presence_penalty": 0,
+        "stop": [],
         "temperature": 0.8,
         "top_p": 1,
       }
@@ -152,6 +155,7 @@ describe("getOpenAIBody", () => {
       temperature: 0.5,
       top_p: 0.5,
       seed: 123,
+      stop: ["stop1", "stop2"],
       tool_choice: {
         type: "function",
         function: {
@@ -193,6 +197,10 @@ describe("getOpenAIBody", () => {
           "type": "json_object",
         },
         "seed": 123,
+        "stop": [
+          "stop1",
+          "stop2",
+        ],
         "temperature": 0.5,
         "tool_choice": {
           "function": {
@@ -236,6 +244,7 @@ describe("getOpenAIBody", () => {
         "model": "gpt-3.5-turbo",
         "presence_penalty": 0,
         "seed": 123,
+        "stop": [],
         "temperature": 0.8,
         "top_p": 1,
       }

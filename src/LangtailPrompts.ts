@@ -43,7 +43,6 @@ interface IPromptIdProps extends ILangtailExtraProps {
 
 interface IRequestParams extends IPromptIdProps {
   variables?: Record<string, any>
-  messages?: ChatCompletionAssistantMessageParam[]
 }
 
 interface IRequestParamsStream extends IRequestParams {
@@ -101,12 +100,9 @@ export class LangtailPrompts {
   }
 
   invoke(
-    options: IRequestParams & OpenAiBodyType,
+    options: Omit<IRequestParams, "stream">,
   ): Promise<OpenAIResponseWithHttp>
-
-  invoke(
-    options: IRequestParamsStream & OpenAiBodyType,
-  ): Promise<StreamResponseType>
+  invoke(options: IRequestParamsStream): Promise<StreamResponseType>
   async invoke({
     prompt,
     environment,

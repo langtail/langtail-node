@@ -1,10 +1,7 @@
 import OpenAI from "openai"
 import * as Core from "openai/core"
 import { LangtailPrompts } from "./LangtailPrompts"
-import {
-  ChatCompletionCreateParamsStreaming,
-  Completions,
-} from "openai/resources/index"
+import { ChatCompletionCreateParamsStreaming } from "openai/resources/index"
 import {
   ChatCompletion,
   ChatCompletionChunk,
@@ -16,10 +13,11 @@ import { APIPromise } from "openai/core"
 
 import { userAgent } from "./userAgent"
 import { Stream } from "openai/streaming"
+import { OpenAiBodyType } from "./getOpenAIBody"
 
 export const baseURL = "https://proxy.langtail.com/v1"
 
-export interface ILangtailExtraProps {
+export interface ILangtailExtraProps extends OpenAiBodyType {
   doNotRecord?: boolean
   metadata?: Record<string, any>
 }

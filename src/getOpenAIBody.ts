@@ -45,6 +45,7 @@ export const openAiBodySchema = z.object({
   frequency_penalty: z.number().optional(),
   model: z.string().optional(),
   tools: z.array(ToolSchema).optional(),
+  stop: z.union([z.string(), z.array(z.string())]).optional(),
   template: z.array(MessageSchema).optional(),
   variables: z.record(z.string(), z.string()).optional(),
   tool_choice: ToolChoiceSchema.optional(),
@@ -132,6 +133,10 @@ export function getOpenAIBody(
     openAIbody.response_format = parsedBody.response_format ?? {
       type: "json_object",
     }
+  }
+
+  if (completionArgs.stop || parsedBody.stop) { 
+    openAIbody.stop = parsedBody.stop ?? completionArgs.stop
   }
 
   const toolChoice = parsedBody.tool_choice ?? completionArgs.tool_choice
