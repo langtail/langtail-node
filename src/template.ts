@@ -1,16 +1,14 @@
 import handlebarsEvalles from "@langtail/handlebars-evalless"
-import vanillaHandlebarsImport from "handlebars/dist/handlebars"
-import type handlebarsType from "handlebars"
-
-const vanillaHandlebars: typeof handlebarsType = vanillaHandlebarsImport
 
 import { handlebarsDateHelper, operatorHelpers } from "./handlebars-helpers"
 import { JSONValue } from "./jsonType"
 import { ContentArray } from "./schemas"
 
-handlebarsEvalles.registerHelper("$date", handlebarsDateHelper)
-handlebarsEvalles.registerHelper(operatorHelpers)
-const Visitor = vanillaHandlebars.Visitor
+const handlebars = handlebarsEvalles.default ?? handlebarsEvalles
+
+handlebars.registerHelper("$date", handlebarsDateHelper)
+handlebars.registerHelper(operatorHelpers)
+const Visitor = handlebars.Visitor
 
 /*
  * This class is used to wrap the input object to be used in handlebars templates. Without this JSON objects are rendered as [object Object]
@@ -51,7 +49,7 @@ export const compileStringHandlebars = (
       .replace(/\n?({{else}})\n?/g, "$1") // Remove newline before and after {{else}}
       .replace(/\n({{\/(if|unless|with)}})/g, "$1") // Remove newline before closing block helpers
 
-    const template = handlebarsEvalles.compileAST(preprocessedText, {
+    const template = handlebars.compileAST(preprocessedText, {
       noEscape: true,
     }) // regular compile cannot be used in cloudflare worker
 
@@ -207,7 +205,7 @@ class VariableScanner extends Visitor {
 
 export function extractVariablesForHandlebars(template: string): string[] {
   try {
-    const ast = handlebarsEvalles.parse(template)
+    const ast = handlebars.parse(template)
     const scanner = new VariableScanner()
     scanner.accept(ast)
     return scanner.variables
