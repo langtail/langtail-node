@@ -1,17 +1,16 @@
 import handlebarsEvalles from "@langtail/handlebars-evalless"
+import vanillaHandlebarsImport from "handlebars/dist/handlebars"
+import type handlebarsType from "handlebars"
+
+const vanillaHandlebars: typeof handlebarsType = vanillaHandlebarsImport
 
 import { handlebarsDateHelper, operatorHelpers } from "./handlebars-helpers"
 import { JSONValue } from "./jsonType"
 import { ContentArray } from "./schemas"
 
-// @ts-expect-error handlebarsEvalles sometimes has issues with CJS/ESM interop so we need to use the default export
-const handlebars: typeof Handlebars = handlebarsEvalles.registerHelper
-  ? handlebarsEvalles
-  : handlebarsEvalles.default
-
-handlebars.registerHelper("$date", handlebarsDateHelper)
-handlebars.registerHelper(operatorHelpers)
-const Visitor = handlebarsEvalles.Visitor
+handlebarsEvalles.registerHelper("$date", handlebarsDateHelper)
+handlebarsEvalles.registerHelper(operatorHelpers)
+const Visitor = vanillaHandlebars.Visitor
 
 /*
  * This class is used to wrap the input object to be used in handlebars templates. Without this JSON objects are rendered as [object Object]
@@ -52,7 +51,9 @@ export const compileStringHandlebars = (
       .replace(/\n?({{else}})\n?/g, "$1") // Remove newline before and after {{else}}
       .replace(/\n({{\/(if|unless|with)}})/g, "$1") // Remove newline before closing block helpers
 
-    const template = handlebars.compileAST(preprocessedText, { noEscape: true }) // regular compile cannot be used in cloudflare worker
+    const template = handlebarsEvalles.compileAST(preprocessedText, {
+      noEscape: true,
+    }) // regular compile cannot be used in cloudflare worker
 
     const parsedInput: Record<string, JSONValue | TemplateObject> = {}
     for (const key in input) {
@@ -206,9 +207,8 @@ class VariableScanner extends Visitor {
 
 export function extractVariablesForHandlebars(template: string): string[] {
   try {
-    const ast = handlebars.parse(template)
-    const scanner = new VariableScanner() as handlebarsEvalles.VariableScanner
-
+    const ast = handlebarsEvalles.parse(template)
+    const scanner = new VariableScanner()
     scanner.accept(ast)
     return scanner.variables
   } catch (error) {
