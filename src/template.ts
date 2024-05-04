@@ -7,8 +7,7 @@ import { ContentArray } from "./schemas"
 // @ts-expect-error handlebarsEvalles sometimes has issues with CJS/ESM interop so we need to use the default export
 const handlebars: typeof Handlebars = handlebarsEvalles.registerHelper
   ? handlebarsEvalles
-  : // @ts-expect-error handlebarsEvalles
-    handlebarsEvalles.default
+  : handlebarsEvalles.default
 
 handlebars.registerHelper("$date", handlebarsDateHelper)
 handlebars.registerHelper(operatorHelpers)
@@ -208,7 +207,8 @@ class VariableScanner extends Visitor {
 export function extractVariablesForHandlebars(template: string): string[] {
   try {
     const ast = handlebars.parse(template)
-    const scanner = new VariableScanner()
+    const scanner = new VariableScanner() as handlebarsEvalles.VariableScanner
+
     scanner.accept(ast)
     return scanner.variables
   } catch (error) {
