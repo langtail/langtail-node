@@ -9,8 +9,8 @@ dependencies:
     specifier: ^7.0.0
     version: 7.0.0(zod@3.23.6)
   '@langtail/handlebars-evalless':
-    specifier: ^0.1.0
-    version: 0.1.0
+    specifier: ^0.1.1
+    version: 0.1.1
   date-fns:
     specifier: ^3.6.0
     version: 3.6.0
@@ -314,8 +314,8 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
 
-  /@langtail/handlebars-evalless@0.1.0:
-    resolution: {integrity: sha512-6jeyYmZCw/2s31fmF6w0oETMoh3twR0rFwDpxs+zryXBJ78lbVmqjJcpkdQDXATEeKIxMCzQWn0PdlZ9AfBN3g==}
+  /@langtail/handlebars-evalless@0.1.1:
+    resolution: {integrity: sha512-zvGCL5iLXgbCdBtj79ZJZ66+iKyHE9wjs2PqoL/9lS34mFft3JkLkOs2bgClyXjK+t5eWimYqgdi+qux2ZGKgg==}
     dependencies:
       handlebars: 4.7.8
       prettier: 3.2.5
