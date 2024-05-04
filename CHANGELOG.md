@@ -1,3 +1,9 @@
+# Changelog
+
+# 0.3.1
+
+- fix next.js compatibility
+
 # 0.3.0
 
 - add ability to `get` and `build` to run langtail prompts without using a proxy
