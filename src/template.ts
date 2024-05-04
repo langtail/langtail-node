@@ -9,7 +9,7 @@ import { JSONValue } from "./jsonType"
 import { ContentArray } from "./schemas"
 
 // @ts-expect-error handlebarsEvalles sometimes has issues with CJS/ESM interop so we need to use the default export
-const handlebars: typeof Handlebars = handlebarsEvalles.registerHelper
+const handlebars: typeof handlebarsType = handlebarsEvalles.registerHelper
   ? handlebarsEvalles
   : handlebarsEvalles.default
 
