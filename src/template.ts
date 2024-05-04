@@ -2,7 +2,7 @@ import handlebarsEvalles from "@langtail/handlebars-evalless"
 import vanillaHandlebarsImport from "handlebars/dist/handlebars"
 import type handlebarsType from "handlebars"
 
-const vanillaHandlebars = vanillaHandlebarsImport as typeof handlebarsType
+const vanillaHandlebars: typeof handlebarsType = vanillaHandlebarsImport
 
 import { handlebarsDateHelper, operatorHelpers } from "./handlebars-helpers"
 import { JSONValue } from "./jsonType"
