@@ -12,6 +12,6 @@ export const openAIStreamingResponseSchema = z.object({
   object: z.literal("chat.completion.chunk"),
   created: z.number(),
   model: z.string(),
-  system_fingerprint: z.string(),
+  system_fingerprint: z.string().nullish(),
   choices: z.array(choiceStreamedSchema),
 })
