@@ -12,7 +12,7 @@ import queryString from "query-string"
 import { PlaygroundState } from "./schemas"
 import { OpenAiBodyType, getOpenAIBody } from "./getOpenAIBody"
 
-export type Environment = "preview" | "staging" | "production"
+export type LangtailEnvironment = "preview" | "staging" | "production"
 
 interface LangtailPromptVariables {} // TODO use this when generating schema for deployed prompts
 
@@ -37,7 +37,7 @@ interface IPromptIdProps extends ILangtailExtraProps {
    * The environment to fetch the prompt from. Defaults to "production".
    * @default "production"
    **/
-  environment?: Environment
+  environment?: LangtailEnvironment
   version?: string
 }
 
@@ -68,7 +68,7 @@ export class LangtailPrompts {
     configGet,
   }: {
     prompt: string
-    environment: Environment
+    environment: LangtailEnvironment
     version?: string
     configGet?: boolean
   }) {
@@ -174,7 +174,7 @@ export class LangtailPrompts {
      * The environment to fetch the prompt from. Defaults to "production".
      * @default "production"
      **/
-    environment?: Environment
+    environment?: LangtailEnvironment
     version?: string
   }): Promise<PlaygroundState> {
     const promptPath = this._createPromptPath({
