@@ -12,6 +12,6 @@ export const openAIStreamingResponseSchema = z.object({
   object: z.literal("chat.completion.chunk"),
   created: z.number(),
   model: z.string(),
-  system_fingerprint: z.string().nullish(),
+  system_fingerprint: z.string().nullish(), // TODO change back to non nullable when openAI fixes the issue where system_fingerprint is returned as null
   choices: z.array(choiceStreamedSchema),
 })
