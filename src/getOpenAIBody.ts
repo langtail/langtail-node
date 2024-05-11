@@ -27,7 +27,7 @@ export const langtailBodySchema = z.object({
   _langtailTestInputId: z.string().optional(),
 })
 
-export const openAiBodySchema = z.object({
+export const openAIBodySchemaObjectDefinition = {
   stream: z.boolean().optional().openapi({ example: false }),
   user: z.string().optional().openapi({
     description: "A unique identifier representing your end-user",
@@ -66,12 +66,13 @@ export const openAiBodySchema = z.object({
         },
       ],
     }),
-})
+}
+export const openAIBodySchema = z.object(openAIBodySchemaObjectDefinition)
 
-export const bothBodySchema = langtailBodySchema.merge(openAiBodySchema)
+export const bothBodySchema = langtailBodySchema.merge(openAIBodySchema)
 
 export type IncomingBodyType = z.infer<typeof bothBodySchema>
-export type OpenAiBodyType = z.infer<typeof openAiBodySchema>
+export type OpenAiBodyType = z.infer<typeof openAIBodySchema>
 
 /**
  * Get the body for the OpenAI API request. Used in the langtail prompt API. // TODO remove this from our prompt-API when this is merged so that we don't have this code duplicated
@@ -135,7 +136,7 @@ export function getOpenAIBody(
     }
   }
 
-  if (completionArgs.stop || parsedBody.stop) { 
+  if (completionArgs.stop || parsedBody.stop) {
     openAIbody.stop = parsedBody.stop ?? completionArgs.stop
   }
 

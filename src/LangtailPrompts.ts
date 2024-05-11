@@ -11,6 +11,7 @@ import { userAgent } from "./userAgent"
 import queryString from "query-string"
 import { PlaygroundState } from "./schemas"
 import { OpenAiBodyType, getOpenAIBody } from "./getOpenAIBody"
+import { LogDataType, OpenAIResponseType } from "./dataSchema"
 
 export type LangtailEnvironment = "preview" | "staging" | "production"
 
@@ -111,12 +112,7 @@ export class LangtailPrompts {
     metadata,
     ...rest
   }: IRequestParams | IRequestParamsStream) {
-    const metadataHeaders = metadata
-      ? Object.entries(metadata).reduce((acc, [key, value]) => {
-          acc[`x-langtail-metadata-${key}`] = value
-          return acc
-        }, {})
-      : {}
+    const metadataHeaders = this.formatMetadataHeaders(metadata)
 
     const fetchInit = {
       method: "POST",
@@ -164,6 +160,15 @@ export class LangtailPrompts {
     return result
   }
 
+  private formatMetadataHeaders(metadata: Record<string, any> | undefined) {
+    return metadata
+      ? Object.entries(metadata).reduce((acc, [key, value]) => {
+          acc[`x-langtail-metadata-${key}`] = value
+          return acc
+        }, {})
+      : {}
+  }
+
   async get({
     prompt,
     environment,
@@ -202,5 +207,42 @@ export class LangtailPrompts {
 
   build(completionConfig: PlaygroundState, parsedBody: OpenAiBodyType) {
     return getOpenAIBody(completionConfig, parsedBody)
+  }
+
+  async _record(
+    promptConfig: IPromptIdProps,
+    input: OpenAiBodyType,
+    response: OpenAIResponseType,
+    metadata: Record<string, string>,
+  ) {
+    const path = this._createPromptPath({
+      prompt: promptConfig.prompt,
+      environment: promptConfig.environment ?? "production",
+    })
+    const promptPath = promptConfig.version
+      ? path.replace("?", "/log?")
+      : path + "/log"
+
+    const payload: LogDataType = {
+      input,
+      openAIResponse: response,
+    }
+
+    const res = await fetch(promptPath, {
+      method: "POST",
+      headers: {
+        "X-API-Key": this.apiKey,
+        "user-agent": userAgent,
+        "content-type": "application/json",
+        ...this.formatMetadataHeaders(metadata),
+      },
+      body: JSON.stringify(payload),
+    })
+
+    if (!res.ok) {
+      throw new Error(
+        `Failed to record prompt: ${res.status} ${await res.text()}`,
+      )
+    }
   }
 }
