@@ -22,6 +22,10 @@ export interface ILangtailExtraProps extends OpenAiBodyType {
   metadata?: Record<string, any>
 }
 
+export type ChatCompletionsCreateParams =
+  | (ChatCompletionCreateParamsStreaming & ILangtailExtraProps)
+  | (ChatCompletionCreateParamsNonStreaming & ILangtailExtraProps)
+
 export class LangtailNode {
   prompts: LangtailPrompts
   chat: {

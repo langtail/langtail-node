@@ -30,7 +30,7 @@ describe("LangtailNode", () => {
     expect(partCount > 1).toBe(true)
   })
 
-  it("should not record", async (t) => {
+  it("should not record this completion in the logs", async (t) => {
     nock(baseURL) // nock works by intercepting requests at the network level, if open AI switches to undici we will need to intercept differently
       .post("/chat/completions")
       .reply(200, function (uri, req) {

@@ -1,17 +1,17 @@
 import {
   ChatCompletion,
-  ChatCompletionAssistantMessageParam,
 } from "openai/resources/chat/completions"
 import { ChatCompletionChunk } from "openai/resources/chat/completions"
 
 import { Stream } from "openai/streaming"
-import { ILangtailExtraProps, LangtailNode } from "./LangtailNode"
+import { ChatCompletionsCreateParams, ILangtailExtraProps, LangtailNode } from "./LangtailNode"
 import { Fetch } from "openai/core"
 import { userAgent } from "./userAgent"
 import queryString from "query-string"
 import { PlaygroundState } from "./schemas"
 import { OpenAiBodyType, getOpenAIBody } from "./getOpenAIBody"
 import { LogDataType, OpenAIResponseType } from "./dataSchema"
+import OpenAI from "openai"
 
 export type LangtailEnvironment = "preview" | "staging" | "production"
 
@@ -25,6 +25,7 @@ type OpenAIResponseWithHttp = ChatCompletion & {
 
 type Options = {
   apiKey: string
+  openAIKey?: string | undefined
   baseURL?: string | undefined
   workspace?: string | undefined
   project?: string | undefined
@@ -42,6 +43,17 @@ interface IPromptIdProps extends ILangtailExtraProps {
   version?: string
 }
 
+type PromptIdProps = {
+  prompt: string
+  /**
+   * The environment to fetch the prompt from. Defaults to "production".
+   * @default "production"
+   **/
+  environment?: LangtailEnvironment
+  version?: string
+}
+
+
 interface IRequestParams extends IPromptIdProps {
   variables?: Record<string, any>
 }
@@ -51,21 +63,24 @@ interface IRequestParamsStream extends IRequestParams {
 }
 
 interface IPromptObject {
+  _promptIdProps: IPromptIdProps
   promptConfig: PlaygroundState
   variables: Record<string, string> | undefined
-  toOpenAI: () => ReturnType<typeof getOpenAIBody>
+  toOpenAI: () => ChatCompletionsCreateParams
 }
 
 export class LangtailPrompts {
   apiKey: string
   baseUrl: string
   options: Options
+  openAIKey: string | undefined
 
   constructor(options: Options) {
     const { apiKey, baseURL: baseUrl } = options
     this.apiKey = apiKey
     this.baseUrl = baseUrl ?? "https://api.langtail.com"
     this.options = options
+    this.openAIKey = options.openAIKey
   }
 
   _createPromptPath({
@@ -187,7 +202,9 @@ export class LangtailPrompts {
      **/
     environment?: LangtailEnvironment
     version?: string
-  }): Promise<PlaygroundState> {
+    }): Promise<PlaygroundState & {
+    _promptIdProps: PromptIdProps
+  }> {
     const promptPath = this._createPromptPath({
       prompt,
       environment: environment ?? "production",
@@ -208,15 +225,36 @@ export class LangtailPrompts {
       )
     }
 
-    return res.json()
+    const payload = await res.json()
+    // payload._promptIdProps = {
+    //   prompt,
+    //   environment,
+    //   version,
+    // }
+
+    Object.defineProperty(payload, "_promptIdProps", {
+      value: {
+        prompt,
+        environment,
+        version,
+      },
+      writable: false,
+      enumerable: false,
+      configurable: false,
+    })
+    
+    return payload
   }
 
   build(
-    completionConfig: PlaygroundState,
+    completionConfig: PlaygroundState & {
+      _promptIdProps: PromptIdProps
+    },
     parsedBody: OpenAiBodyType,
   ): IPromptObject {
     const openAiBody = getOpenAIBody(completionConfig, parsedBody)
     return {
+      _promptIdProps: completionConfig._promptIdProps,
       promptConfig: completionConfig,
       variables: parsedBody.variables,
       toOpenAI: () => openAiBody,
@@ -225,13 +263,46 @@ export class LangtailPrompts {
 
   completions = {
     create: async (prompt: IPromptObject) => {
-      const ltNode = new LangtailNode({
-        apiKey: this.apiKey,
-        fetch: this.options.fetch,
-        onResponse: this.options.onResponse,
+
+
+      const openAI = new OpenAI({
+        apiKey: this.openAIKey
       })
-      // @ts-expect-error
-      return ltNode.chat.completions.create(prompt.toOpenAI())
+
+      const openAIBody = prompt.toOpenAI()
+
+        const startedAt = new Date()      
+
+        const completionResponse = await openAI.chat.completions.create(
+          openAIBody,
+        ).asResponse()
+
+        if (openAIBody.stream) {
+        
+        }
+  
+        const finishedAt = new Date()
+  
+        const data = completionResponse.status > 299 ? null : await completionResponse.json()
+        void this._record(
+          prompt._promptIdProps,
+          prompt.toOpenAI(),
+          {
+            data: data,
+            startedAt: startedAt.toISOString(),
+            finishedAt: finishedAt.toISOString(),
+            status: completionResponse.status,
+            error: completionResponse.status > 299 ? await completionResponse.json() : null,
+          }
+        )
+
+        return data
+
+
+
+
+     
+
     },
   }
 
@@ -239,10 +310,11 @@ export class LangtailPrompts {
     promptConfig: IPromptIdProps,
     input: OpenAiBodyType,
     response: OpenAIResponseType,
-    metadata: Record<string, string>,
+    metadata?: Record<string, string>,
   ) {
     const path = this._createPromptPath({
       prompt: promptConfig.prompt,
+      version: promptConfig.version,
       environment: promptConfig.environment ?? "production",
     })
     const promptPath = promptConfig.version

@@ -8,6 +8,7 @@
     "datetime",
     "Langtail",
     "logprobs",
+    "proxyless",
     "undici"
   ],
   "ignoreWords": [],

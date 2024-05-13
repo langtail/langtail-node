@@ -153,17 +153,17 @@ describe(
 
     describe("build", () => {
       const ltLocal = new LangtailPrompts({
-        // baseURL: "https://api-staging.langtail.com",
+       // baseURL: "https://api-staging.langtail.com",// uncomment this line to test against local prompt api
         apiKey: process.env.LANGTAIL_API_KEY!,
       })
 
       it("should return the openAI body user can use with openai client", async () => {
-        const playgroundState = await ltLocal.get({
+        const prompt = await ltLocal.get({
           prompt: "optional-var-test",
           environment: "preview",
           version: "c8hrwdiz",
         })
-        expect(playgroundState).toMatchInlineSnapshot(`
+        expect(prompt).toMatchInlineSnapshot(`
           {
             "chatInput": {
               "optionalExtra": "",
@@ -195,12 +195,11 @@ describe(
           }
         `)
 
-        const promptObj = ltLocal.build(playgroundState, {
+        const promptObj = ltLocal.build(prompt, {
           stream: true,
           variables: {
             optionalExtra: "This is an optional extra",
           },
-          
         })
 
         expect(promptObj.toOpenAI()).toMatchInlineSnapshot(`
@@ -222,6 +221,32 @@ describe(
             "top_p": 1,
           }
         `)
+      })
+    })
+
+    describe("completion proxyless use case", () => {
+      it("should return completion for ai clock prompt", async () => {
+        const ltLocal = new LangtailPrompts({
+          baseURL: "https://api-staging.langtail.com",
+          apiKey: "lt-eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJsYW5ndGFpbC1hcGkiLCJzdWIiOiJjbG11cTVndW8wMDA0bDkwOHZvbjFvMjhmIiwianRpIjoiY2x1MThrczg0MDAwMTl1Y2JsOGFueHl5ZCIsInJhdGVMaW1pdCI6bnVsbCwiaWF0IjoxNzExMDI1Nzg5fQ.pXT-4CsIenb1VchGaSMxfn7ZBeQHdASWGSs-r7Ryk9uVrfgk7ju5bFDRHWY9N6ua42SrwTx75m5u6Un4wxONUQ",
+
+        })
+    
+        const promptPlaygroundState = await ltLocal.get({
+          prompt: "ai-clock",
+          environment: "preview",
+          version: "yjxvsqwx",
+        })
+        const preparedPrompt = ltLocal.build(promptPlaygroundState, {
+          variables: {
+            time: "13:11",
+          
+          }
+        })
+
+        const completion = await ltLocal.completions.create(preparedPrompt)
+
+        expect(completion.choices[0].message.content.length > 10).toBeTruthy()
       })
     })
   },

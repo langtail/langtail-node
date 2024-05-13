@@ -9,6 +9,7 @@ import {
   ToolSchema,
 } from "./schemas"
 import { compileLTTemplate } from "./template"
+import { ChatCompletionsCreateParams } from "./LangtailNode"
 
 extendZodWithOpenApi(z)
 
@@ -80,7 +81,7 @@ export type OpenAiBodyType = z.infer<typeof openAIBodySchema>
 export function getOpenAIBody(
   completionConfig: PlaygroundState,
   parsedBody: IncomingBodyType,
-) {
+): ChatCompletionsCreateParams {
   const completionArgs = completionConfig.state.args
 
   const template = parsedBody.template ?? completionConfig.state.template
@@ -168,7 +169,6 @@ export function getOpenAIBody(
       content: "format: JSON",
     })
   }
-  return openAIbody
+  return openAIbody as ChatCompletionsCreateParams
 }
 
-export type ChatCompletionCreateParams = OpenAI.Chat.ChatCompletionCreateParams
