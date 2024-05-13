@@ -1,6 +1,5 @@
 import type OpenAI from "openai"
 import { z } from "zod"
-import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi"
 
 import {
   MessageSchema,
@@ -11,34 +10,22 @@ import {
 import { compileLTTemplate } from "./template"
 import { ChatCompletionsCreateParams } from "./LangtailNode"
 
-extendZodWithOpenApi(z)
-
 export const bodyMetadataSchema = z
   .record(z.string().max(64), z.union([z.string(), z.number()]))
   .optional()
 
 export const langtailBodySchema = z.object({
-  doNotRecord: z.boolean().optional().openapi({
-    description:
-      "If true, potentially sensitive data like the prompt and response will not be recorded in the logs",
-    example: false,
-  }),
+  doNotRecord: z.boolean().optional(),
   metadata: bodyMetadataSchema,
   _langtailTestRunId: z.string().optional(),
   _langtailTestInputId: z.string().optional(),
 })
 
 export const openAIBodySchemaObjectDefinition = {
-  stream: z.boolean().optional().openapi({ example: false }),
-  user: z.string().optional().openapi({
-    description: "A unique identifier representing your end-user",
-    example: "user_123",
-  }),
+  stream: z.boolean().optional(),
+  user: z.string().optional(),
 
-  seed: z.number().optional().openapi({
-    description: "A seed is used  to generate reproducible results",
-    example: 123,
-  }),
+  seed: z.number().optional(),
   max_tokens: z.number().optional(),
   temperature: z.number().optional(),
   top_p: z.number().optional(),
@@ -55,18 +42,7 @@ export const openAIBodySchemaObjectDefinition = {
       type: z.enum(["json_object"]),
     })
     .optional(),
-  messages: z
-    .array(MessageSchema)
-    .optional()
-    .openapi({
-      description: "Additional messages to seed the conversation with",
-      example: [
-        {
-          role: "user",
-          content: "Hello",
-        },
-      ],
-    }),
+  messages: z.array(MessageSchema).optional(),
 }
 export const openAIBodySchema = z.object(openAIBodySchemaObjectDefinition)
 

@@ -11,9 +11,6 @@ dependencies:
   '@ai-sdk/provider-utils':
     specifier: ^0.0.8
     version: 0.0.8(zod@3.23.8)
-  '@asteasolutions/zod-to-openapi':
-    specifier: ^7.0.0
-    version: 7.0.0(zod@3.23.8)
   '@langtail/handlebars-evalless':
     specifier: ^0.1.1
     version: 0.1.1
@@ -79,15 +76,6 @@ packages:
     engines: {node: '>=18'}
     dependencies:
       json-schema: 0.4.0
-    dev: false
-
-  /@asteasolutions/zod-to-openapi@7.0.0(zod@3.23.8):
-    resolution: {integrity: sha512-rJRKHD2m6nUb/9ZheeN8nqOURX24WTzY8Sex1ZKT0Kpx+xfpRcD0fTD6vEeXNHGaDGxzu65Jj/jb2x6nLTjcMw==}
-    peerDependencies:
-      zod: ^3.20.2
-    dependencies:
-      openapi3-ts: 4.3.1
-      zod: 3.23.8
     dev: false
 
   /@esbuild/aix-ppc64@0.19.12:
@@ -1303,12 +1291,6 @@ packages:
       - encoding
     dev: false
 
-  /openapi3-ts@4.3.1:
-    resolution: {integrity: sha512-ha/kTOLhMQL7MvS9Abu/cpCXx5qwHQ++88YkUzn1CGfmM8JvCOG/4ZE6tRsexgXRFaoJrcwLyf81H2Y/CXALtA==}
-    dependencies:
-      yaml: 2.4.1
-    dev: false
-
   /p-limit@5.0.0:
     resolution: {integrity: sha512-/Eaoq+QyLSiXQ4lyYV23f14mZRQcXnxfHrN0vCai+ak9G0pp9iEQukIIZq5NccEvwRB8PUnZT0KsOoDCINS1qQ==}
     engines: {node: '>=18'}
@@ -1917,6 +1899,7 @@ packages:
     resolution: {integrity: sha512-pIXzoImaqmfOrL7teGUBt/T7ZDnyeGBWyXQBvOVhLkWLN37GXv8NMLK406UY6dS51JfcQHsmcW5cJ441bHg6Lg==}
     engines: {node: '>= 14'}
     hasBin: true
+    dev: true
 
   /yocto-queue@1.0.0:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
