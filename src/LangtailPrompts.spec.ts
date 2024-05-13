@@ -2,7 +2,7 @@ import "dotenv/config"
 import { describe, expect, it } from "vitest"
 
 import { LangtailPrompts } from "./LangtailPrompts"
-import { openAIStreamingResponseSchema } from "./dataSchema"
+import { ChatCompletionChunkSchema } from "./dataSchema"
 
 const lt = new LangtailPrompts({
   apiKey: process.env.LANGTAIL_API_KEY!,
@@ -98,11 +98,12 @@ describe(
           },
           stream: true,
         })
+
         let partCount = 0
         for await (const part of proxyCompletion) {
           partCount++
 
-          openAIStreamingResponseSchema.parse(part)
+          ChatCompletionChunkSchema.parse(part)
         }
 
         expect(partCount > 1).toBe(true)
@@ -153,7 +154,7 @@ describe(
 
     describe("build", () => {
       const ltLocal = new LangtailPrompts({
-       // baseURL: "https://api-staging.langtail.com",// uncomment this line to test against local prompt api
+        // baseURL: "https://api-staging.langtail.com",// uncomment this line to test against local prompt api
         apiKey: process.env.LANGTAIL_API_KEY!,
       })
 
@@ -228,9 +229,10 @@ describe(
       it("should return completion for ai clock prompt", async () => {
         const ltLocal = new LangtailPrompts({
           baseURL: "https://api-staging.langtail.com",
-          apiKey: "lt-eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJsYW5ndGFpbC1hcGkiLCJzdWIiOiJjbG11cTVndW8wMDA0bDkwOHZvbjFvMjhmIiwianRpIjoiY2x1MThrczg0MDAwMTl1Y2JsOGFueHl5ZCIsInJhdGVMaW1pdCI6bnVsbCwiaWF0IjoxNzExMDI1Nzg5fQ.pXT-4CsIenb1VchGaSMxfn7ZBeQHdASWGSs-r7Ryk9uVrfgk7ju5bFDRHWY9N6ua42SrwTx75m5u6Un4wxONUQ",
+          apiKey:
+            "lt-eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJsYW5ndGFpbC1hcGkiLCJzdWIiOiJjbG11cTVndW8wMDA0bDkwOHZvbjFvMjhmIiwianRpIjoiY2x1MThrczg0MDAwMTl1Y2JsOGFueHl5ZCIsInJhdGVMaW1pdCI6bnVsbCwiaWF0IjoxNzExMDI1Nzg5fQ.pXT-4CsIenb1VchGaSMxfn7ZBeQHdASWGSs-r7Ryk9uVrfgk7ju5bFDRHWY9N6ua42SrwTx75m5u6Un4wxONUQ",
         })
-    
+
         const promptPlaygroundState = await ltLocal.get({
           prompt: "ai-clock",
           environment: "preview",
@@ -239,8 +241,7 @@ describe(
         const preparedPrompt = ltLocal.build(promptPlaygroundState, {
           variables: {
             time: "13:11",
-          
-          }
+          },
         })
 
         const completion = await ltLocal.completions.create(preparedPrompt)

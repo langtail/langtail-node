@@ -2,7 +2,7 @@ import { LangtailNode, baseURL } from "./LangtailNode"
 import "dotenv/config"
 import { describe, expect, it } from "vitest"
 import nock from "nock"
-import { openAIStreamingResponseSchema } from "./dataSchema"
+import { ChatCompletionChunkSchema } from "./dataSchema"
 
 const lt = new LangtailNode()
 
@@ -24,7 +24,7 @@ describe("LangtailNode", () => {
     for await (const part of proxyCompletion) {
       partCount++
 
-      openAIStreamingResponseSchema.parse(part)
+      ChatCompletionChunkSchema.parse(part)
     }
 
     expect(partCount > 1).toBe(true)

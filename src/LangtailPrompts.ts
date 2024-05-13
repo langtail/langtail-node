@@ -268,29 +268,53 @@ export class LangtailPrompts {
 
       const startedAt = new Date()
 
-      const completionResponse = await openAI.chat.completions
-        .create(openAIBody)
-        .asResponse()
-
+      let finishedAt: Date | null = null
       if (openAIBody.stream) {
-      }
+        const completionResponse =
+          await openAI.chat.completions.create(openAIBody)
 
-      const finishedAt = new Date()
+        const [streamForMeasuringDuration, streamToReturn] =
+          completionResponse.tee()
 
-      const data =
-        completionResponse.status > 299 ? null : await completionResponse.json()
-      void this._record(prompt._promptIdProps, prompt.toOpenAI(), {
-        data: data,
-        startedAt: startedAt.toISOString(),
-        finishedAt: finishedAt.toISOString(),
-        status: completionResponse.status,
-        error:
+        ;(async () => {
+          const data: ChatCompletionChunk[] = []
+          for await (const part of streamForMeasuringDuration) {
+            data.push(part)
+          }
+          finishedAt = new Date()
+
+          void this._record(prompt._promptIdProps, prompt.toOpenAI(), {
+            // @ts-expect-error
+            data: data,
+            startedAt: startedAt.toISOString(),
+            finishedAt: finishedAt.toISOString(),
+            status: 200,
+            error: null,
+          })
+        })()
+        return streamToReturn
+      } else {
+        const completionResponse = await openAI.chat.completions
+          .create(openAIBody)
+          .asResponse()
+        finishedAt = new Date()
+
+        const data =
           completionResponse.status > 299
-            ? await completionResponse.json()
-            : null,
-      })
-
-      return data
+            ? null
+            : await completionResponse.json()
+        void this._record(prompt._promptIdProps, prompt.toOpenAI(), {
+          data: data,
+          startedAt: startedAt.toISOString(),
+          finishedAt: finishedAt.toISOString(),
+          status: completionResponse.status,
+          error:
+            completionResponse.status > 299
+              ? await completionResponse.json()
+              : null,
+        })
+        return data
+      }
     },
   }
 
