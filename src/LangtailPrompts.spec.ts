@@ -195,7 +195,7 @@ describe(
           }
         `)
 
-        const openAiBody = ltLocal.build(playgroundState, {
+        const promptObj = ltLocal.build(playgroundState, {
           stream: true,
           variables: {
             optionalExtra: "This is an optional extra",
@@ -203,7 +203,7 @@ describe(
           
         })
 
-        expect(openAiBody).toMatchInlineSnapshot(`
+        expect(promptObj.toOpenAI()).toMatchInlineSnapshot(`
           {
             "frequency_penalty": 0,
             "max_tokens": 800,

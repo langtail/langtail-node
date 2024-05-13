@@ -5,7 +5,7 @@ import {
 import { ChatCompletionChunk } from "openai/resources/chat/completions"
 
 import { Stream } from "openai/streaming"
-import { ILangtailExtraProps } from "./LangtailNode"
+import { ILangtailExtraProps, LangtailNode } from "./LangtailNode"
 import { Fetch } from "openai/core"
 import { userAgent } from "./userAgent"
 import queryString from "query-string"
@@ -48,6 +48,12 @@ interface IRequestParams extends IPromptIdProps {
 
 interface IRequestParamsStream extends IRequestParams {
   stream: boolean
+}
+
+interface IPromptObject {
+  promptConfig: PlaygroundState
+  variables: Record<string, string> | undefined
+  toOpenAI: () => ReturnType<typeof getOpenAIBody>
 }
 
 export class LangtailPrompts {
@@ -205,8 +211,28 @@ export class LangtailPrompts {
     return res.json()
   }
 
-  build(completionConfig: PlaygroundState, parsedBody: OpenAiBodyType) {
-    return getOpenAIBody(completionConfig, parsedBody)
+  build(
+    completionConfig: PlaygroundState,
+    parsedBody: OpenAiBodyType,
+  ): IPromptObject {
+    const openAiBody = getOpenAIBody(completionConfig, parsedBody)
+    return {
+      promptConfig: completionConfig,
+      variables: parsedBody.variables,
+      toOpenAI: () => openAiBody,
+    }
+  }
+
+  completions = {
+    create: async (prompt: IPromptObject) => {
+      const ltNode = new LangtailNode({
+        apiKey: this.apiKey,
+        fetch: this.options.fetch,
+        onResponse: this.options.onResponse,
+      })
+      // @ts-expect-error
+      return ltNode.chat.completions.create(prompt.toOpenAI())
+    },
   }
 
   async _record(
