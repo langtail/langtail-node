@@ -50,6 +50,7 @@ jobs:
       - name: run tests
         env:
           LANGTAIL_API_KEY: ${{secrets.LANGTAIL_API_KEY}}
+          OPENAI_API_KEY: ${{secrets.OPENAI_API_KEY}}
         run: pnpm test
 
   publish:
