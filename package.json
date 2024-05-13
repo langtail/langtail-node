@@ -22,6 +22,7 @@
     "natural language processing",
     "gpt-3",
     "gpt-4",
+    "openrouter",
     "anthropic"
   ],
   "authors": [
@@ -67,7 +68,6 @@
   "dependencies": {
     "@ai-sdk/provider": "^0.0.5",
     "@ai-sdk/provider-utils": "^0.0.8",
-    "@asteasolutions/zod-to-openapi": "^7.0.0",
     "@langtail/handlebars-evalless": "^0.1.1",
     "date-fns": "^3.6.0",
     "handlebars": "^4.7.8",
