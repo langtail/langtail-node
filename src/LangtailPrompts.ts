@@ -1,10 +1,11 @@
-import {
-  ChatCompletion,
-} from "openai/resources/chat/completions"
+import { ChatCompletion } from "openai/resources/chat/completions"
 import { ChatCompletionChunk } from "openai/resources/chat/completions"
 
 import { Stream } from "openai/streaming"
-import { ChatCompletionsCreateParams, ILangtailExtraProps, LangtailNode } from "./LangtailNode"
+import {
+  ChatCompletionsCreateParams,
+  ILangtailExtraProps,
+} from "./LangtailNode"
 import { Fetch } from "openai/core"
 import { userAgent } from "./userAgent"
 import queryString from "query-string"
@@ -52,7 +53,6 @@ type PromptIdProps = {
   environment?: LangtailEnvironment
   version?: string
 }
-
 
 interface IRequestParams extends IPromptIdProps {
   variables?: Record<string, any>
@@ -202,9 +202,11 @@ export class LangtailPrompts {
      **/
     environment?: LangtailEnvironment
     version?: string
-    }): Promise<PlaygroundState & {
-    _promptIdProps: PromptIdProps
-  }> {
+  }): Promise<
+    PlaygroundState & {
+      _promptIdProps: PromptIdProps
+    }
+  > {
     const promptPath = this._createPromptPath({
       prompt,
       environment: environment ?? "production",
@@ -226,11 +228,6 @@ export class LangtailPrompts {
     }
 
     const payload = await res.json()
-    // payload._promptIdProps = {
-    //   prompt,
-    //   environment,
-    //   version,
-    // }
 
     Object.defineProperty(payload, "_promptIdProps", {
       value: {
@@ -242,7 +239,7 @@ export class LangtailPrompts {
       enumerable: false,
       configurable: false,
     })
-    
+
     return payload
   }
 
@@ -263,46 +260,37 @@ export class LangtailPrompts {
 
   completions = {
     create: async (prompt: IPromptObject) => {
-
-
       const openAI = new OpenAI({
-        apiKey: this.openAIKey
+        apiKey: this.openAIKey,
       })
 
       const openAIBody = prompt.toOpenAI()
 
-        const startedAt = new Date()      
+      const startedAt = new Date()
 
-        const completionResponse = await openAI.chat.completions.create(
-          openAIBody,
-        ).asResponse()
+      const completionResponse = await openAI.chat.completions
+        .create(openAIBody)
+        .asResponse()
 
-        if (openAIBody.stream) {
-          
-        }
-  
-        const finishedAt = new Date()
-  
-        const data = completionResponse.status > 299 ? null : await completionResponse.json()
-        void this._record(
-          prompt._promptIdProps,
-          prompt.toOpenAI(),
-          {
-            data: data,
-            startedAt: startedAt.toISOString(),
-            finishedAt: finishedAt.toISOString(),
-            status: completionResponse.status,
-            error: completionResponse.status > 299 ? await completionResponse.json() : null,
-          }
-        )
+      if (openAIBody.stream) {
+      }
 
-        return data
+      const finishedAt = new Date()
 
+      const data =
+        completionResponse.status > 299 ? null : await completionResponse.json()
+      void this._record(prompt._promptIdProps, prompt.toOpenAI(), {
+        data: data,
+        startedAt: startedAt.toISOString(),
+        finishedAt: finishedAt.toISOString(),
+        status: completionResponse.status,
+        error:
+          completionResponse.status > 299
+            ? await completionResponse.json()
+            : null,
+      })
 
-
-
-     
-
+      return data
     },
   }
 

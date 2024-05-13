@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+- change return type of `build` to `Promise<IPromptObject>`
+- add `lt.completions.create` method to directly call openAI SDK with the output of `build` method
+
 # 0.3.1
 
 - fix next.js compatibility
