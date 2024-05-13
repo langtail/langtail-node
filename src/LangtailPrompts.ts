@@ -278,7 +278,7 @@ export class LangtailPrompts {
         ).asResponse()
 
         if (openAIBody.stream) {
-        
+          
         }
   
         const finishedAt = new Date()

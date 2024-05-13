@@ -162,7 +162,7 @@ const playgroundState = await lt.get({
 render your template and builds the final open AI compatible payload:
 
 ```ts
-const openAiBody = lt.build(playgroundState, {
+const preparedPrompt = lt.build(playgroundState, {
   stream: true,
   variables: {
     topic: "iron man",
@@ -170,10 +170,11 @@ const openAiBody = lt.build(playgroundState, {
 })
 ```
 
-openAiBody now contains this object:
+preparedPrompt now contains this object:
 
 ```js
 {
+            "stream": true,
             "frequency_penalty": 0,
             "max_tokens": 800,
             "messages": [
@@ -194,9 +195,29 @@ Notice that your langtail template was replaced with a variable passed in. You c
 ```ts
 import OpenAI from "openai"
 
-const openai = new OpenAI()
+const openAI = new OpenAI()
 
-const joke = await openai.chat.completions.create(openAiBody)
+const jokeCompletion = await openAI.chat.completions.create(
+  preparedPrompt.toOpenAI(),
+)
 ```
 
 This way you are still using langtail prompts without exposing potentially sensitive data in your variables.
+In case you wish to use the proxyless feature and keep having your logs visible in langtail, use the `preparedPrompt` in the `lt.completions.create` call like this:
+
+### Proxyless with Langtail logs
+
+```ts
+const lt = new LangtailPrompts({
+  apiKey: "<LANGTAIL_API_KEY>",
+  openAIKey: "<OPENAI_API>", // required for the completions.create to work, you can also define it as env variable OPENAI_API_KEY
+})
+
+const preparedPrompt = lt.build(playgroundState, {
+  variables: {
+    topic: "iron man",
+  },
+})
+
+const jokeCompletion = await lt.completions.create(preparedPrompt) // results in an openAI ChatCompletion and you can see the request in langtail logs. Variables pass
+```

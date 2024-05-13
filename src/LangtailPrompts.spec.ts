@@ -229,7 +229,6 @@ describe(
         const ltLocal = new LangtailPrompts({
           baseURL: "https://api-staging.langtail.com",
           apiKey: "lt-eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJsYW5ndGFpbC1hcGkiLCJzdWIiOiJjbG11cTVndW8wMDA0bDkwOHZvbjFvMjhmIiwianRpIjoiY2x1MThrczg0MDAwMTl1Y2JsOGFueHl5ZCIsInJhdGVMaW1pdCI6bnVsbCwiaWF0IjoxNzExMDI1Nzg5fQ.pXT-4CsIenb1VchGaSMxfn7ZBeQHdASWGSs-r7Ryk9uVrfgk7ju5bFDRHWY9N6ua42SrwTx75m5u6Un4wxONUQ",
-
         })
     
         const promptPlaygroundState = await ltLocal.get({
