@@ -103,6 +103,7 @@ export class LangtailPrompts {
       v: version,
       "open-ai-completion-config-payload": configGet,
     })
+    const queryParamsString = queryParams ? `?${queryParams}` : ""
 
     if (this.options.workspace && this.options.project) {
       const url = `${this.baseUrl}/${this.options.workspace}/${this.options.project}/${prompt}/${environment}?${queryParams}`
@@ -112,13 +113,13 @@ export class LangtailPrompts {
     }
 
     if (this.options.project) {
-      return `${this.options.project}/${prompt}/${environment}?${queryParams}`
+      return `${this.options.project}/${prompt}/${environment}${queryParamsString}`
     }
 
     const urlPath = `project-prompt/${prompt}/${environment}`
     return urlPath.startsWith("/")
-      ? this.baseUrl + urlPath + `?${queryParams}`
-      : `${this.baseUrl}/${urlPath}?${queryParams}`
+      ? this.baseUrl + urlPath + `${queryParamsString}`
+      : `${this.baseUrl}/${urlPath}${queryParamsString}`
   }
 
   invoke(

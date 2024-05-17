@@ -17,12 +17,23 @@ describe(
       it("should return the correct path for project prompt", () => {
         const path = lt._createPromptPath({
           prompt: "prompt",
-          environment: "staging",
+          environment: "preview",
           version: "6vy19bmp",
         })
 
         expect(path).toBe(
-          "https://api.langtail.com/project-prompt/prompt/staging?v=6vy19bmp",
+          "https://api.langtail.com/project-prompt/prompt/preview?v=6vy19bmp",
+        )
+      })
+
+      it("staging with no version parameter", () => {
+        const path = lt._createPromptPath({
+          prompt: "prompt",
+          environment: "staging",
+        })
+
+        expect(path).toBe(
+          "https://api.langtail.com/project-prompt/prompt/staging",
         )
       })
 
@@ -35,23 +46,23 @@ describe(
 
         const path = ltProject._createPromptPath({
           prompt: "prompt",
-          environment: "staging",
+          environment: "preview",
           version: "6vy19bmp",
         })
 
         expect(path).toBe(
-          "https://api.langtail.com/some-workspace/ci-tests-project/prompt/staging?v=6vy19bmp",
+          "https://api.langtail.com/some-workspace/ci-tests-project/prompt/preview?v=6vy19bmp",
         )
 
         const pathForPromptConfig = ltProject._createPromptPath({
           prompt: "prompt",
-          environment: "staging",
+          environment: "preview",
           version: "6vy19bmp",
           configGet: true,
         })
 
         expect(pathForPromptConfig).toBe(
-          "https://api.langtail.com/some-workspace/ci-tests-project/prompt/staging?open-ai-completion-config-payload=true&v=6vy19bmp",
+          "https://api.langtail.com/some-workspace/ci-tests-project/prompt/preview?open-ai-completion-config-payload=true&v=6vy19bmp",
         )
       })
     })
