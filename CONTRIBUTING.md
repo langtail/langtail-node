@@ -5,7 +5,7 @@ This repository uses [`pnpm`](https://pnpm.io/).
 To set up the repository, run:
 
 ```bash
-pnpm
+pnpm install
 pnpm build
 ```
 
