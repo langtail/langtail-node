@@ -10,7 +10,9 @@ const lt = new LangtailPrompts({
 
 const prompt = "short-story-teller"
 
-describe(
+const liveTesting = process.env.TEST_LIVE === "true"
+
+describe.skipIf(!liveTesting)(
   "LangtailPrompts",
   () => {
     describe("createPromptPath", () => {
