@@ -14,7 +14,7 @@ import { OpenAiBodyType, getOpenAIBody } from "./getOpenAIBody"
 
 export type LangtailEnvironment = "preview" | "staging" | "production"
 
-interface LangtailPromptVariables {} // TODO use this when generating schema for deployed prompts
+interface LangtailPromptVariables { } // TODO use this when generating schema for deployed prompts
 
 type StreamResponseType = Stream<ChatCompletionChunk>
 
@@ -31,7 +31,7 @@ type Options = {
   onResponse?: (response: ChatCompletion) => void
 }
 
-interface IPromptIdProps extends ILangtailExtraProps {
+interface IPromptIdProps extends ILangtailExtraProps, OpenAiBodyType {
   prompt: string
   /**
    * The environment to fetch the prompt from. Defaults to "production".
@@ -41,7 +41,7 @@ interface IPromptIdProps extends ILangtailExtraProps {
   version?: string
 }
 
-interface IRequestParams extends IPromptIdProps {
+export interface IRequestParams extends IPromptIdProps {
   variables?: Record<string, any>
 }
 
@@ -61,7 +61,7 @@ export class LangtailPrompts {
     this.options = options
   }
 
-  _createPromptPath({
+  createPromptPath({
     prompt,
     environment,
     version,
@@ -113,9 +113,9 @@ export class LangtailPrompts {
   }: IRequestParams | IRequestParamsStream) {
     const metadataHeaders = metadata
       ? Object.entries(metadata).reduce((acc, [key, value]) => {
-          acc[`x-langtail-metadata-${key}`] = value
-          return acc
-        }, {})
+        acc[`x-langtail-metadata-${key}`] = value
+        return acc
+      }, {})
       : {}
 
     const fetchInit = {
@@ -129,7 +129,7 @@ export class LangtailPrompts {
       },
       body: JSON.stringify({ stream: false, ...rest }),
     }
-    const promptPath = this._createPromptPath({
+    const promptPath = this.createPromptPath({
       prompt,
       environment: environment ?? "production",
       version: version,
@@ -177,7 +177,7 @@ export class LangtailPrompts {
     environment?: LangtailEnvironment
     version?: string
   }): Promise<PlaygroundState> {
-    const promptPath = this._createPromptPath({
+    const promptPath = this.createPromptPath({
       prompt,
       environment: environment ?? "production",
       version,

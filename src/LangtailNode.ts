@@ -17,7 +17,7 @@ import { OpenAiBodyType } from "./getOpenAIBody"
 
 export const baseURL = "https://proxy.langtail.com/v1"
 
-export interface ILangtailExtraProps extends OpenAiBodyType {
+export interface ILangtailExtraProps {
   doNotRecord?: boolean
   metadata?: Record<string, any>
 }
