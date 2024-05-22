@@ -17,7 +17,7 @@ describe.skipIf(!liveTesting)(
   () => {
     describe("createPromptPath", () => {
       it("should return the correct path for project prompt", () => {
-        const path = lt._createPromptPath({
+        const path = lt.createPromptPath({
           prompt: "prompt",
           environment: "staging",
           version: "6vy19bmp",
@@ -35,7 +35,7 @@ describe.skipIf(!liveTesting)(
           workspace: "some-workspace",
         })
 
-        const path = ltProject._createPromptPath({
+        const path = ltProject.createPromptPath({
           prompt: "prompt",
           environment: "staging",
           version: "6vy19bmp",
@@ -45,7 +45,7 @@ describe.skipIf(!liveTesting)(
           "https://api.langtail.com/some-workspace/ci-tests-project/prompt/staging?v=6vy19bmp",
         )
 
-        const pathForPromptConfig = ltProject._createPromptPath({
+        const pathForPromptConfig = ltProject.createPromptPath({
           prompt: "prompt",
           environment: "staging",
           version: "6vy19bmp",
@@ -202,7 +202,7 @@ describe.skipIf(!liveTesting)(
           variables: {
             optionalExtra: "This is an optional extra",
           },
-          
+
         })
 
         expect(openAiBody).toMatchInlineSnapshot(`
