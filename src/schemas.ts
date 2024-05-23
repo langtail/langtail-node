@@ -10,11 +10,11 @@ export interface ChatState {
 
 type ToolChoiceType =
   | {
-      type: "function"
-      function: {
-        name: string
-      }
+    type: "function"
+    function: {
+      name: string
     }
+  }
   | "auto"
   | "none"
   | "required"

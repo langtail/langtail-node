@@ -13,7 +13,6 @@ import { APIPromise } from "openai/core"
 
 import { userAgent } from "./userAgent"
 import { Stream } from "openai/streaming"
-import { OpenAiBodyType } from "./getOpenAIBody"
 
 export const baseURL = "https://proxy.langtail.com/v1"
 

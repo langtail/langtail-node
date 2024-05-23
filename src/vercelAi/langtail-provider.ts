@@ -38,14 +38,8 @@ export function createLangtail(
     withoutTrailingSlash(options.baseURL) ??
     'https://api.langtail.com';
 
-  const apiKey = loadApiKey({
-    apiKey: options.apiKey,
-    environmentVariableName: 'LANGTAIL_API_KEY',
-    description: 'Langtail',
-  })
-
   const langtailPrompts = new LangtailPrompts({
-    apiKey,
+    apiKey: options.apiKey ?? "",  // loaded later from environment
     baseURL,
     workspace: options.langtailWorkspace,
     project: options.langtailProject,
@@ -70,6 +64,11 @@ export function aiBridge(
     promptId: string,
     settings: LangtailChatSettings = {},
   ) => {
+    const apiKey = loadApiKey({
+      apiKey: langtailPrompts.apiKey || undefined,
+      environmentVariableName: 'LANGTAIL_API_KEY',
+      description: 'Langtail',
+    })
     const metadataHeaders = settings.metadata
       ? Object.entries(settings.metadata).reduce((acc, [key, value]) => {
         acc[`x-langtail-metadata-${key}`] = value
@@ -77,7 +76,7 @@ export function aiBridge(
       }, {})
       : {}
     const headers = {
-      'X-API-Key': langtailPrompts.apiKey,
+      'X-API-Key': apiKey,
       'user-agent': userAgent,
       'content-type': 'application/json',
       'OpenAI-Organization': options.openaiOrganization,
