@@ -29,7 +29,7 @@ describe.skipIf(!liveTesting)(
       })
 
       it("staging with no version parameter", () => {
-        const path = lt._createPromptPath({
+        const path = lt.createPromptPath({
           prompt: "prompt",
           environment: "staging",
         })
