@@ -2,6 +2,7 @@ import {
   InvalidResponseDataError,
   LanguageModelV1,
   LanguageModelV1FinishReason,
+  LanguageModelV1FunctionTool,
   LanguageModelV1LogProbs,
   LanguageModelV1StreamPart,
   UnsupportedFunctionalityError,
@@ -15,6 +16,7 @@ import {
   postJsonToApi,
 } from '@ai-sdk/provider-utils';
 import { z } from 'zod';
+import { jsonSchemaToZod } from "json-schema-to-zod";
 import { convertToOpenAIChatMessages } from './convert-to-openai-chat-messages';
 import { mapOpenAIFinishReason } from './map-openai-finish-reason';
 import { LangtailChatSettings } from './langtail-chat-settings';
@@ -22,6 +24,8 @@ import { openaiFailedResponseHandler } from './openai-error';
 import { mapOpenAIChatLogProbsOutput } from './map-openai-chat-logprobs';
 import { ILangtailExtraProps, LangtailPrompts } from '../LangtailNode';
 import { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions';
+import { JSONSchema7 } from 'json-schema';
+import { FunctionParameters } from 'openai/resources';
 
 type LangtailChatConfig = {
   provider: string;
@@ -32,6 +36,20 @@ type LangtailChatConfig = {
 // modelId cannot be undefined, therefore we use 'langtail'
 // to choose the default model from Langtail playground
 const MODEL_IN_LANGTAIL = 'langtail';
+
+// https://github.com/vercel/ai/blob/main/packages/core/core/tool/tool.ts#L9
+interface VercelAITool<PARAMETERS extends z.ZodTypeAny = any, RESULT = any> {
+  description?: string;
+  parameters: PARAMETERS;
+  execute?: (args: z.infer<PARAMETERS>) => PromiseLike<RESULT>;
+}
+
+// version with optional parameters for overrides
+interface VercelAIToolOverride<PARAMETERS extends z.ZodTypeAny = any, RESULT = any> {
+  description?: string;
+  parameters?: PARAMETERS;
+  execute?: (args: z.infer<PARAMETERS>) => PromiseLike<RESULT>;
+}
 
 export class LangtailChatLanguageModel implements LanguageModelV1 {
   readonly specificationVersion = 'v1';
@@ -69,6 +87,46 @@ export class LangtailChatLanguageModel implements LanguageModelV1 {
       environment: this.settings.environment ?? 'production',
       version: this.settings.version,
     });
+  }
+
+  private jsonSchemaToZod(schema: JSONSchema7): z.ZodTypeAny {
+    const zodObjectString = jsonSchemaToZod(schema, { module: "cjs" });
+    const zodObject = eval(zodObjectString);
+    return zodObject;
+  }
+
+  async tools<TOOLS extends Record<string, VercelAITool>>(toolsOverride?: Record<string, VercelAIToolOverride>): Promise<TOOLS | undefined> {
+    const promptTools = await this.getPromptTools();
+    if (promptTools !== undefined) {
+      const tools = promptTools.reduce((acc, tool) => {
+        const override = toolsOverride?.[tool.name];
+        const zodParameters = override?.parameters ?? this.jsonSchemaToZod(tool.parameters);
+        acc[tool.name] = {
+          description: override?.description ?? tool.description,
+          parameters: zodParameters,
+          execute: override?.execute
+        };
+        return acc;
+      }, {} as Record<string, VercelAITool>);
+      return tools as TOOLS;
+    }
+  }
+
+  private async getPromptTools(): Promise<LanguageModelV1FunctionTool[] | undefined> {
+    const prompt = await this.config.langtailPrompts.get({
+      prompt: this.promptId,
+      environment: this.settings.environment ?? 'production',
+      version: this.settings.version,
+    });
+
+    if (prompt.state.tools && prompt.state.tools.length > 0) {
+      return prompt.state.tools.map(tool => ({
+        type: 'function',
+        name: tool.function.name,
+        description: tool.function.description,
+        parameters: tool.function.parameters,
+      }));
+    }
   }
 
   private getArgs({
@@ -116,7 +174,7 @@ export class LangtailChatLanguageModel implements LanguageModelV1 {
             function: {
               name: tool.name,
               description: tool.description ?? "",
-              parameters: tool.parameters,
+              parameters: tool.parameters as FunctionParameters,
             },
           })),
         };
@@ -139,7 +197,7 @@ export class LangtailChatLanguageModel implements LanguageModelV1 {
               function: {
                 name: mode.tool.name,
                 description: mode.tool.description ?? "",
-                parameters: mode.tool.parameters,
+                parameters: mode.tool.parameters as FunctionParameters,
               },
             },
           ],

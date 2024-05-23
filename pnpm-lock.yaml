@@ -23,6 +23,9 @@ dependencies:
   handlebars:
     specifier: ^4.7.8
     version: 4.7.8
+  json-schema-to-zod:
+    specifier: ^2.1.0
+    version: 2.1.0
   openai:
     specifier: ^4.43.0
     version: 4.43.0
@@ -34,6 +37,9 @@ dependencies:
     version: 3.23.8
 
 devDependencies:
+  '@types/json-schema':
+    specifier: ^7.0.15
+    version: 7.0.15
   '@types/node':
     specifier: ^20.12.11
     version: 20.12.11
@@ -493,6 +499,10 @@ packages:
 
   /@types/estree@1.0.5:
     resolution: {integrity: sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==}
+    dev: true
+
+  /@types/json-schema@7.0.15:
+    resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
     dev: true
 
   /@types/node-fetch@2.6.11:
@@ -1076,6 +1086,11 @@ packages:
   /js-tokens@8.0.3:
     resolution: {integrity: sha512-UfJMcSJc+SEXEl9lH/VLHSZbThQyLpw1vLO1Lb+j4RWDvG3N2f7yj3PVQA3cmkTBNldJ9eFnM+xEXxHIXrYiJw==}
     dev: true
+
+  /json-schema-to-zod@2.1.0:
+    resolution: {integrity: sha512-7ishNgYY+AbIKeeHcp5xCOdJbdVwSfDx/4V2ktc16LUusCJJbz2fEKdWUmAxhKIiYzhZ9Fp4E8OsAoM/h9cOLA==}
+    hasBin: true
+    dev: false
 
   /json-schema@0.4.0:
     resolution: {integrity: sha512-es94M3nTIfsEPisRafak+HDLfHXnKBhV3vU5eqPcS3flIWqcxJWgXHXiey3YrpaNsanY5ei1VoYEbOzijuq9BA==}
