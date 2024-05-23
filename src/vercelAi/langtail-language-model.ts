@@ -15,6 +15,7 @@ import {
   isParseableJson,
   postJsonToApi,
 } from '@ai-sdk/provider-utils';
+import { ReactNode } from 'react';
 import { z } from 'zod';
 import { jsonSchemaToZod } from "json-schema-to-zod";
 import { convertToOpenAIChatMessages } from './convert-to-openai-chat-messages';
@@ -37,19 +38,24 @@ type LangtailChatConfig = {
 // to choose the default model from Langtail playground
 const MODEL_IN_LANGTAIL = 'langtail';
 
+type Streamable = ReactNode | Promise<ReactNode>;
+type Renderer<T extends Array<any>> = (...args: T) => Streamable | Generator<Streamable, Streamable, void> | AsyncGenerator<Streamable, Streamable, void>;
 // https://github.com/vercel/ai/blob/main/packages/core/core/tool/tool.ts#L9
 interface VercelAITool<PARAMETERS extends z.ZodTypeAny = any, RESULT = any> {
   description?: string;
   parameters: PARAMETERS;
   execute?: (args: z.infer<PARAMETERS>) => PromiseLike<RESULT>;
+  generate?: Renderer<[
+    z.infer<PARAMETERS>,
+    {
+      toolName: string;
+      toolCallId: string;
+    }
+  ]>;
 }
 
 // version with optional parameters for overrides
-interface VercelAIToolOverride<PARAMETERS extends z.ZodTypeAny = any, RESULT = any> {
-  description?: string;
-  parameters?: PARAMETERS;
-  execute?: (args: z.infer<PARAMETERS>) => PromiseLike<RESULT>;
-}
+interface VercelAIToolOverride<PARAMETERS extends z.ZodTypeAny = any, RESULT = any> extends Partial<VercelAITool<PARAMETERS, RESULT>> { }
 
 export class LangtailChatLanguageModel implements LanguageModelV1 {
   readonly specificationVersion = 'v1';
@@ -104,7 +110,8 @@ export class LangtailChatLanguageModel implements LanguageModelV1 {
         acc[tool.name] = {
           description: override?.description ?? tool.description,
           parameters: zodParameters,
-          execute: override?.execute
+          execute: override?.execute,
+          generate: override?.generate,
         };
         return acc;
       }, {} as Record<string, VercelAITool>);
