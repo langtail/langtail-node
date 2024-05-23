@@ -1,6 +1,6 @@
 {
   "name": "langtail",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "",
   "main": "./dist/LangtailNode.js",
   "packageManager": "pnpm@8.15.6",
@@ -54,12 +54,19 @@
       "require": "./dist/template.js",
       "import": "./dist/template.mjs",
       "types": "./dist/template.d.ts"
+    },
+    "./dist/vercelAi": {
+      "require": "./dist/vercelAi/index.js",
+      "import": "./dist/vercelAi/index.mjs",
+      "types": "./dist/vercelAi/index.d.ts"
     }
   },
   "files": [
     "dist"
   ],
   "dependencies": {
+    "@ai-sdk/provider": "^0.0.5",
+    "@ai-sdk/provider-utils": "^0.0.8",
     "@asteasolutions/zod-to-openapi": "^7.0.0",
     "@langtail/handlebars-evalless": "^0.1.1",
     "date-fns": "^3.6.0",
@@ -79,7 +86,8 @@
     "entryPoints": [
       "src/LangtailNode.ts",
       "src/template.ts",
-      "src/getOpenAIBody.ts"
+      "src/getOpenAIBody.ts",
+      "src/vercelAi/index.ts"
     ]
   }
 }

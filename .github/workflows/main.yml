@@ -50,6 +50,7 @@ jobs:
       - name: run tests
         env:
           LANGTAIL_API_KEY: ${{secrets.LANGTAIL_API_KEY}}
+          TEST_LIVE: true
         run: pnpm test
 
   publish:

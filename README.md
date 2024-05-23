@@ -200,3 +200,47 @@ const joke = await openai.chat.completions.create(openAiBody)
 ```
 
 This way you are still using langtail prompts without exposing potentially sensitive data in your variables.
+
+
+## Vercel AI provider
+
+You can use Langtail with [Vercel AI SDK](https://github.com/vercel/ai).
+Import `langtail` from `langtail/dist/vercelAi` and provide your prompt slug as an argument.
+```typescript
+import { generateText } from 'ai'
+import { langtail } from 'langtail/dist/vercelAi'
+
+async function main() {
+  const result = await generateText({
+    // API key is loaded from env variable LANGTAIL_API_KEY
+    model: langtail('stock-simple', {
+      // Optional Langtail options:
+      variables: { 'ticker': 'TSLA' },
+      environment: "production",
+      version: "2",
+      doNotRecord: false,
+      metadata: {},
+    }),
+    // Optional LLM options:
+    prompt: 'show me the pice',
+    temperature: 0,  // overrides setting in Langtail
+  })
+
+  console.log(result.text)
+}
+
+main().catch(console.error);
+```
+
+You can also use `aiBridge` from `langtail/dist/vercelAi` to use already existing Langtail instance:
+```typescript
+const langtail = new Langtail({ apiKey })
+const lt = aiBridge(langtail)
+
+const result = await generateText({
+  model: lt('stock-simple', {
+    variables: { 'ticker': 'TSLA' },
+  }),
+  prompt: 'show me the pice',
+})
+```

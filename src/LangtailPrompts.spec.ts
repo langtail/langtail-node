@@ -10,12 +10,14 @@ const lt = new LangtailPrompts({
 
 const prompt = "short-story-teller"
 
-describe(
+const liveTesting = process.env.TEST_LIVE === "true"
+
+describe.skipIf(!liveTesting)(
   "LangtailPrompts",
   () => {
     describe("createPromptPath", () => {
       it("should return the correct path for project prompt", () => {
-        const path = lt._createPromptPath({
+        const path = lt.createPromptPath({
           prompt: "prompt",
           environment: "preview",
           version: "6vy19bmp",
@@ -27,7 +29,7 @@ describe(
       })
 
       it("staging with no version parameter", () => {
-        const path = lt._createPromptPath({
+        const path = lt.createPromptPath({
           prompt: "prompt",
           environment: "staging",
         })
@@ -44,7 +46,7 @@ describe(
           workspace: "some-workspace",
         })
 
-        const path = ltProject._createPromptPath({
+        const path = ltProject.createPromptPath({
           prompt: "prompt",
           environment: "preview",
           version: "6vy19bmp",
@@ -54,7 +56,7 @@ describe(
           "https://api.langtail.com/some-workspace/ci-tests-project/prompt/preview?v=6vy19bmp",
         )
 
-        const pathForPromptConfig = ltProject._createPromptPath({
+        const pathForPromptConfig = ltProject.createPromptPath({
           prompt: "prompt",
           environment: "preview",
           version: "6vy19bmp",
@@ -211,7 +213,7 @@ describe(
           variables: {
             optionalExtra: "This is an optional extra",
           },
-          
+
         })
 
         expect(openAiBody).toMatchInlineSnapshot(`

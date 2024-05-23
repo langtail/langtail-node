@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.4.0
+
+- provider for Vercel AI (https://github.com/vercel/ai)
+
 # 0.3.1
 
 - fix next.js compatibility
