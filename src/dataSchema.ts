@@ -4,10 +4,19 @@ import z from "zod"
 const choiceStreamedSchema = z.object({
   index: z.number(),
   delta: z.any(), // Adjust based on the actual shape of delta
-  logprobs: z.null(),
+  logprobs: z
+    .array(
+      z.object({
+        token: z.string(),
+        bytes: z.array(z.number()),
+        logprob: z.number(),
+        top_logprobs: z.record(z.number()),
+      }),
+    )
+    .nullish(),
   finish_reason: z.string().nullable(),
 })
-export const openAIStreamingResponseSchema = z.object({
+export const ChatCompletionChunkSchema = z.object({
   id: z.string(),
   object: z.literal("chat.completion.chunk"),
   created: z.number(),
