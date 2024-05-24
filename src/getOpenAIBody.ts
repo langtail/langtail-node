@@ -114,8 +114,8 @@ export function getOpenAIBody(
       parsedBody.frequency_penalty ?? completionArgs.frequency_penalty,
     ...(parsedBody.seed || completionArgs.seed
       ? {
-          seed: parsedBody.seed ?? completionArgs.seed,
-        }
+        seed: parsedBody.seed ?? completionArgs.seed,
+      }
       : {}),
     ...(Array.isArray(completionArgs.stop) && completionArgs.stop.length > 0
       ? { stop: completionArgs.stop }
@@ -135,7 +135,7 @@ export function getOpenAIBody(
     }
   }
 
-  if (completionArgs.stop || parsedBody.stop) { 
+  if (completionArgs.stop || parsedBody.stop) {
     openAIbody.stop = parsedBody.stop ?? completionArgs.stop
   }
 
@@ -157,8 +157,13 @@ export function getOpenAIBody(
       return { ...tool, function: rest }
     })
   }
-  if (parsedBody.tools && parsedBody.tools.length > 0) {
-    openAIbody.tools = parsedBody.tools
+  if (parsedBody.tools) {
+    if (parsedBody.tools.length > 0) {
+      openAIbody.tools = parsedBody.tools
+    } else {
+      // replace empty array with undefined to avoid OpenAI API error
+      openAIbody.tools = undefined
+    }
   }
 
   if (parsedBody.response_format?.type === "json_object") {
