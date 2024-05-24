@@ -60,9 +60,6 @@ Releases are done manually for now.
 
 ### Publish with a GitHub workflow
 
-You can release to package managers by using [the `Publish NPM` GitHub action](https://www.github.com/langtail/langtail-node/actions/workflows/publish-npm.yml). This requires a setup organization or repository secret to be set up.
+When you push a new tag (`vX.Y.Z`), Github Action will automatically publish this version.
 
-### Publish manually
-
-If you need to manually release a package, you can run the `bin/publish-npm` script with an `NPM_TOKEN` set on
-the environment.
+Also create a release from the tag in Github so the Changes are easily visible in https://github.com/langtail/langtail-node/releases
