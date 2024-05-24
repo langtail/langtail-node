@@ -1,5 +1,10 @@
 # Changelog
 
+# 0.4.1
+
+- remove zod openapi dependency
+- internal changes #24
+
 # 0.4.0
 
 - provider for Vercel AI (https://github.com/vercel/ai)
