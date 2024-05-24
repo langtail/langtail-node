@@ -22,6 +22,7 @@ import { openaiFailedResponseHandler } from './openai-error';
 import { mapOpenAIChatLogProbsOutput } from './map-openai-chat-logprobs';
 import { ILangtailExtraProps, LangtailPrompts } from '../LangtailNode';
 import { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions';
+import { FunctionParameters } from 'openai/resources';
 
 type LangtailChatConfig = {
   provider: string;
@@ -106,8 +107,7 @@ export class LangtailChatLanguageModel implements LanguageModelV1 {
 
     switch (type) {
       case 'regular': {
-        // when the tools array is empty, change it to undefined to prevent OpenAI errors:
-        const tools = mode.tools?.length ? mode.tools : undefined;
+        const tools = mode.tools ?? [];
 
         return {
           ...baseArgs,
@@ -116,7 +116,7 @@ export class LangtailChatLanguageModel implements LanguageModelV1 {
             function: {
               name: tool.name,
               description: tool.description ?? "",
-              parameters: tool.parameters,
+              parameters: tool.parameters as FunctionParameters,
             },
           })),
         };
@@ -139,7 +139,7 @@ export class LangtailChatLanguageModel implements LanguageModelV1 {
               function: {
                 name: mode.tool.name,
                 description: mode.tool.description ?? "",
-                parameters: mode.tool.parameters,
+                parameters: mode.tool.parameters as FunctionParameters,
               },
             },
           ],
