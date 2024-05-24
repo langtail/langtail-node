@@ -2,7 +2,7 @@ import "dotenv/config"
 import { describe, expect, it } from "vitest"
 
 import { LangtailPrompts } from "./LangtailPrompts"
-import { openAIStreamingResponseSchema } from "./dataSchema"
+import { ChatCompletionChunkSchema } from "./dataSchema"
 
 const lt = new LangtailPrompts({
   apiKey: process.env.LANGTAIL_API_KEY!,
@@ -115,7 +115,7 @@ describe.skipIf(!liveTesting)(
         for await (const part of proxyCompletion) {
           partCount++
 
-          openAIStreamingResponseSchema.parse(part)
+          ChatCompletionChunkSchema.parse(part)
         }
 
         expect(partCount > 1).toBe(true)

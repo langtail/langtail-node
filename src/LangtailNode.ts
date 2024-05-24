@@ -21,6 +21,10 @@ export interface ILangtailExtraProps {
   metadata?: Record<string, any>
 }
 
+export type ChatCompletionsCreateParams =
+  | (ChatCompletionCreateParamsStreaming & ILangtailExtraProps)
+  | (ChatCompletionCreateParamsNonStreaming & ILangtailExtraProps)
+
 export class LangtailNode {
   prompts: LangtailPrompts
   chat: {
