@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.4.1
+
+- fix tool errors for Vercel AI provider
+
 # 0.4.0
 
 - provider for Vercel AI (https://github.com/vercel/ai)
