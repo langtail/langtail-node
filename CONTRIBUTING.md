@@ -56,10 +56,6 @@ pnpm format
 
 ## Publishing and releases
 
-Releases are done manually for now.
-
-### Publish with a GitHub workflow
-
 When you push a new tag (`vX.Y.Z`), Github Action will automatically publish this version.
 
 Also create a release from the tag in Github so the Changes are easily visible in https://github.com/langtail/langtail-node/releases
