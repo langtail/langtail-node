@@ -222,7 +222,7 @@ async function main() {
       metadata: {},
     }),
     // Optional LLM options:
-    prompt: 'show me the pice',
+    prompt: 'show me the price',
     temperature: 0,  // overrides setting in Langtail
   })
 
@@ -241,6 +241,6 @@ const result = await generateText({
   model: lt('stock-simple', {
     variables: { 'ticker': 'TSLA' },
   }),
-  prompt: 'show me the pice',
+  prompt: 'show me the price',
 })
 ```
