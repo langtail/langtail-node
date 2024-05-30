@@ -14,7 +14,7 @@
     "test": "vitest",
     "ts": "tsc --noEmit",
     "format": "prettier --write .",
-    "build": "tsup && cp src/bin/langtailTools.template.ts dist/bin/langtailTools.template.ts",
+    "build": "tsup && copyfiles -u 1 src/bin/langtailTools.template.ts dist/",
     "prepublishOnly": "pnpm run build"
   },
   "keywords": [
@@ -34,6 +34,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.12.11",
+    "copyfiles": "^2.4.1",
     "dotenv": "^16.4.5",
     "nock": "14.0.0-beta.5",
     "prettier": "^3.2.5",
