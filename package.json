@@ -8,7 +8,7 @@
     "node": ">=18"
   },
   "bin": {
-    "lt-gen-tools": "./dist/bin/generateTools.mjs"
+    "langtail": "./dist/bin/entry.mjs"
   },
   "scripts": {
     "test": "vitest",
@@ -94,7 +94,7 @@
       "src/template.ts",
       "src/getOpenAIBody.ts",
       "src/vercelAi/index.ts",
-      "src/bin/generateTools.ts"
+      "src/bin/entry.ts"
     ]
   }
 }

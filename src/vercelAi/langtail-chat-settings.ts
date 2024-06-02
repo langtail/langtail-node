@@ -1,3 +1,6 @@
-import { IRequestParams } from '../LangtailPrompts';
+import { IRequestParams, LangtailEnvironment } from '../LangtailPrompts';
 
-export interface LangtailChatSettings extends Omit<IRequestParams, 'prompt'> { }
+export interface LangtailChatSettings<E extends LangtailEnvironment = "production", V extends string = "default"> extends Omit<IRequestParams, 'prompt'> {
+  environment?: E;
+  version?: V;
+}

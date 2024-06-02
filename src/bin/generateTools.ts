@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { program, Option } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
@@ -9,11 +8,67 @@ import packageJson from "../../package.json"
 
 const SDK_VERSION = packageJson.version;
 const TEMPLATE_PATH = new URL('./langtailTools.template.ts', import.meta.url);
-const REPLACE_LINE = 'export const toolsObject = {};  // replaced by generateTools.ts'
+const REPLACE_LINE = 'const toolsObject = {};  // replaced by generateTools.ts'
+
+const getApiKey = (): string => {
+  const apiKey = process.env.LANGTAIL_API_KEY;
+  if (!apiKey) {
+    throw new Error('LANGTAIL_API_KEY environment variable is required');
+  }
+  return apiKey;
+}
+
+interface Deployment {
+  environment: string;
+  version?: string;
+  default?: boolean;
+}
+
+interface DeployedPrompt {
+  promptSlug: string;
+  deployments: Deployment[];
+}
+
+const fetchDeployedPrompts = async (): Promise<DeployedPrompt[]> => {
+  return [
+    {
+      promptSlug: 'stock-simple',
+      deployments: [
+        {
+          environment: 'staging',
+          default: true,
+        },
+        {
+          environment: 'production',
+          version: '2',
+        },
+        {
+          environment: 'production',
+          version: '3',
+          default: true,
+        }
+      ]
+    },
+    {
+      promptSlug: 'stock-trading-bot',
+      deployments: [
+        {
+          environment: 'production',
+          version: '5',
+        },
+        {
+          environment: 'production',
+          version: '6',
+          default: true,
+        }
+      ]
+    },
+  ]
+}
+
 
 interface FetchToolsOptions {
-  workspace: string | undefined;
-  project: string | undefined;
+  langtailPrompts: LangtailPrompts;
   promptSlug: string;
   environment: LangtailEnvironment;
   version: string | undefined;
@@ -26,18 +81,7 @@ interface Tools {
   }
 }
 
-const fetchTools = async ({ workspace, project, promptSlug, environment, version }: FetchToolsOptions): Promise<Tools | undefined> => {
-  const apiKey = process.env.LANGTAIL_API_KEY;
-  if (!apiKey) {
-    throw new Error('LANGTAIL_API_KEY environment variable is required');
-  }
-
-  const langtailPrompts = new LangtailPrompts({
-    apiKey: apiKey,
-    workspace: workspace,
-    project: project,
-  });
-
+const fetchTools = async ({ langtailPrompts, promptSlug, environment, version }: FetchToolsOptions): Promise<Tools | undefined> => {
   const prompt = await langtailPrompts.get({
     prompt: promptSlug,
     environment: environment,
@@ -48,7 +92,7 @@ const fetchTools = async ({ workspace, project, promptSlug, environment, version
     return Object.fromEntries(prompt.state.tools.map(tool => [
       tool.function.name, {
         description: tool.function.description,
-        parameters: jsonSchemaToZod(tool.function.parameters)  // Parameters already serialized
+        parameters: jsonSchemaToZod(tool.function.parameters)
       }
     ]));
   }
@@ -95,70 +139,110 @@ const prepareOutputFilePath = async (outputFile: string): Promise<string | undef
   return resultFilePath;
 }
 
-interface GenerateToolsOptions {
-  out: string;
-  workspace: string | undefined;
-  project: string | undefined;
-  env: LangtailEnvironment;
-  ver: string | undefined;
+const stringifyToolsObject = (obj: object, depth = 0): string => {
+  const indent = '  '.repeat(depth);
+  let result = '{\n';
+
+  Object.entries(obj).forEach(([key, value], index, array) => {
+    result += `${indent}  "${key}": `;
+    if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+      // Recursively call customStringify for nested objects
+      result += stringifyToolsObject(value, depth + 1);
+    } else if (key === 'parameters') {
+      // Directly append the parameters string without quotes
+      result += value;
+    } else {
+      // For simple properties, stringify normally
+      result += JSON.stringify(value);
+    }
+    result += index < array.length - 1 ? ',\n' : '\n';
+  });
+
+  result += `${indent}}`;
+  return result;
 }
 
-const generateTools = async (promptSlug: string, { out, workspace, project, env, ver }: GenerateToolsOptions) => {
+interface ToolsObject {
+  [promptSlug: string]: {
+    [environment: string]: {
+      [version: string]: {
+        [toolName: string]: {
+          description: string;
+          parameters: string;
+        }
+      }
+    }
+  }
+}
+
+interface GenerateToolsOptions {
+  out: string;
+}
+
+const generateTools = async ({ out }: GenerateToolsOptions) => {
   const outputFile = await prepareOutputFilePath(out);
   if (!outputFile) {
     console.log('Operation cancelled by the user.');
     return;
   }
 
-  let tools: Tools | undefined;
-  try {
-    tools = await fetchTools({ workspace, project, promptSlug, environment: env, version: ver });
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(error.message);
-    } else {
-      console.error('Unexpected error:', error);
+  const langtailPrompts = new LangtailPrompts({
+    apiKey: getApiKey()
+  });
+
+  const promptDeployments = await fetchDeployedPrompts();
+
+  let toolsObject: ToolsObject = {};
+  for (const deployedPrompt of promptDeployments) {
+    const { promptSlug, deployments } = deployedPrompt;
+    for (const deployment of deployments) {
+      const { environment, version } = deployment;
+      try {
+        const promptTools = await fetchTools({ langtailPrompts, promptSlug, environment: environment as LangtailEnvironment, version });
+        if (promptTools) {
+          toolsObject[promptSlug] = toolsObject[promptSlug] || {};
+          toolsObject[promptSlug][environment] = toolsObject[promptSlug][environment] || {};
+          if (version) {
+            toolsObject[promptSlug][environment][version] = promptTools;
+          }
+          if (deployment.default) {
+            toolsObject[promptSlug][environment]['default'] = promptTools;
+          }
+        }
+      } catch (error) {
+        let errorMessage: string;
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = JSON.stringify(error);
+        }
+        console.error(`Error fetching ${promptSlug} (${environment}, v${version}): ${errorMessage}`);
+      }
     }
-    return;
   }
 
-  if (!tools) {
-    console.log(`No tools found for prompt ${promptSlug}`);
-    return;
+  if (Object.keys(toolsObject).length === 0) {
+    const confirmed = await askUserToConfirm('No tools found. Create an empty tools file? [y/N]: ');
+    if (!confirmed) {
+      return;
+    }
   }
 
   const fileInfo = '// ' + [
-    `Langtail tools file`,
+    'Langtail tools file, generated with `langtail generate`',
     `Generated at: ${new Date().toISOString()}`,
     `Langtail SDK Version: ${SDK_VERSION}`,
-    workspace && `Workspace: ${workspace}`,
-    project && `Project: ${project}`,
-    `Prompt Slug: ${promptSlug}`,
-    `Environment: ${env}`,
-    ver && `Version: ${ver}`,
     ``
   ].filter(Boolean).join('\n// ') + '\n';
 
   const template = fs.readFileSync(TEMPLATE_PATH, 'utf8');
-  const fileString = fileInfo + template.replace(REPLACE_LINE, `export const toolsObject = {\n${Object.entries(tools).map(([name, tool]) =>
-    `  ${JSON.stringify(name)}: {\n    description: ${JSON.stringify(tool.description)},\n    parameters: ${tool.parameters}\n  }`).join(',\n')}\n};  // generated by generateTools.ts`);
+  const fileString = fileInfo + template.replace(
+    REPLACE_LINE,
+    `const toolsObject = ${stringifyToolsObject(toolsObject)};`
+  );
 
   fs.writeFileSync(outputFile, fileString, 'utf8');
   console.log(`Tools data generated at ${outputFile}`);
 }
 
-function determineDefaultPath() {
-  return fs.existsSync(path.join(process.cwd(), 'src')) ? 'src/langtailTools.ts' : 'langtailTools.ts';
-}
-
-program
-  .version(SDK_VERSION)
-  .option('--out [path]', 'output file path', determineDefaultPath())
-  .addOption(new Option('--env [type]', 'Langtail environment').choices(['production', 'staging', 'preview']).default('production'))
-  .option('--ver [number]', 'prompt version number')
-  .option('--workspace [workspace]', 'Langtail workspace')
-  .option('--project [project]', 'Langtail project')
-  .argument('<promptSlug>', 'Langtail prompt slug')
-  .action(generateTools);
-
-program.parse(process.argv);
+export default generateTools

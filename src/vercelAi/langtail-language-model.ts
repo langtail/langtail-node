@@ -23,6 +23,7 @@ import { mapOpenAIChatLogProbsOutput } from './map-openai-chat-logprobs';
 import { ILangtailExtraProps, LangtailPrompts } from '../LangtailNode';
 import { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions';
 import { FunctionParameters } from 'openai/resources';
+import { LangtailEnvironment } from '../LangtailPrompts';
 
 type LangtailChatConfig = {
   provider: string;
@@ -34,26 +35,34 @@ type LangtailChatConfig = {
 // to choose the default model from Langtail playground
 const MODEL_IN_LANGTAIL = 'langtail';
 
-export class LangtailChatLanguageModel implements LanguageModelV1 {
-  readonly specificationVersion = 'v1';
+export class LangtailChatLanguageModel<P extends string = string, E extends LangtailEnvironment = LangtailEnvironment, V extends string = string> implements LanguageModelV1 {
+  readonly specificationVersion: 'v1' = 'v1';
   readonly defaultObjectGenerationMode = 'tool';
 
-  readonly promptId: string;
   readonly modelId: string;
+  readonly promptId: P;
 
-  readonly settings: LangtailChatSettings;
+  readonly settings: LangtailChatSettings<E, V>;
 
   private readonly config: LangtailChatConfig;
 
   constructor(
-    promptId: string,
-    settings: LangtailChatSettings,
+    promptId: P,
+    settings: LangtailChatSettings<E, V>,
     config: LangtailChatConfig,
   ) {
-    this.promptId = promptId;
+    this.promptId = promptId as P;
     this.modelId = settings.model ?? MODEL_IN_LANGTAIL;
     this.settings = settings;
     this.config = config;
+  }
+
+  get environment(): E {
+    return (this.settings.environment ?? 'production') as E;
+  }
+
+  get version(): V {
+    return (this.settings.version ?? 'default') as V;
   }
 
   get provider(): string {
@@ -67,8 +76,8 @@ export class LangtailChatLanguageModel implements LanguageModelV1 {
   private createPromptPath(): string {
     return this.config.langtailPrompts.createPromptPath({
       prompt: this.promptId,
-      environment: this.settings.environment ?? 'production',
-      version: this.settings.version,
+      environment: this.environment,
+      version: this.settings.version,  // use undefined if version is 'default'
     });
   }
 
