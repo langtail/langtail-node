@@ -18,55 +18,6 @@ const getApiKey = (): string => {
   return apiKey;
 }
 
-interface Deployment {
-  environment: string;
-  version?: string;
-  default?: boolean;
-}
-
-interface DeployedPrompt {
-  promptSlug: string;
-  deployments: Deployment[];
-}
-
-const fetchDeployedPrompts = async (): Promise<DeployedPrompt[]> => {
-  return [
-    {
-      promptSlug: 'stock-simple',
-      deployments: [
-        {
-          environment: 'staging',
-          default: true,
-        },
-        {
-          environment: 'production',
-          version: '2',
-        },
-        {
-          environment: 'production',
-          version: '3',
-          default: true,
-        }
-      ]
-    },
-    {
-      promptSlug: 'stock-trading-bot',
-      deployments: [
-        {
-          environment: 'production',
-          version: '5',
-        },
-        {
-          environment: 'production',
-          version: '6',
-          default: true,
-        }
-      ]
-    },
-  ]
-}
-
-
 interface FetchToolsOptions {
   langtailPrompts: LangtailPrompts;
   promptSlug: string;
@@ -190,34 +141,31 @@ const generateTools = async ({ out }: GenerateToolsOptions) => {
     apiKey: getApiKey()
   });
 
-  const promptDeployments = await fetchDeployedPrompts();
+  const deployments = await langtailPrompts.listDeployments();
 
   let toolsObject: ToolsObject = {};
-  for (const deployedPrompt of promptDeployments) {
-    const { promptSlug, deployments } = deployedPrompt;
-    for (const deployment of deployments) {
-      const { environment, version } = deployment;
-      try {
-        const promptTools = await fetchTools({ langtailPrompts, promptSlug, environment: environment as LangtailEnvironment, version });
-        if (promptTools) {
-          toolsObject[promptSlug] = toolsObject[promptSlug] || {};
-          toolsObject[promptSlug][environment] = toolsObject[promptSlug][environment] || {};
-          if (version) {
-            toolsObject[promptSlug][environment][version] = promptTools;
-          }
-          if (deployment.default) {
-            toolsObject[promptSlug][environment]['default'] = promptTools;
-          }
+  for (const deployment of deployments) {
+    const { promptSlug, environment, version } = deployment;
+    try {
+      const promptTools = await fetchTools({ langtailPrompts, promptSlug, environment: environment as LangtailEnvironment, version });
+      if (promptTools) {
+        toolsObject[promptSlug] = toolsObject[promptSlug] || {};
+        toolsObject[promptSlug][environment] = toolsObject[promptSlug][environment] || {};
+        if (version) {
+          toolsObject[promptSlug][environment][version] = promptTools;
         }
-      } catch (error) {
-        let errorMessage: string;
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        } else {
-          errorMessage = JSON.stringify(error);
+        if (!toolsObject[promptSlug][environment]['default']) {
+          toolsObject[promptSlug][environment]['default'] = promptTools;
         }
-        console.error(`Error fetching ${promptSlug} (${environment}, v${version}): ${errorMessage}`);
       }
+    } catch (error) {
+      let errorMessage: string;
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else {
+        errorMessage = JSON.stringify(error);
+      }
+      console.error(`Error fetching ${promptSlug} (${environment}, v${version}): ${errorMessage}`);
     }
   }
 

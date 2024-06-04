@@ -100,6 +100,13 @@ export interface PlaygroundState {
   chatInput: Record<string, string>
 }
 
+export interface Deployment {
+  deployedAt: string;
+  promptSlug: string;
+  environment: string;
+  version?: string;
+}
+
 export const ContentItemTextSchema = z.object({
   type: z.literal("text"),
   text: z.string(),
