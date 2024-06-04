@@ -1,3 +1,4 @@
+// @ts-ignore
 import { CoreTool } from 'ai'
 import { z } from 'zod'
 

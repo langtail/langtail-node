@@ -184,10 +184,12 @@ const generateTools = async ({ out }: GenerateToolsOptions) => {
   ].filter(Boolean).join('\n// ') + '\n';
 
   const template = fs.readFileSync(TEMPLATE_PATH, 'utf8');
-  const fileString = fileInfo + template.replace(
-    REPLACE_LINE,
-    `const toolsObject = ${stringifyToolsObject(toolsObject)};`
-  );
+  const fileString = fileInfo + template
+    .replace('// @ts-ignore\n', '')
+    .replace(
+      REPLACE_LINE,
+      `const toolsObject = ${stringifyToolsObject(toolsObject)};`
+    );
 
   fs.writeFileSync(outputFile, fileString, 'utf8');
   console.log(`Tools data generated at ${outputFile}`);
