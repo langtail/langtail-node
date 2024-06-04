@@ -244,3 +244,40 @@ const result = await generateText({
   prompt: 'show me the price',
 })
 ```
+
+### Using tools from Langtail
+
+If your prompts in Langtail contain tools, you can generate a file containing tool parameters for every prompt deployment in your project. Run `npx langtail generate --out [output_filepath]` to generate the file.
+
+After the file is generated, you can provide the Langtail tools to AI SDK like this:
+```typescript
+import { generateText } from 'ai'
+import { langtail } from 'langtail/dist/vercelAi'
+import tools from './langtailTools';  // generated langtailTools.ts file
+
+const ltModel = langtail('stock-simple',
+  {
+    environment: "production",
+    version: "3"  // pinning the version is recommended
+  }
+);
+const result = await generateText({
+  model: ltModel,
+  prompt: 'Show me the current price!',
+  tools: tools(ltModel),  // loads all the tools for the specified prompt version
+});
+```
+
+You can also define custom execute functions for your tools as follows:
+```typescript
+tools(ltModel, {
+  get_current_stock_price: {
+    execute: async ({ ticker }) => {
+      return ({
+        ticker,
+        price: 200 + Math.floor(Math.random() * 50),
+      });
+    },
+  },
+})
+```
