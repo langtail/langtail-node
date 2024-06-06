@@ -24,7 +24,7 @@ function determineDefaultPath() {
 }
 
 program
-  .command('generate')
+  .command('generate-tools')
   .description('Generate tools based on a Langtail prompt')
   .option('--out [path]', 'output file path', determineDefaultPath())
   .action(actionRunner(generateTools));

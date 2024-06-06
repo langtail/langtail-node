@@ -247,7 +247,7 @@ const result = await generateText({
 
 ### Using tools from Langtail
 
-If your prompts in Langtail contain tools, you can generate a file containing tool parameters for every prompt deployment in your project. Run `npx langtail generate --out [output_filepath]` to generate the file.
+If your prompts in Langtail contain tools, you can generate a file containing tool parameters for every prompt deployment in your project. Run `npx langtail generate-tools --out [output_filepath]` to generate the file.
 
 After the file is generated, you can provide the Langtail tools to AI SDK like this:
 ```typescript

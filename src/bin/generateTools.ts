@@ -177,7 +177,7 @@ const generateTools = async ({ out }: GenerateToolsOptions) => {
   }
 
   const fileInfo = '// ' + [
-    'Langtail tools file, generated with `langtail generate`',
+    'Langtail tools file, generated with `langtail generate-tools`',
     `Generated at: ${new Date().toISOString()}`,
     `Langtail SDK Version: ${SDK_VERSION}`,
     ``
