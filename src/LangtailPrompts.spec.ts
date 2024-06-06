@@ -1,4 +1,4 @@
-import "dotenv/config"
+import "dotenv-flow/config"
 import { describe, expect, it } from "vitest"
 
 import { LangtailPrompts } from "./LangtailPrompts"

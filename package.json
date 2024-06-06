@@ -1,17 +1,20 @@
 {
   "name": "langtail",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "",
   "main": "./dist/LangtailNode.js",
   "packageManager": "pnpm@8.15.6",
   "engines": {
     "node": ">=18"
   },
+  "bin": {
+    "langtail": "./dist/bin/entry.mjs"
+  },
   "scripts": {
     "test": "vitest",
     "ts": "tsc --noEmit",
     "format": "prettier --write .",
-    "build": "tsup",
+    "build": "tsup && copyfiles -u 1 src/bin/langtailTools.template.ts dist/",
     "prepublishOnly": "pnpm run build"
   },
   "keywords": [
@@ -31,7 +34,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.12.11",
-    "dotenv": "^16.4.5",
+    "copyfiles": "^2.4.1",
     "nock": "14.0.0-beta.5",
     "prettier": "^3.2.5",
     "tsup": "^8.0.2",
@@ -69,8 +72,11 @@
     "@ai-sdk/provider": "^0.0.5",
     "@ai-sdk/provider-utils": "^0.0.8",
     "@langtail/handlebars-evalless": "^0.1.1",
+    "commander": "^12.1.0",
     "date-fns": "^3.6.0",
+    "dotenv-flow": "^4.1.0",
     "handlebars": "^4.7.8",
+    "json-schema-to-zod": "^2.1.0",
     "openai": "^4.43.0",
     "query-string": "^9.0.0",
     "zod": "^3.23.8"
@@ -87,7 +93,11 @@
       "src/LangtailNode.ts",
       "src/template.ts",
       "src/getOpenAIBody.ts",
-      "src/vercelAi/index.ts"
+      "src/vercelAi/index.ts",
+      "src/bin/entry.ts"
+    ],
+    "external": [
+      "dotenv-flow"
     ]
   }
 }

@@ -266,6 +266,7 @@ describe('doGenerate', () => {
 
     expect(await server.getRequestBodyJson()).toStrictEqual({
       model: 'gpt-3.5-turbo',
+      tools: [],
       messages: [{ role: 'user', content: [{ type: 'text', text: 'Hello' }] }],
       stream: false,
     });
@@ -559,6 +560,7 @@ describe('doStream', () => {
 
     expect(await server.getRequestBodyJson()).toStrictEqual({
       stream: true,
+      tools: [],
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: [{ type: 'text', text: 'Hello' }] }],
     });

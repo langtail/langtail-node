@@ -135,8 +135,13 @@ export function getOpenAIBody(
       return { ...tool, function: rest }
     })
   }
-  if (parsedBody.tools && parsedBody.tools.length > 0) {
-    openAIbody.tools = parsedBody.tools
+  if (parsedBody.tools) {
+    if (parsedBody.tools.length > 0) {
+      openAIbody.tools = parsedBody.tools
+    } else {
+      // replace empty array with undefined to avoid OpenAI API error
+      openAIbody.tools = undefined
+    }
   }
 
   if (parsedBody.response_format?.type === "json_object") {

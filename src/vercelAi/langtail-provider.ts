@@ -1,21 +1,11 @@
 import { loadApiKey, withoutTrailingSlash } from '@ai-sdk/provider-utils';
 import { LangtailChatLanguageModel } from './langtail-language-model';
 import { userAgent } from '../userAgent';
-import { LangtailPrompts } from '../LangtailPrompts';
+import { LangtailEnvironment, LangtailPrompts } from '../LangtailPrompts';
 import { LangtailChatSettings } from './langtail-chat-settings';
 import { LangtailNode } from '../LangtailNode';
 
-export interface LangtailProvider {
-  (
-    promptId: string,
-    settings?: LangtailChatSettings,
-  ): LangtailChatLanguageModel;
-
-  chat(
-    promptId: string,
-    settings?: LangtailChatSettings,
-  ): LangtailChatLanguageModel;
-}
+export { LangtailChatLanguageModel };
 
 export interface AIBridgeSettings {
   openaiOrganization?: string;
@@ -26,14 +16,12 @@ export interface AIBridgeSettings {
 export interface LangtailProviderSettings extends AIBridgeSettings {
   baseURL?: string;
   apiKey?: string;
-  langtailWorkspace?: string;
-  langtailProject?: string;
 }
 
 
 export function createLangtail(
   options: LangtailProviderSettings = {},
-): LangtailProvider {
+) {
   const baseURL =
     withoutTrailingSlash(options.baseURL) ??
     'https://api.langtail.com';
@@ -41,8 +29,6 @@ export function createLangtail(
   const langtailPrompts = new LangtailPrompts({
     apiKey: options.apiKey ?? "",  // loaded later from environment
     baseURL,
-    workspace: options.langtailWorkspace,
-    project: options.langtailProject,
   });
 
   return aiBridge(langtailPrompts, options);
@@ -51,7 +37,7 @@ export function createLangtail(
 export function aiBridge(
   langtail: LangtailPrompts | LangtailNode,
   options: AIBridgeSettings = {},
-): LangtailProvider {
+) {
 
   let langtailPrompts: LangtailPrompts;
   if (langtail instanceof LangtailPrompts) {
@@ -60,15 +46,17 @@ export function aiBridge(
     langtailPrompts = langtail.prompts;
   }
 
-  const createChatModel = (
-    promptId: string,
-    settings: LangtailChatSettings = {},
+  const createChatModel = <P extends string, E extends LangtailEnvironment = "production", V extends string = "default">(
+    promptId: P,
+    settings: LangtailChatSettings<E, V> = {},
   ) => {
-    const apiKey = loadApiKey({
-      apiKey: langtailPrompts.apiKey || undefined,
-      environmentVariableName: 'LANGTAIL_API_KEY',
-      description: 'Langtail',
-    })
+    if (!langtailPrompts.apiKey) {
+      langtailPrompts.apiKey = loadApiKey({
+        apiKey: undefined,
+        environmentVariableName: 'LANGTAIL_API_KEY',
+        description: 'Langtail',
+      })
+    }
     const metadataHeaders = settings.metadata
       ? Object.entries(settings.metadata).reduce((acc, [key, value]) => {
         acc[`x-langtail-metadata-${key}`] = value
@@ -76,7 +64,7 @@ export function aiBridge(
       }, {})
       : {}
     const headers = {
-      'X-API-Key': apiKey,
+      'X-API-Key': langtailPrompts.apiKey,
       'user-agent': userAgent,
       'content-type': 'application/json',
       'OpenAI-Organization': options.openaiOrganization,
@@ -92,9 +80,9 @@ export function aiBridge(
     });
   }
 
-  const provider = function (
-    promptId: string,
-    settings?: LangtailChatSettings,
+  const provider = function <P extends string, E extends LangtailEnvironment = "production", V extends string = "default">(
+    promptId: P,
+    settings?: LangtailChatSettings<E, V>,
   ) {
     if (new.target) {
       throw new Error(
@@ -107,7 +95,7 @@ export function aiBridge(
 
   provider.chat = createChatModel;
 
-  return provider as LangtailProvider;
+  return provider;
 }
 
 export const langtail = createLangtail();

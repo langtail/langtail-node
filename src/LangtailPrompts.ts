@@ -9,7 +9,7 @@ import { ILangtailExtraProps } from "./LangtailNode"
 import { Fetch } from "openai/core"
 import { userAgent } from "./userAgent"
 import queryString from "query-string"
-import { PlaygroundState } from "./schemas"
+import { Deployment, PlaygroundState } from "./schemas"
 import { OpenAiBodyType, getOpenAIBody } from "./getOpenAIBody"
 
 export type LangtailEnvironment = "preview" | "staging" | "production"
@@ -163,6 +163,25 @@ export class LangtailPrompts {
     }
     result.httpResponse = res
     return result
+  }
+
+  async listDeployments(): Promise<Deployment[]> {
+    const res = await fetch(`${this.baseUrl}/list-deployments`, {
+      headers: {
+        "X-API-Key": this.apiKey,
+        "user-agent": userAgent,
+        "content-type": "application/json",
+      },
+    })
+
+    if (!res.ok) {
+      throw new Error(
+        `Failed to fetch deployments: ${res.status} ${await res.text()}`,
+      )
+    }
+
+    const responseJson = await res.json()
+    return responseJson.deployments
   }
 
   async get({
