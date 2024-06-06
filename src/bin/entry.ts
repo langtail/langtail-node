@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'fs';
 import path from 'path';
+import 'dotenv/config'
 import { program } from 'commander';
 import generateTools from './generateTools';
 import packageJson from "../../package.json";

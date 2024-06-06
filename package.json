@@ -95,6 +95,9 @@
       "src/getOpenAIBody.ts",
       "src/vercelAi/index.ts",
       "src/bin/entry.ts"
+    ],
+    "external": [
+      "dotenv"
     ]
   }
 }
