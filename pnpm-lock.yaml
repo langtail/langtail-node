@@ -20,6 +20,9 @@ dependencies:
   date-fns:
     specifier: ^3.6.0
     version: 3.6.0
+  dotenv-flow:
+    specifier: ^4.1.0
+    version: 4.1.0
   handlebars:
     specifier: ^4.7.8
     version: 4.7.8
@@ -43,9 +46,6 @@ devDependencies:
   copyfiles:
     specifier: ^2.4.1
     version: 2.4.1
-  dotenv:
-    specifier: ^16.4.5
-    version: 16.4.5
   nock:
     specifier: 14.0.0-beta.5
     version: 14.0.0-beta.5
@@ -815,10 +815,17 @@ packages:
       path-type: 4.0.0
     dev: true
 
+  /dotenv-flow@4.1.0:
+    resolution: {integrity: sha512-0cwP9jpQBQfyHwvE0cRhraZMkdV45TQedA8AAUZMsFzvmLcQyc1HPv+oX0OOYwLFjIlvgVepQ+WuQHbqDaHJZg==}
+    engines: {node: '>= 12.0.0'}
+    dependencies:
+      dotenv: 16.4.5
+    dev: false
+
   /dotenv@16.4.5:
     resolution: {integrity: sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==}
     engines: {node: '>=12'}
-    dev: true
+    dev: false
 
   /eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}

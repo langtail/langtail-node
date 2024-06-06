@@ -1,5 +1,5 @@
 import { LangtailNode, baseURL } from "./LangtailNode"
-import "dotenv/config"
+import "dotenv-flow/config"
 import { describe, expect, it } from "vitest"
 import nock from "nock"
 import { ChatCompletionChunkSchema } from "./dataSchema"
