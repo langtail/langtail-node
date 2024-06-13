@@ -5,8 +5,11 @@ import styles from "./chat.module.css";
 import Markdown from "react-markdown";
 import zod from "zod";
 import { AiLoading } from "./AiLoading";
-import { ChatCompletionAssistantMessageParam } from "openai/resources";
-import { useAIStream } from "../../../src/react/useAIStream/index";
+import {
+  ChatCompletionAssistantMessageParam,
+  ChatCompletionMessageToolCall,
+} from "openai/resources";
+import { useChatStream } from "../../../src/react/useChatStream";
 
 const aiDataSchema = zod.object({
   id: zod.string(),
@@ -60,28 +63,21 @@ const Message = ({ role, content }: ChatMessage) => {
 
 type ChatProps = {
   functionCallHandler?: (
-    toolCall: ChatCompletionAssistantMessageParam,
-  ) => Promise<ChatMessage[] | undefined>;
+    toolCall: ChatCompletionMessageToolCall,
+    message: ChatCompletionAssistantMessageParam,
+  ) => Promise<string> | string | undefined;
+  onStart?: () => void;
 };
 
 export type ChatMessage = AIData["choices"][number]["message"] & {
   deltaPlaceholder?: boolean;
 };
 
-const Chat = ({ functionCallHandler }: ChatProps) => {
+const Chat = ({ functionCallHandler, onStart }: ChatProps) => {
   const [userInput, setUserInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [generatingResponse, setGeneratingResponse] = useState<boolean>(false);
-  const messageRef = useRef<ChatMessage[]>([]);
-  const [inputDisabled, setInputDisabled] = useState(false);
 
-  const handleRunCompleted = () => {
-    setInputDisabled(false);
-    setGeneratingResponse(false);
-  };
-
-  const { invoke } = useAIStream(
-    (localMessages: ChatMessage[]) =>
+  const { isLoading, messages, send } = useChatStream({
+    fetcher: (localMessages) =>
       fetch(`/api/langtail`, {
         method: "POST",
         body: JSON.stringify({ messages: localMessages }),
@@ -89,31 +85,12 @@ const Chat = ({ functionCallHandler }: ChatProps) => {
           "Content-Type": "application/json",
         },
       }).then((res) => res.body),
-    {
-      onText: (delta) => {
-        appendDeltaToTheLastMessage(delta);
-      },
-      onToolCall: (toolCall) => {
-        functionCallHandler?.(toolCall).then((toolMessages) => {
-          if (toolMessages) {
-            const messages = appendMessages([
-              {
-                ...toolCall,
-                content: "", // NOTE: ensure that the message insn't duplicated due to onText chunk streaming
-              },
-              ...toolMessages,
-            ]);
-            invoke(messages);
-          }
-        });
-      },
-      onStart: () => {
-        setGeneratingResponse(true);
-        setInputDisabled(true);
-      },
-      onEnd: handleRunCompleted,
+    onToolCall: (toolCall, message) =>
+      functionCallHandler?.(toolCall, message) ?? "Data not available",
+    onStart: () => {
+      onStart?.();
     },
-  );
+  });
 
   // automatically scroll to bottom of chat
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -125,39 +102,13 @@ const Chat = ({ functionCallHandler }: ChatProps) => {
     scrollToBottom();
   }, [messages]);
 
-  const appendMessages = (newMessages: ChatMessage[]) => {
-    messageRef.current = [...messageRef.current, ...newMessages];
-    setMessages([...messageRef.current]);
-
-    return messageRef.current;
-  };
-
-  const appendDeltaToTheLastMessage = (messageDelta) => {
-    const maybeDetlaLastMessage =
-      messageRef.current[messageRef.current.length - 1];
-    // NOTE: when appending a delta, ensure that there is a message for it prepared
-    if (!maybeDetlaLastMessage.deltaPlaceholder) {
-      messageRef.current = [
-        ...messageRef.current,
-        {
-          role: "assistant",
-          content: "",
-          deltaPlaceholder: true,
-        },
-      ];
-    }
-
-    const lastMessage = messageRef.current[messageRef.current.length - 1];
-    lastMessage.content += messageDelta;
-    setMessages([...messageRef.current]);
-    return messageRef.current;
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!userInput.trim() || inputDisabled) return;
+    if (!userInput.trim() || isLoading) return;
 
-    invoke(appendMessages([{ role: "user" as const, content: userInput }]));
+    const nextMessages = [{ role: "user" as const, content: userInput }];
+
+    send(nextMessages);
 
     setUserInput("");
     scrollToBottom();
@@ -171,7 +122,7 @@ const Chat = ({ functionCallHandler }: ChatProps) => {
           .map((msg, index) => (
             <Message key={index} role={msg.role} content={msg.content} />
           ))}
-        {generatingResponse && <AiLoading />}
+        {isLoading && <AiLoading />}
         <div ref={messagesEndRef} />
       </div>
       <form
@@ -185,11 +136,7 @@ const Chat = ({ functionCallHandler }: ChatProps) => {
           onChange={(e) => setUserInput(e.target.value)}
           placeholder="Enter your question"
         />
-        <button
-          type="submit"
-          className={styles.button}
-          disabled={inputDisabled}
-        >
+        <button type="submit" className={styles.button} disabled={isLoading}>
           Send
         </button>
       </form>

@@ -33,11 +33,15 @@
   ],
   "license": "MIT",
   "devDependencies": {
+    "@testing-library/dom": "^10.0.0",
+    "@testing-library/react": "^16.0.0",
     "@types/node": "^20.12.11",
     "@types/react": "^18.3.3",
     "copyfiles": "^2.4.1",
+    "jsdom": "^24.1.0",
     "nock": "14.0.0-beta.5",
     "prettier": "^3.2.5",
+    "react-dom": "^18.0.0",
     "tsup": "^8.0.2",
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
