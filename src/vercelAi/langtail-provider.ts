@@ -1,7 +1,7 @@
 import { loadApiKey, withoutTrailingSlash } from '@ai-sdk/provider-utils';
 import { LangtailChatLanguageModel } from './langtail-language-model';
 import { userAgent } from '../userAgent';
-import { LangtailEnvironment, LangtailPrompts } from '../LangtailPrompts';
+import { Environment, LangtailEnvironment, LangtailPrompts, PromptSlug, Version } from '../LangtailPrompts';
 import { LangtailChatSettings } from './langtail-chat-settings';
 import { LangtailNode } from '../LangtailNode';
 
@@ -46,9 +46,9 @@ export function aiBridge(
     langtailPrompts = langtail.prompts;
   }
 
-  const createChatModel = <P extends string, E extends LangtailEnvironment = "production", V extends string = "default">(
+  const createChatModel = <P extends PromptSlug, E extends Environment<P> = "production", V extends Version<P, E> | undefined = undefined>(
     promptId: P,
-    settings: LangtailChatSettings<E, V> = {},
+    settings: LangtailChatSettings<P, E, V> = {},
   ) => {
     if (!langtailPrompts.apiKey) {
       langtailPrompts.apiKey = loadApiKey({
@@ -80,9 +80,9 @@ export function aiBridge(
     });
   }
 
-  const provider = function <P extends string, E extends LangtailEnvironment = "production", V extends string = "default">(
+  const provider = function <P extends PromptSlug, E extends Environment<P> = "production", V extends Version<P, E> | undefined = undefined>(
     promptId: P,
-    settings?: LangtailChatSettings<E, V>,
+    settings?: LangtailChatSettings<P, E, V>,
   ) {
     if (new.target) {
       throw new Error(

@@ -1,3 +1,3 @@
-import packageJson from "../package.json"
+import SDK_VERSION from './version'
 
-export const userAgent = `langtail-js-sdk:${packageJson.version}`
+export const userAgent = `langtail-js-sdk:${SDK_VERSION}`
