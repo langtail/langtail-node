@@ -14,7 +14,7 @@
     "test": "vitest",
     "ts": "tsc --noEmit",
     "format": "prettier --write .",
-    "build": "tsup && copyfiles -u 1 src/bin/langtailTools.template.ts dist/",
+    "build": "tsup && copyfiles -u 1 src/bin/*.template dist/",
     "prepublishOnly": "pnpm run build"
   },
   "keywords": [
@@ -63,6 +63,11 @@
       "require": "./dist/vercelAi/index.js",
       "import": "./dist/vercelAi/index.mjs",
       "types": "./dist/vercelAi/index.d.ts"
+    },
+    "./dist/customTypes": {
+      "require": "./dist/customTypes.js",
+      "import": "./dist/customTypes.mjs",
+      "types": "./dist/customTypes.d.ts"
     }
   },
   "files": [
@@ -91,13 +96,15 @@
     "clean": true,
     "entryPoints": [
       "src/LangtailNode.ts",
+      "src/customTypes.ts",
       "src/template.ts",
       "src/getOpenAIBody.ts",
       "src/vercelAi/index.ts",
       "src/bin/entry.ts"
     ],
     "external": [
-      "dotenv-flow"
+      "dotenv-flow",
+      "langtail/dist/customTypes"
     ]
   }
 }

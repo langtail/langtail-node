@@ -11,6 +11,15 @@ import { userAgent } from "./userAgent"
 import queryString from "query-string"
 import { Deployment, PlaygroundState } from "./schemas"
 import { OpenAiBodyType, getOpenAIBody } from "./getOpenAIBody"
+import * as typesRelative from 'langtail/dist/customTypes';
+import * as typesDefault from './customTypes';
+
+// if relative types are unresolved, PromptOptions is Any
+// in which case we use default options instead
+export type PromptSlug = 0 extends (1 & typesRelative.PromptSlug) ? typesDefault.PromptSlug : typesRelative.PromptSlug;
+export type Environment<P extends PromptSlug> = 0 extends (1 & typesRelative.Environment<P>) ? typesDefault.Environment<P> : typesRelative.Environment<P>;
+export type Version<P extends PromptSlug, E extends Environment<P>> = 0 extends (1 & typesRelative.Version<P, E>) ? typesDefault.Version<P, E> : typesRelative.Version<P, E>;
+export type PromptOptions<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>> = 0 extends (1 & typesRelative.PromptOptions<P, E, V>) ? typesDefault.PromptOptions<P, E, V> : typesRelative.PromptOptions<P, E, V>;
 
 export type LangtailEnvironment = "preview" | "staging" | "production"
 
@@ -22,6 +31,10 @@ type OpenAIResponseWithHttp = ChatCompletion & {
   httpResponse: Response | globalThis.Response
 }
 
+interface CreatePromptPathOptions<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>> extends PromptOptions<P, E, V> {
+  configGet?: boolean
+}
+
 type Options = {
   apiKey: string
   baseURL?: string | undefined
@@ -31,21 +44,13 @@ type Options = {
   onResponse?: (response: ChatCompletion) => void
 }
 
-interface IPromptIdProps extends ILangtailExtraProps, OpenAiBodyType {
-  prompt: string
-  /**
-   * The environment to fetch the prompt from. Defaults to "production".
-   * @default "production"
-   **/
-  environment?: LangtailEnvironment
-  version?: string
-}
+interface IPromptIdProps<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>> extends PromptOptions<P, E, V>, ILangtailExtraProps, OpenAiBodyType { }
 
-export interface IRequestParams extends IPromptIdProps {
+export interface IRequestParams<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>> extends IPromptIdProps<P, E, V> {
   variables?: Record<string, any>
 }
 
-interface IRequestParamsStream extends IRequestParams {
+interface IRequestParamsStream<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>> extends IRequestParams<P, E, V> {
   stream: boolean
 }
 
@@ -61,17 +66,13 @@ export class LangtailPrompts {
     this.options = options
   }
 
-  createPromptPath({
+  createPromptPath<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>>({
     prompt,
     environment,
     version,
     configGet,
-  }: {
-    prompt: string
-    environment: LangtailEnvironment
-    version?: string
-    configGet?: boolean
-  }) {
+  }: CreatePromptPathOptions<P, E, V>) {
+    const env = environment as LangtailEnvironment;
     if (prompt.includes("/")) {
       throw new Error(
         "prompt should not include / character, either omit workspace/project or use just the prompt name.",
@@ -84,34 +85,34 @@ export class LangtailPrompts {
     const queryParamsString = queryParams ? `?${queryParams}` : ""
 
     if (this.options.workspace && this.options.project) {
-      const url = `${this.baseUrl}/${this.options.workspace}/${this.options.project}/${prompt}/${environment}?${queryParams}`
+      const url = `${this.baseUrl}/${this.options.workspace}/${this.options.project}/${prompt}/${env}?${queryParams}`
       // user supplied workspace and project in constructor
 
       return url
     }
 
     if (this.options.project) {
-      return `${this.options.project}/${prompt}/${environment}${queryParamsString}`
+      return `${this.options.project}/${prompt}/${env}${queryParamsString}`
     }
 
-    const urlPath = `project-prompt/${prompt}/${environment}`
+    const urlPath = `project-prompt/${prompt}/${env}`
     return urlPath.startsWith("/")
       ? this.baseUrl + urlPath + `${queryParamsString}`
       : `${this.baseUrl}/${urlPath}${queryParamsString}`
   }
 
-  invoke(
-    options: Omit<IRequestParams, "stream">,
+  invoke<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>>(
+    options: Omit<IRequestParams<P, E, V>, "stream">,
   ): Promise<OpenAIResponseWithHttp>
-  invoke(options: IRequestParamsStream): Promise<StreamResponseType>
-  async invoke({
+  invoke<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>>(options: IRequestParamsStream<P, E, V>): Promise<StreamResponseType>
+  async invoke<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>>({
     prompt,
     environment,
     version,
     doNotRecord,
     metadata,
     ...rest
-  }: IRequestParams | IRequestParamsStream) {
+  }: IRequestParams<P, E, V> | IRequestParamsStream<P, E, V>) {
     const metadataHeaders = metadata
       ? Object.entries(metadata).reduce((acc, [key, value]) => {
         acc[`x-langtail-metadata-${key}`] = value
@@ -184,19 +185,11 @@ export class LangtailPrompts {
     return responseJson.deployments
   }
 
-  async get({
+  async get<P extends PromptSlug, E extends Environment<P> = "production", V extends Version<P, E> = undefined>({
     prompt,
     environment,
     version,
-  }: {
-    prompt: string
-    /**
-     * The environment to fetch the prompt from. Defaults to "production".
-     * @default "production"
-     **/
-    environment?: LangtailEnvironment
-    version?: string
-  }): Promise<PlaygroundState> {
+  }: PromptOptions<P, E, V>): Promise<PlaygroundState> {
     const promptPath = this.createPromptPath({
       prompt,
       environment: environment ?? "production",

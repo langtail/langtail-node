@@ -1,11 +1,9 @@
 #!/usr/bin/env node
-import fs from 'fs';
-import path from 'path';
 import 'dotenv-flow/config'
 import { program } from 'commander';
-import generateTools from './generateTools';
-import packageJson from "../../package.json";
-
+import generateTools, { determineDefaultPath as determineDefaultPathTools } from './generateTools';
+import generateTypes, { determineDefaultPath as determineDefaultPathTypes } from './generateTypes';
+import SDK_VERSION from '../version'
 
 function actionErrorHanlder(error: Error) {
   console.error(error.message);
@@ -18,16 +16,18 @@ export function actionRunner(fn: (...args) => Promise<any>) {
 }
 
 program
-  .version(packageJson.version);
+  .version(SDK_VERSION);
 
-function determineDefaultPath() {
-  return fs.existsSync(path.join(process.cwd(), 'src')) ? 'src/langtailTools.ts' : 'langtailTools.ts';
-}
+program
+  .command('generate-types')
+  .description('Generate types for your Langtail project')
+  .option('--out [path]', 'output file path', determineDefaultPathTypes())
+  .action(actionRunner(generateTypes));
 
 program
   .command('generate-tools')
-  .description('Generate tools based on a Langtail prompt')
-  .option('--out [path]', 'output file path', determineDefaultPath())
+  .description('Generate tools based on Langtail prompts in your project')
+  .option('--out [path]', 'output file path', determineDefaultPathTools())
   .action(actionRunner(generateTools));
 
 program.parse(process.argv);

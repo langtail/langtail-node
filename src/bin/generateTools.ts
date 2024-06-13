@@ -1,22 +1,14 @@
 #!/usr/bin/env node
 import fs from 'fs';
-import path from 'path';
-import readline from 'readline';
 import { LangtailEnvironment, LangtailPrompts } from '../LangtailPrompts';
 import jsonSchemaToZod from 'json-schema-to-zod';
-import packageJson from "../../package.json"
+import SDK_VERSION from '../version'
+import { askUserToConfirm, dirExists, getApiKey, prepareOutputFilePath } from './utils';
 
-const SDK_VERSION = packageJson.version;
-const TEMPLATE_PATH = new URL('./langtailTools.template.ts', import.meta.url);
+
+const DEFAULT_FILENAME = 'langtailTools.ts';
+const TEMPLATE_PATH = new URL('./langtailTools.ts.template', import.meta.url);
 const REPLACE_LINE = 'const toolsObject = {};  // replaced by generateTools.ts'
-
-const getApiKey = (): string => {
-  const apiKey = process.env.LANGTAIL_API_KEY;
-  if (!apiKey) {
-    throw new Error('LANGTAIL_API_KEY environment variable is required');
-  }
-  return apiKey;
-}
 
 interface FetchToolsOptions {
   langtailPrompts: LangtailPrompts;
@@ -47,47 +39,6 @@ const fetchTools = async ({ langtailPrompts, promptSlug, environment, version }:
       }
     ]));
   }
-}
-
-function askUserToConfirm(query: string): Promise<boolean> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-
-  return new Promise(resolve => {
-    rl.question(query, (answer) => {
-      rl.close();
-      resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
-    });
-  });
-}
-
-const prepareOutputFilePath = async (outputFile: string): Promise<string | undefined> => {
-  let resultFilePath = outputFile;
-  if (fs.existsSync(resultFilePath) && fs.statSync(resultFilePath).isDirectory()) {
-    resultFilePath = path.join(resultFilePath, 'langtailTools.ts');
-  }
-
-  if (fs.existsSync(resultFilePath)) {
-    const confirmed = await askUserToConfirm(`File ${resultFilePath} exists. Overwrite? [y/N]: `);
-    if (!confirmed) {
-      return;
-    }
-  }
-
-  const directory = path.dirname(resultFilePath);
-  if (!fs.existsSync(directory)) {
-    const confirmed = await askUserToConfirm(`Directory ${directory} does not exist. Create it? [y/N]: `);
-    if (confirmed) {
-      fs.mkdirSync(directory, { recursive: true });
-      console.log(`Created directory: ${directory}`);
-    } else {
-      return;
-    }
-  }
-
-  return resultFilePath;
 }
 
 const stringifyToolsObject = (obj: object, depth = 0): string => {
@@ -126,12 +77,14 @@ interface ToolsObject {
   }
 }
 
+export const determineDefaultPath = () => dirExists('src') ? `src/${DEFAULT_FILENAME}` : DEFAULT_FILENAME;
+
 interface GenerateToolsOptions {
   out: string;
 }
 
 const generateTools = async ({ out }: GenerateToolsOptions) => {
-  const outputFile = await prepareOutputFilePath(out);
+  const outputFile = await prepareOutputFilePath(out, DEFAULT_FILENAME);
   if (!outputFile) {
     console.log('Operation cancelled by the user.');
     return;

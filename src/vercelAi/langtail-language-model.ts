@@ -24,6 +24,7 @@ import { ILangtailExtraProps, LangtailPrompts } from '../LangtailNode';
 import { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions';
 import { FunctionParameters } from 'openai/resources';
 import { LangtailEnvironment } from '../LangtailPrompts';
+import type { PromptSlug, Environment, Version } from '../LangtailPrompts';
 
 type LangtailChatConfig = {
   provider: string;
@@ -35,20 +36,20 @@ type LangtailChatConfig = {
 // to choose the default model from Langtail playground
 const MODEL_IN_LANGTAIL = 'langtail';
 
-export class LangtailChatLanguageModel<P extends string = string, E extends LangtailEnvironment = LangtailEnvironment, V extends string = string> implements LanguageModelV1 {
+export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E extends Environment<P> = Environment<P>, V extends Version<P, E> | undefined = Version<P, E>> implements LanguageModelV1 {
   readonly specificationVersion: 'v1' = 'v1';
   readonly defaultObjectGenerationMode = 'tool';
 
   readonly modelId: string;
   readonly promptId: P;
 
-  readonly settings: LangtailChatSettings<E, V>;
+  readonly settings: LangtailChatSettings<P, E, V>;
 
   private readonly config: LangtailChatConfig;
 
   constructor(
     promptId: P,
-    settings: LangtailChatSettings<E, V>,
+    settings: LangtailChatSettings<P, E, V>,
     config: LangtailChatConfig,
   ) {
     this.promptId = promptId as P;

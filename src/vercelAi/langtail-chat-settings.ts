@@ -1,6 +1,9 @@
-import { IRequestParams, LangtailEnvironment } from '../LangtailPrompts';
+import { ILangtailExtraProps } from '../LangtailNode';
+import { PromptSlug, Environment, LangtailEnvironment, Version } from '../LangtailPrompts';
+import { OpenAiBodyType } from '../getOpenAIBody';
 
-export interface LangtailChatSettings<E extends LangtailEnvironment = "production", V extends string = "default"> extends Omit<IRequestParams, 'prompt'> {
+export interface LangtailChatSettings<P extends PromptSlug, E extends Environment<P> = "production", V extends Version<P, E> | undefined = undefined> extends ILangtailExtraProps, OpenAiBodyType {
   environment?: E;
   version?: V;
+  variables?: Record<string, any>
 }
