@@ -153,6 +153,7 @@ export function useChatStream<
     ) => Promise<string> | string
     onAbort?: () => void
     onChunk?: (chunk: ChatCompletionChunk) => void
+    onError?: (error: Error) => void
     onStart?: () => void
     onEnd?: (finalAIMessages: ChatMessage[]) => void
     onMessagesChange?: (messages: ChatMessage[]) => void
@@ -202,7 +203,6 @@ export function useChatStream<
   ): (ChatCompletion | ChatMessage)[] {
     messagesRef.current = messagesRef.current.concat(messages)
     setMessagesState(messagesRef.current)
-    console.log('messagesRef.current', messagesRef.current)
 
     return messagesRef.current
   }
@@ -233,15 +233,13 @@ export function useChatStream<
       }
 
       setIsLoadingState(true)
-      options.fetcher(parameter, optional, abortController).then(
+      return options.fetcher(parameter, optional, abortController).then(
         (maybeStream) => {
           if (!maybeStream) {
             setIsLoadingState(false)
             return () => { }
           }
 
-          const runner = chatStreamToRunner(maybeStream)
-          runnerRef.current = runner
 
           const onConnect = () => {
             if (endedRef.current) {
@@ -298,14 +296,17 @@ export function useChatStream<
                       role: "tool" as const,
                       tool_call_id: toolCall.id,
                       content,
-                    }),
+                    })
                   ),
                 ),
               ).then((toolMessages) => {
                 // NOTE: pass the complete messages from the previous call to finish the tool call
                 const nextMessages = [...addMessages(toolMessages)]
                 messagesRef.current = []
-                send(nextMessages as P, optional)
+                return send(nextMessages as P, optional)
+              }, (error) => {
+                setErrorState(error)
+                options.onError?.(error)
               })
             }
           }
@@ -321,6 +322,9 @@ export function useChatStream<
             setIsLoadingState(false)
             options.onEnd?.(mapAIMessagesToChatCompletions(messagesRef.current))
           }
+
+
+          const runner = chatStreamToRunner(maybeStream)
 
           const destroyRunner = () => {
             runner.off("connect", onConnect)
@@ -346,7 +350,17 @@ export function useChatStream<
           runner.on("message", onMessage)
           runner.on("end", onEnd)
           runner.on("abort", onAbort)
-        }, setErrorState,
+
+          runnerRef.current = runner
+          if (abortControllerRef.current?.signal.aborted) {
+            runner.abort()
+            runnerRef.current = { abort: () => { } }
+            return
+          }
+        }, (error) => {
+          options.onError?.(error)
+          setErrorState(error)
+        },
       )
     },
   }
