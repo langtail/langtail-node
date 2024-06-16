@@ -281,3 +281,7 @@ tools(ltModel, {
   },
 })
 ```
+
+## Typed inputs
+
+You can override input types to improve IntelliSense for the `prompt`, `environment`, and `version` attributes. Use the command `npx langtail generate-types`.
