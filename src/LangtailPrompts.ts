@@ -23,7 +23,10 @@ type OpenAIResponseWithHttp = ChatCompletion & {
   httpResponse: Response | globalThis.Response
 }
 
-interface CreatePromptPathOptions<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> extends PromptOptions<P, E, V> {
+interface CreatePromptPathOptions<P extends PromptSlug, E extends Environment<P> & LangtailEnvironment, V extends Version<P, E> = undefined> {
+  prompt: P,
+  environment: E,
+  version?: V
   configGet?: boolean
 }
 
@@ -58,13 +61,12 @@ export class LangtailPrompts {
     this.options = options
   }
 
-  createPromptPath<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>({
+  createPromptPath<P extends PromptSlug, E extends Environment<P> & LangtailEnvironment, V extends Version<P, E> = undefined>({
     prompt,
     environment,
     version,
     configGet,
   }: CreatePromptPathOptions<P, E, V>) {
-    const env = environment as LangtailEnvironment;
     if (prompt.includes("/")) {
       throw new Error(
         "prompt should not include / character, either omit workspace/project or use just the prompt name.",
@@ -77,17 +79,17 @@ export class LangtailPrompts {
     const queryParamsString = queryParams ? `?${queryParams}` : ""
 
     if (this.options.workspace && this.options.project) {
-      const url = `${this.baseUrl}/${this.options.workspace}/${this.options.project}/${prompt}/${env}?${queryParams}`
+      const url = `${this.baseUrl}/${this.options.workspace}/${this.options.project}/${prompt}/${environment}?${queryParams}`
       // user supplied workspace and project in constructor
 
       return url
     }
 
     if (this.options.project) {
-      return `${this.options.project}/${prompt}/${env}${queryParamsString}`
+      return `${this.options.project}/${prompt}/${environment}${queryParamsString}`
     }
 
-    const urlPath = `project-prompt/${prompt}/${env}`
+    const urlPath = `project-prompt/${prompt}/${environment}`
     return urlPath.startsWith("/")
       ? this.baseUrl + urlPath + `${queryParamsString}`
       : `${this.baseUrl}/${urlPath}${queryParamsString}`

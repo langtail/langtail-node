@@ -23,7 +23,7 @@ import { mapOpenAIChatLogProbsOutput } from './map-openai-chat-logprobs';
 import { ILangtailExtraProps, LangtailPrompts } from '../LangtailNode';
 import { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions';
 import { FunctionParameters } from 'openai/resources';
-import type { PromptSlug, Environment, Version } from '../types';
+import type { PromptSlug, Environment, Version, LangtailEnvironment } from '../types';
 
 type LangtailChatConfig = {
   provider: string;
@@ -57,8 +57,8 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
     this.config = config;
   }
 
-  get environment(): E {
-    return (this.settings.environment ?? 'production') as E;
+  get environment(): E & LangtailEnvironment {
+    return (this.settings.environment ?? 'production') as E & LangtailEnvironment;
   }
 
   get version(): V {
