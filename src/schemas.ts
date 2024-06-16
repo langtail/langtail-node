@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { Environment, PromptSlug, Version } from "./types"
 
 export interface ChatState {
   type: "chat"
@@ -100,11 +101,11 @@ export interface PlaygroundState {
   chatInput: Record<string, string>
 }
 
-export interface Deployment {
+export interface Deployment<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> {
   deployedAt: string;
-  promptSlug: string;
-  environment: string;
-  version?: string;
+  promptSlug: P;
+  environment: E;
+  version?: V;
 }
 
 export const ContentItemTextSchema = z.object({

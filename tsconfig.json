@@ -23,6 +23,7 @@
     "types": [
       "vitest/globals"
     ],
+    "baseUrl": "./",
     "paths": {
       "langtail/dist/customTypes": [
         "./src/customTypes.ts"

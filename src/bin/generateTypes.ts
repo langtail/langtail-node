@@ -77,14 +77,16 @@ const generateTypes = async ({ out }: GenerateTypesOptions) => {
   const promptObject: PromptObject = {};
   for (const deployment of deployments) {
     const { promptSlug, environment, version } = deployment;
-    if (!promptObject[promptSlug]) {
-      promptObject[promptSlug] = {};
-    }
-    if (!promptObject[promptSlug][environment]) {
-      promptObject[promptSlug][environment] = {};
-    }
-    if (version) {
-      promptObject[promptSlug][environment][version] = {};
+    if (promptSlug && environment) {
+      if (!promptObject[promptSlug]) {
+        promptObject[promptSlug] = {};
+      }
+      if (!promptObject[promptSlug][environment]) {
+        promptObject[promptSlug][environment] = {};
+      }
+      if (version) {
+        promptObject[promptSlug][environment]![version] = {};
+      }
     }
   }
 
