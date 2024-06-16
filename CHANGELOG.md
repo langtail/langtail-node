@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.4.3
+
+- Langtail types generator
+
 # 0.4.2
 
 - list deployments EP
