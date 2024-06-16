@@ -11,19 +11,11 @@ import { userAgent } from "./userAgent"
 import queryString from "query-string"
 import { Deployment, PlaygroundState } from "./schemas"
 import { OpenAiBodyType, getOpenAIBody } from "./getOpenAIBody"
-import * as typesRelative from 'langtail/dist/customTypes';
-import * as typesDefault from './customTypes';
-
-// if relative types are unresolved, PromptOptions is Any
-// in which case we use default options instead
-export type PromptSlug = 0 extends (1 & typesRelative.PromptSlug) ? typesDefault.PromptSlug : typesRelative.PromptSlug;
-export type Environment<P extends PromptSlug> = 0 extends (1 & typesRelative.Environment<P>) ? typesDefault.Environment<P> : typesRelative.Environment<P>;
-export type Version<P extends PromptSlug, E extends Environment<P>> = 0 extends (1 & typesRelative.Version<P, E>) ? typesDefault.Version<P, E> : typesRelative.Version<P, E>;
-export type PromptOptions<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>> = 0 extends (1 & typesRelative.PromptOptions<P, E, V>) ? typesDefault.PromptOptions<P, E, V> : typesRelative.PromptOptions<P, E, V>;
-
-export type LangtailEnvironment = "preview" | "staging" | "production"
+import { Environment, PromptOptions, PromptSlug, Version, LangtailEnvironment } from "./types"
 
 interface LangtailPromptVariables { } // TODO use this when generating schema for deployed prompts
+
+export { LangtailEnvironment }
 
 type StreamResponseType = Stream<ChatCompletionChunk>
 
@@ -31,7 +23,7 @@ type OpenAIResponseWithHttp = ChatCompletion & {
   httpResponse: Response | globalThis.Response
 }
 
-interface CreatePromptPathOptions<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>> extends PromptOptions<P, E, V> {
+interface CreatePromptPathOptions<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> extends PromptOptions<P, E, V> {
   configGet?: boolean
 }
 
@@ -44,13 +36,13 @@ type Options = {
   onResponse?: (response: ChatCompletion) => void
 }
 
-interface IPromptIdProps<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>> extends PromptOptions<P, E, V>, ILangtailExtraProps, OpenAiBodyType { }
+interface IPromptIdProps<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> extends PromptOptions<P, E, V>, ILangtailExtraProps, OpenAiBodyType { }
 
-export interface IRequestParams<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>> extends IPromptIdProps<P, E, V> {
+export interface IRequestParams<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> extends IPromptIdProps<P, E, V> {
   variables?: Record<string, any>
 }
 
-interface IRequestParamsStream<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>> extends IRequestParams<P, E, V> {
+interface IRequestParamsStream<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> extends IRequestParams<P, E, V> {
   stream: boolean
 }
 
@@ -66,7 +58,7 @@ export class LangtailPrompts {
     this.options = options
   }
 
-  createPromptPath<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>>({
+  createPromptPath<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>({
     prompt,
     environment,
     version,
@@ -101,11 +93,11 @@ export class LangtailPrompts {
       : `${this.baseUrl}/${urlPath}${queryParamsString}`
   }
 
-  invoke<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>>(
+  invoke<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>(
     options: Omit<IRequestParams<P, E, V>, "stream">,
   ): Promise<OpenAIResponseWithHttp>
-  invoke<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>>(options: IRequestParamsStream<P, E, V>): Promise<StreamResponseType>
-  async invoke<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>>({
+  invoke<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>(options: IRequestParamsStream<P, E, V>): Promise<StreamResponseType>
+  async invoke<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>({
     prompt,
     environment,
     version,
@@ -166,7 +158,7 @@ export class LangtailPrompts {
     return result
   }
 
-  async listDeployments(): Promise<Deployment[]> {
+  async listDeployments<P extends PromptSlug, E extends Environment<P> = Environment<P>, V extends Version<P, E> = Version<P, E>>(): Promise<Deployment<P, E, V>[]> {
     const res = await fetch(`${this.baseUrl}/list-deployments`, {
       headers: {
         "X-API-Key": this.apiKey,
@@ -185,7 +177,7 @@ export class LangtailPrompts {
     return responseJson.deployments
   }
 
-  async get<P extends PromptSlug, E extends Environment<P> = "production", V extends Version<P, E> = undefined>({
+  async get<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>({
     prompt,
     environment,
     version,

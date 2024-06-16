@@ -1,9 +1,10 @@
 import { loadApiKey, withoutTrailingSlash } from '@ai-sdk/provider-utils';
 import { LangtailChatLanguageModel } from './langtail-language-model';
 import { userAgent } from '../userAgent';
-import { Environment, LangtailEnvironment, LangtailPrompts, PromptSlug, Version } from '../LangtailPrompts';
 import { LangtailChatSettings } from './langtail-chat-settings';
 import { LangtailNode } from '../LangtailNode';
+import { LangtailPrompts } from '../LangtailPrompts';
+import { PromptSlug, Environment, Version } from '../types';
 
 export { LangtailChatLanguageModel };
 
@@ -18,10 +19,20 @@ export interface LangtailProviderSettings extends AIBridgeSettings {
   apiKey?: string;
 }
 
+type LangtailProviderFunction = {
+  <P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>(
+    promptId: P,
+    settings?: LangtailChatSettings<P, E, V>
+  ): LangtailChatLanguageModel<P, E, V>;
+  chat: <P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>(
+    promptId: P,
+    settings?: LangtailChatSettings<P, E, V>
+  ) => LangtailChatLanguageModel<P, E, V>;
+};
 
 export function createLangtail(
   options: LangtailProviderSettings = {},
-) {
+): LangtailProviderFunction {
   const baseURL =
     withoutTrailingSlash(options.baseURL) ??
     'https://api.langtail.com';
@@ -37,7 +48,7 @@ export function createLangtail(
 export function aiBridge(
   langtail: LangtailPrompts | LangtailNode,
   options: AIBridgeSettings = {},
-) {
+): LangtailProviderFunction {
 
   let langtailPrompts: LangtailPrompts;
   if (langtail instanceof LangtailPrompts) {
@@ -46,7 +57,7 @@ export function aiBridge(
     langtailPrompts = langtail.prompts;
   }
 
-  const createChatModel = <P extends PromptSlug, E extends Environment<P> = "production", V extends Version<P, E> | undefined = undefined>(
+  const createChatModel = <P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>(
     promptId: P,
     settings: LangtailChatSettings<P, E, V> = {},
   ) => {
@@ -80,7 +91,7 @@ export function aiBridge(
     });
   }
 
-  const provider = function <P extends PromptSlug, E extends Environment<P> = "production", V extends Version<P, E> | undefined = undefined>(
+  const provider = function <P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>(
     promptId: P,
     settings?: LangtailChatSettings<P, E, V>,
   ) {
@@ -98,4 +109,4 @@ export function aiBridge(
   return provider;
 }
 
-export const langtail = createLangtail();
+export const langtail: LangtailProviderFunction = createLangtail();

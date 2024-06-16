@@ -1,20 +1,18 @@
 #!/usr/bin/env node
 import fs from 'fs';
-import { LangtailEnvironment, LangtailPrompts } from '../LangtailPrompts';
+import { LangtailPrompts } from '../LangtailPrompts';
 import jsonSchemaToZod from 'json-schema-to-zod';
 import SDK_VERSION from '../version'
 import { askUserToConfirm, dirExists, getApiKey, prepareOutputFilePath } from './utils';
+import { Environment, PromptOptions, PromptSlug, Version } from '../types';
 
 
 const DEFAULT_FILENAME = 'langtailTools.ts';
 const TEMPLATE_PATH = new URL('./langtailTools.ts.template', import.meta.url);
 const REPLACE_LINE = 'const toolsObject = {};  // replaced by generateTools.ts'
 
-interface FetchToolsOptions {
+interface FetchToolsOptions<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> extends PromptOptions<P, E, V> {
   langtailPrompts: LangtailPrompts;
-  promptSlug: string;
-  environment: LangtailEnvironment;
-  version: string | undefined;
 }
 
 interface Tools {
@@ -24,7 +22,7 @@ interface Tools {
   }
 }
 
-const fetchTools = async ({ langtailPrompts, promptSlug, environment, version }: FetchToolsOptions): Promise<Tools | undefined> => {
+const fetchTools = async <P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>({ langtailPrompts, prompt: promptSlug, environment, version }: FetchToolsOptions<P, E, V>): Promise<Tools | undefined> => {
   const prompt = await langtailPrompts.get({
     prompt: promptSlug,
     environment: environment,
@@ -100,8 +98,8 @@ const generateTools = async ({ out }: GenerateToolsOptions) => {
   for (const deployment of deployments) {
     const { promptSlug, environment, version } = deployment;
     try {
-      const promptTools = await fetchTools({ langtailPrompts, promptSlug, environment: environment as LangtailEnvironment, version });
-      if (promptTools) {
+      const promptTools = await fetchTools({ langtailPrompts, prompt: promptSlug, environment: environment, version });
+      if (promptTools && environment && promptSlug) {
         toolsObject[promptSlug] = toolsObject[promptSlug] || {};
         toolsObject[promptSlug][environment] = toolsObject[promptSlug][environment] || {};
         if (version) {

@@ -3,11 +3,5 @@ declare module 'langtail/dist/customTypes' {
 
   export type PromptSlug = keyof PromptsType;
   export type Environment<P extends PromptSlug> = keyof PromptsType[P] | undefined;
-  export type Version<P extends PromptSlug, E extends Environment<P> = undefined> = (E extends keyof PromptsType[P] ? keyof PromptsType[P][E] : "production" extends keyof PromptsType[P] ? keyof PromptsType[P]["production"] : undefined) | undefined;
-
-  export interface PromptOptions<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> {
-    prompt: P,
-    environment?: E,
-    version?: V
-  }
+  export type Version<P extends PromptSlug, E extends Environment<P> = undefined> = (E extends undefined ? ("production" extends keyof PromptsType[P] ? keyof PromptsType[P]["production"] : undefined) : keyof PromptsType[P][E]) | undefined;
 }
