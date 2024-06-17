@@ -101,7 +101,7 @@ const generateTypes = async ({ out }: GenerateTypesOptions) => {
   const fileString = fileInfo + template
     .replace(
       REPLACE_LINE,
-      `type PromptsType = ${JSON.stringify(promptObject, null, 2)};`
+      `type PromptsType = ${JSON.stringify(promptObject, null, 2).split("\n").join("\n  ")};`
     );
 
   fs.writeFileSync(outputFile, fileString, 'utf8');

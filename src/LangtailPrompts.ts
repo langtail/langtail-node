@@ -23,10 +23,10 @@ type OpenAIResponseWithHttp = ChatCompletion & {
   httpResponse: Response | globalThis.Response
 }
 
-interface CreatePromptPathOptions<P extends PromptSlug, E extends Environment<P> & LangtailEnvironment, V extends Version<P, E> = undefined> {
+interface CreatePromptPathOptions<P extends PromptSlug, E extends Environment<P> & LangtailEnvironment, V extends Version<P, E>> {
   prompt: P,
   environment: E,
-  version?: V
+  version?: V,
   configGet?: boolean
 }
 
@@ -39,14 +39,14 @@ type Options = {
   onResponse?: (response: ChatCompletion) => void
 }
 
-interface IPromptIdProps<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> extends PromptOptions<P, E, V>, ILangtailExtraProps, OpenAiBodyType { }
+type IPromptIdProps<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> = PromptOptions<P, E, V> & ILangtailExtraProps & OpenAiBodyType
 
-export interface IRequestParams<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> extends IPromptIdProps<P, E, V> {
+export type IRequestParams<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> = IPromptIdProps<P, E, V> & {
   variables?: Record<string, any>
 }
 
-interface IRequestParamsStream<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> extends IRequestParams<P, E, V> {
-  stream: boolean
+type IRequestParamsStream<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined, S extends boolean | undefined = false> = IRequestParams<P, E, V> & {
+  stream?: S
 }
 
 export class LangtailPrompts {
@@ -61,7 +61,7 @@ export class LangtailPrompts {
     this.options = options
   }
 
-  createPromptPath<P extends PromptSlug, E extends Environment<P> & LangtailEnvironment, V extends Version<P, E> = undefined>({
+  createPromptPath<P extends PromptSlug, E extends Environment<P> & LangtailEnvironment, V extends Version<P, E>>({
     prompt,
     environment,
     version,
@@ -95,18 +95,17 @@ export class LangtailPrompts {
       : `${this.baseUrl}/${urlPath}${queryParamsString}`
   }
 
-  invoke<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>(
-    options: Omit<IRequestParams<P, E, V>, "stream">,
-  ): Promise<OpenAIResponseWithHttp>
-  invoke<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>(options: IRequestParamsStream<P, E, V>): Promise<StreamResponseType>
-  async invoke<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>({
+  async invoke<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined, S extends boolean = false>({
     prompt,
     environment,
     version,
     doNotRecord,
     metadata,
+    stream,
     ...rest
-  }: IRequestParams<P, E, V> | IRequestParamsStream<P, E, V>) {
+  }: IRequestParamsStream<P, E, V, S>): Promise<S extends true ? StreamResponseType : OpenAIResponseWithHttp> {
+    type OutputType = S extends true ? StreamResponseType : OpenAIResponseWithHttp
+
     const metadataHeaders = metadata
       ? Object.entries(metadata).reduce((acc, [key, value]) => {
         acc[`x-langtail-metadata-${key}`] = value
@@ -123,7 +122,7 @@ export class LangtailPrompts {
         "x-langtail-do-not-record": doNotRecord ? "true" : "false",
         ...metadataHeaders,
       },
-      body: JSON.stringify({ stream: false, ...rest }),
+      body: JSON.stringify({ stream, ...rest }),
     }
     const promptPath = this.createPromptPath({
       prompt,
@@ -145,11 +144,11 @@ export class LangtailPrompts {
       )
     }
 
-    if ("stream" in rest && rest.stream) {
+    if (stream) {
       if (!res.body) {
         throw new Error("No body in response")
       }
-      return Stream.fromSSEResponse(res, new AbortController())
+      return Stream.fromSSEResponse(res, new AbortController()) as OutputType
     }
 
     const result = (await res.json()) as OpenAIResponseWithHttp
@@ -157,10 +156,10 @@ export class LangtailPrompts {
       this.options.onResponse(result)
     }
     result.httpResponse = res
-    return result
+    return result as OutputType
   }
 
-  async listDeployments<P extends PromptSlug, E extends Environment<P> = Environment<P>, V extends Version<P, E> = Version<P, E>>(): Promise<Deployment<P, E, V>[]> {
+  async listDeployments<P extends PromptSlug>(): Promise<Deployment<P>[]> {
     const res = await fetch(`${this.baseUrl}/list-deployments`, {
       headers: {
         "X-API-Key": this.apiKey,
