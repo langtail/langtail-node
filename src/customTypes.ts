@@ -5,5 +5,5 @@
 type LangtailEnvironment = "preview" | "staging" | "production";
 
 export type PromptSlug = string;
-export type Environment<P extends PromptSlug> = LangtailEnvironment | undefined
-export type Version<P extends PromptSlug, E extends Environment<P>> = string | undefined;
+export type Environment<P extends PromptSlug> = LangtailEnvironment | undefined;
+export type Version<P extends PromptSlug, E extends Environment<P> = undefined> = string | undefined;
