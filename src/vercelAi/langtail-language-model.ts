@@ -57,8 +57,8 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
     this.config = config;
   }
 
-  get environment(): E {
-    return (this.settings.environment ?? 'production') as E;
+  get environment(): E extends LangtailEnvironment ? E : "production" {
+    return (this.settings.environment ?? 'production') as E extends LangtailEnvironment ? E : "production";
   }
 
   get version(): NonNullable<V> | "default" {

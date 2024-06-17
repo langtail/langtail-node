@@ -19,8 +19,8 @@ export type PromptOptions<P extends PromptSlug, E extends Environment<P> = undef
   prompt: P,
   environment?: E,
   version?: V
-} : {
+} : (E extends undefined ? never : {
   prompt: P,
   environment: E,
   version?: V
-};
+});
