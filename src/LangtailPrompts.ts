@@ -122,7 +122,7 @@ export class LangtailPrompts {
         "x-langtail-do-not-record": doNotRecord ? "true" : "false",
         ...metadataHeaders,
       },
-      body: JSON.stringify({ stream, ...rest }),
+      body: JSON.stringify({ stream: stream === true, ...rest }),
     }
     const promptPath = this.createPromptPath({
       prompt,
