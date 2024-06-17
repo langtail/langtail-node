@@ -20,11 +20,11 @@ export interface LangtailProviderSettings extends AIBridgeSettings {
 }
 
 interface LangtailProviderFunction {
-  <P extends PromptSlug, E extends Environment<P> & LangtailEnvironment = "production", V extends Version<P, E> = undefined>(promptId: P, settings: LangtailChatSettings<P, E, V>): LangtailChatLanguageModel<P, E, V>;
-  <P extends PromptSlug, E extends Environment<P> & LangtailEnvironment = "production", V extends Version<P, E> = undefined>(promptId: P): IsProductionDefined<P> extends true ? LangtailChatLanguageModel<P, E, V> : never;
+  <P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>(promptId: P, settings: LangtailChatSettings<P, E, V>): LangtailChatLanguageModel<P, E, V>;
+  <P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>(promptId: P): IsProductionDefined<P> extends true ? LangtailChatLanguageModel<P, E, V> : never;
   chat: {
-    <P extends PromptSlug, E extends Environment<P> & LangtailEnvironment = "production", V extends Version<P, E> = undefined>(promptId: P, settings: LangtailChatSettings<P, E, V>): LangtailChatLanguageModel<P, E, V>;
-    <P extends PromptSlug, E extends Environment<P> & LangtailEnvironment = "production", V extends Version<P, E> = undefined>(promptId: P): IsProductionDefined<P> extends true ? LangtailChatLanguageModel<P, E, V> : never;
+    <P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>(promptId: P, settings: LangtailChatSettings<P, E, V>): LangtailChatLanguageModel<P, E, V>;
+    <P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>(promptId: P): IsProductionDefined<P> extends true ? LangtailChatLanguageModel<P, E, V> : never;
   };
 }
 
@@ -55,7 +55,7 @@ export function aiBridge(
     langtailPrompts = langtail.prompts;
   }
 
-  const createChatModel = <P extends PromptSlug, E extends Environment<P> & LangtailEnvironment = "production", V extends Version<P, E> = undefined>(
+  const createChatModel = <P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>(
     promptId: P,
     settings: LangtailChatSettings<P, E, V> = {},
   ) => {
@@ -89,7 +89,7 @@ export function aiBridge(
     });
   }
 
-  const provider = function <P extends PromptSlug, E extends Environment<P> & LangtailEnvironment = "production", V extends Version<P, E> = undefined>(
+  const provider = function <P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>(
     promptId: P,
     settings?: LangtailChatSettings<P, E, V>,
   ) {

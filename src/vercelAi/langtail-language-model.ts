@@ -35,7 +35,7 @@ type LangtailChatConfig = {
 // to choose the default model from Langtail playground
 const MODEL_IN_LANGTAIL = 'langtail';
 
-export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E extends Environment<P> & LangtailEnvironment = "production", V extends Version<P, E> = undefined> implements LanguageModelV1 {
+export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> implements LanguageModelV1 {
   readonly specificationVersion: 'v1' = 'v1';
   readonly defaultObjectGenerationMode = 'tool';
 
