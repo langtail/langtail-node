@@ -22,7 +22,13 @@
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
     "types": [
       "vitest/globals"
-    ]
+    ],
+    "baseUrl": "./",
+    "paths": {
+      "langtail/dist/customTypes": [
+        "./src/customTypes.ts"
+      ]
+    }
   },
   "exclude": [
     "node_modules",

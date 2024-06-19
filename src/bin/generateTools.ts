@@ -1,28 +1,18 @@
 #!/usr/bin/env node
 import fs from 'fs';
-import path from 'path';
-import readline from 'readline';
-import { LangtailEnvironment, LangtailPrompts } from '../LangtailPrompts';
+import { LangtailPrompts } from '../LangtailPrompts';
 import jsonSchemaToZod from 'json-schema-to-zod';
-import packageJson from "../../package.json"
+import SDK_VERSION from '../version'
+import { askUserToConfirm, dirExists, getApiKey, prepareOutputFilePath } from './utils';
+import { Environment, PromptOptions, PromptSlug, Version } from '../types';
 
-const SDK_VERSION = packageJson.version;
-const TEMPLATE_PATH = new URL('./langtailTools.template.ts', import.meta.url);
+
+const DEFAULT_FILENAME = 'langtailTools.ts';
+const TEMPLATE_PATH = new URL('./langtailTools.ts.template', import.meta.url);
 const REPLACE_LINE = 'const toolsObject = {};  // replaced by generateTools.ts'
 
-const getApiKey = (): string => {
-  const apiKey = process.env.LANGTAIL_API_KEY;
-  if (!apiKey) {
-    throw new Error('LANGTAIL_API_KEY environment variable is required');
-  }
-  return apiKey;
-}
-
-interface FetchToolsOptions {
+interface FetchToolsOptions<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> extends PromptOptions<P, E, V> {
   langtailPrompts: LangtailPrompts;
-  promptSlug: string;
-  environment: LangtailEnvironment;
-  version: string | undefined;
 }
 
 interface Tools {
@@ -32,7 +22,7 @@ interface Tools {
   }
 }
 
-const fetchTools = async ({ langtailPrompts, promptSlug, environment, version }: FetchToolsOptions): Promise<Tools | undefined> => {
+const fetchTools = async <P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>({ langtailPrompts, prompt: promptSlug, environment, version }: FetchToolsOptions<P, E, V>): Promise<Tools | undefined> => {
   const prompt = await langtailPrompts.get({
     prompt: promptSlug,
     environment: environment,
@@ -47,47 +37,6 @@ const fetchTools = async ({ langtailPrompts, promptSlug, environment, version }:
       }
     ]));
   }
-}
-
-function askUserToConfirm(query: string): Promise<boolean> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-
-  return new Promise(resolve => {
-    rl.question(query, (answer) => {
-      rl.close();
-      resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
-    });
-  });
-}
-
-const prepareOutputFilePath = async (outputFile: string): Promise<string | undefined> => {
-  let resultFilePath = outputFile;
-  if (fs.existsSync(resultFilePath) && fs.statSync(resultFilePath).isDirectory()) {
-    resultFilePath = path.join(resultFilePath, 'langtailTools.ts');
-  }
-
-  if (fs.existsSync(resultFilePath)) {
-    const confirmed = await askUserToConfirm(`File ${resultFilePath} exists. Overwrite? [y/N]: `);
-    if (!confirmed) {
-      return;
-    }
-  }
-
-  const directory = path.dirname(resultFilePath);
-  if (!fs.existsSync(directory)) {
-    const confirmed = await askUserToConfirm(`Directory ${directory} does not exist. Create it? [y/N]: `);
-    if (confirmed) {
-      fs.mkdirSync(directory, { recursive: true });
-      console.log(`Created directory: ${directory}`);
-    } else {
-      return;
-    }
-  }
-
-  return resultFilePath;
 }
 
 const stringifyToolsObject = (obj: object, depth = 0): string => {
@@ -126,12 +75,14 @@ interface ToolsObject {
   }
 }
 
+export const determineDefaultPath = () => dirExists('src') ? `src/${DEFAULT_FILENAME}` : DEFAULT_FILENAME;
+
 interface GenerateToolsOptions {
   out: string;
 }
 
 const generateTools = async ({ out }: GenerateToolsOptions) => {
-  const outputFile = await prepareOutputFilePath(out);
+  const outputFile = await prepareOutputFilePath(out, DEFAULT_FILENAME);
   if (!outputFile) {
     console.log('Operation cancelled by the user.');
     return;
@@ -147,8 +98,8 @@ const generateTools = async ({ out }: GenerateToolsOptions) => {
   for (const deployment of deployments) {
     const { promptSlug, environment, version } = deployment;
     try {
-      const promptTools = await fetchTools({ langtailPrompts, promptSlug, environment: environment as LangtailEnvironment, version });
-      if (promptTools) {
+      const promptTools = await fetchTools({ langtailPrompts, prompt: promptSlug, environment: environment, version });
+      if (promptTools && environment && promptSlug) {
         toolsObject[promptSlug] = toolsObject[promptSlug] || {};
         toolsObject[promptSlug][environment] = toolsObject[promptSlug][environment] || {};
         if (version) {

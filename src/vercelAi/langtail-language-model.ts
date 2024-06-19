@@ -23,7 +23,7 @@ import { mapOpenAIChatLogProbsOutput } from './map-openai-chat-logprobs';
 import { ILangtailExtraProps, LangtailPrompts } from '../LangtailNode';
 import { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions';
 import { FunctionParameters } from 'openai/resources';
-import { LangtailEnvironment } from '../LangtailPrompts';
+import type { PromptSlug, Environment, Version, LangtailEnvironment } from '../types';
 
 type LangtailChatConfig = {
   provider: string;
@@ -35,34 +35,34 @@ type LangtailChatConfig = {
 // to choose the default model from Langtail playground
 const MODEL_IN_LANGTAIL = 'langtail';
 
-export class LangtailChatLanguageModel<P extends string = string, E extends LangtailEnvironment = LangtailEnvironment, V extends string = string> implements LanguageModelV1 {
+export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> implements LanguageModelV1 {
   readonly specificationVersion: 'v1' = 'v1';
   readonly defaultObjectGenerationMode = 'tool';
 
   readonly modelId: string;
   readonly promptId: P;
 
-  readonly settings: LangtailChatSettings<E, V>;
+  readonly settings: LangtailChatSettings<P, E, V>;
 
   private readonly config: LangtailChatConfig;
 
   constructor(
     promptId: P,
-    settings: LangtailChatSettings<E, V>,
+    settings: LangtailChatSettings<P, E, V>,
     config: LangtailChatConfig,
   ) {
-    this.promptId = promptId as P;
+    this.promptId = promptId;
     this.modelId = settings.model ?? MODEL_IN_LANGTAIL;
     this.settings = settings;
     this.config = config;
   }
 
-  get environment(): E {
-    return (this.settings.environment ?? 'production') as E;
+  get environment(): E extends LangtailEnvironment ? E : "production" {
+    return (this.settings.environment ?? 'production') as E extends LangtailEnvironment ? E : "production";
   }
 
-  get version(): V {
-    return (this.settings.version ?? 'default') as V;
+  get version(): NonNullable<V> | "default" {
+    return (this.settings.version ?? 'default');
   }
 
   get provider(): string {
