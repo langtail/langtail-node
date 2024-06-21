@@ -64,6 +64,16 @@
       "import": "./dist/template.mjs",
       "types": "./dist/template.d.ts"
     },
+    "./dist/stream": {
+      "require": "./dist/stream/index.js",
+      "import": "./dist/stream/index.mjs",
+      "types": "./dist/stream/index.d.ts"
+    },
+    "./dist/react/useChatStream": {
+      "require": "./dist/react/useChatStream.js",
+      "import": "./dist/react/useChatStream.mjs",
+      "types": "./dist/react/useChatStream.d.ts"
+    },
     "./dist/vercelAi": {
       "require": "./dist/vercelAi/index.js",
       "import": "./dist/vercelAi/index.mjs",
@@ -106,7 +116,9 @@
       "src/template.ts",
       "src/getOpenAIBody.ts",
       "src/vercelAi/index.ts",
-      "src/bin/entry.ts"
+      "src/bin/entry.ts",
+      "src/stream/index.ts",
+      "src/react/useChatStream.ts"
     ],
     "external": [
       "dotenv-flow",
