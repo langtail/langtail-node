@@ -286,6 +286,39 @@ tools(ltModel, {
 
 You can override input types to improve IntelliSense for the `prompt`, `environment`, and `version` attributes. Use the command `npx langtail generate-types`.
 
+## Stream helpers
+
+The AI streams are delivered as JSON objects, which are split into chunks. This can pose a challenge because JSON objects might be distributed across multiple chunks. We have provide you with helper functions to manage these JSON streams more effectively.
+
+Here's an example:
+
+```ts
+import {
+  chatStreamToRunner,
+  type ChatCompletionStream,
+} from "langtail/dist/stream"
+
+const stream = await fetch(`/api/langtail`, {
+  method: "POST",
+  body: JSON.stringify({ messages: localMessages }),
+  headers: {
+    "Content-Type": "application/json",
+  },
+}).then((res) => res.body)
+
+// NOTE: await res.body => ReadableStream
+const runner = chatStreamToRunner(stream)
+
+runner.on("message", (messageDelta: string) => {
+  // NOTE: this is a string delta directly from the AI you can put together
+  console.log(messageDelta)
+})
+
+runner.on("chunk", (chunk: ChatCompletionChunk) => {
+  // NOTE: chunk here is always a proper JSON even with parts of the message
+})
+```
+
 ## useChatStream React hook
 
 "You can leverage our React hook to handle AI streams more easily. We have developed a hook called `useChatStream`, which can be imported from `langtail/dist/react/useChatStream`.
