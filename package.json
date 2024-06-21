@@ -91,7 +91,7 @@
   "dependencies": {
     "@ai-sdk/provider": "^0.0.5",
     "@ai-sdk/provider-utils": "^0.0.8",
-    "@langtail/handlebars-evalless": "^0.1.1",
+    "@langtail/handlebars-evalless": "^0.1.2",
     "commander": "^12.1.0",
     "date-fns": "^3.6.0",
     "dotenv-flow": "^4.1.0",
