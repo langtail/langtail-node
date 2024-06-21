@@ -1,5 +1,10 @@
 # Changelog
 
+# 0.4.4
+
+- useChatStream react hook
+- export stream helpers `chatStreamToRunner` and `assistantStreamToRunner`
+
 # 0.4.3
 
 - Langtail types generator
