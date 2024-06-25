@@ -11,7 +11,7 @@ import { userAgent } from "./userAgent"
 import queryString from "query-string"
 import { Deployment, PlaygroundState } from "./schemas"
 import { OpenAiBodyType, getOpenAIBody } from "./getOpenAIBody"
-import { Environment, PromptOptions, PromptSlug, Version, LangtailEnvironment } from "./types"
+import { Environment, PromptOptions, PromptSlug, Version, LangtailEnvironment, Variables } from "./types"
 
 interface LangtailPromptVariables { } // TODO use this when generating schema for deployed prompts
 
@@ -42,7 +42,7 @@ type Options = {
 type IPromptIdProps<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> = PromptOptions<P, E, V> & ILangtailExtraProps & OpenAiBodyType
 
 export type IRequestParams<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> = IPromptIdProps<P, E, V> & {
-  variables?: Record<string, any>
+  variables?: Variables<P, E, V>
 }
 
 type IRequestParamsStream<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined, S extends boolean | undefined = false> = IRequestParams<P, E, V> & {

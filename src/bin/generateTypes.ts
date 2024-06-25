@@ -3,6 +3,7 @@ import path from 'path';
 import { LangtailEnvironment, LangtailPrompts } from "../LangtailPrompts";
 import { dirExists, getApiKey, prepareOutputFilePath } from "./utils";
 import SDK_VERSION from '../version'
+import { Environment, PromptOptions, PromptSlug, Version } from 'src/types';
 
 const DEFAULT_FILENAME = 'langtailTypes.d.ts';
 const TEMPLATE_PATH = new URL('./langtailTypes.d.ts.template', import.meta.url);
@@ -49,6 +50,20 @@ export const determineDefaultPath = (): string => {
   return DEFAULT_FILENAME;
 }
 
+interface FetchVariablesOptions<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> extends PromptOptions<P, E, V> {
+  langtailPrompts: LangtailPrompts;
+}
+
+const fetchVariables = async <P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined>({ langtailPrompts, prompt: promptSlug, environment, version }: FetchVariablesOptions<P, E, V>): Promise<Record<string, string>> => {
+  const prompt = await langtailPrompts.get({
+    prompt: promptSlug,
+    environment: environment,
+    version: version,
+  });
+
+  return prompt.chatInput
+}
+
 interface PromptObject {
   [promptSlug: string]: {
     [environment in LangtailEnvironment]?: {
@@ -78,14 +93,23 @@ const generateTypes = async ({ out }: GenerateTypesOptions) => {
   for (const deployment of deployments) {
     const { promptSlug, environment, version } = deployment;
     if (promptSlug && environment) {
+      const variables = await fetchVariables({ langtailPrompts, prompt: promptSlug, environment: environment, version });
+      Object.entries(variables).forEach(([key, value]) => {
+        variables[key] = JSON.stringify(value) + ' | (string & {})';
+      });
       if (!promptObject[promptSlug]) {
         promptObject[promptSlug] = {};
       }
       if (!promptObject[promptSlug][environment]) {
-        promptObject[promptSlug][environment] = {};
+        promptObject[promptSlug][environment] = {
+          versions: {},
+          variables: variables
+        };
       }
       if (version) {
-        promptObject[promptSlug][environment]![version] = {};
+        promptObject[promptSlug][environment]!.versions[version] = {
+          variables: variables
+        };
       }
     }
   }
@@ -98,10 +122,13 @@ const generateTypes = async ({ out }: GenerateTypesOptions) => {
   ].filter(Boolean).join('\n// ') + '\n';
 
   const template = fs.readFileSync(TEMPLATE_PATH, 'utf8');
+  const jsonPO = JSON.stringify(promptObject, null, 2)
+  const unpackedVariablesPO = jsonPO.replace(/\: \"\\\"(\w+)\\\" \| \(string & {}\)\"/g, '?: "$1" | (string & {})')
+  const indentedPO = unpackedVariablesPO.split("\n").join("\n  ")
   const fileString = fileInfo + template
     .replace(
       REPLACE_LINE,
-      `type PromptsType = ${JSON.stringify(promptObject, null, 2).split("\n").join("\n  ")};`
+      `type PromptsType = ${indentedPO};`
     );
 
   fs.writeFileSync(outputFile, fileString, 'utf8');

@@ -3,5 +3,6 @@ declare module 'langtail/dist/customTypes' {
 
   export type PromptSlug = keyof PromptsType;
   export type Environment<P extends PromptSlug> = keyof PromptsType[P] | undefined;
-  export type Version<P extends PromptSlug, E extends Environment<P> = undefined> = (E extends undefined ? ("production" extends keyof PromptsType[P] ? keyof PromptsType[P]["production"] : never) : keyof PromptsType[P][E]) | undefined;
+  export type Version<P extends PromptSlug, E extends Environment<P> = undefined> = (E extends undefined ? ("production" extends keyof PromptsType[P] ? keyof PromptsType[P]["production"]["versions"] : never) : keyof PromptsType[P][E]["versions"]) | undefined;
+  export type Variables<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> = (E extends undefined ? (V extends undefined ? (PromptsType[P]["production"] extends { variables: Record<string, string> } ? PromptsType[P]["production"]["variables"] : {}) : (PromptsType[P]["production"]["versions"][V] extends { variables: Record<string, string> } ? PromptsType[P][E]["versions"][V]["variables"] : {})) : (V extends undefined ? (PromptsType[P][E] extends { variables: Record<string, string> } ? PromptsType[P][E]["variables"] : {}) : (PromptsType[P][E]["versions"][V] extends { variables: Record<string, string> } ? PromptsType[P][E]["versions"][V]["variables"] : {})));
 }
