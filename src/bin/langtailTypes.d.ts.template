@@ -1,4 +1,4 @@
-declare module 'langtail/dist/customTypes' {
+declare module 'langtail/customTypes' {
   type PromptsType = {};  // replaced by generateTypes.ts
 
   export type PromptSlug = keyof PromptsType;

@@ -1,6 +1,6 @@
 // absolute import of custom types from langtail
 // enabling user to override types with local definitions
-import * as typesAbsolute from 'langtail/dist/customTypes';
+import * as typesAbsolute from 'langtail/customTypes';
 // import local definitions as fallback
 import * as typesDefault from './customTypes';
 

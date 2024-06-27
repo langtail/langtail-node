@@ -1,21 +1,23 @@
 {
   "name": "langtail",
-  "version": "0.4.6",
+  "version": "0.5.0",
   "description": "",
-  "main": "./dist/LangtailNode.js",
+  "main": "./LangtailNode.js",
   "packageManager": "pnpm@8.15.6",
   "engines": {
     "node": ">=18"
   },
   "bin": {
-    "langtail": "./dist/bin/entry.mjs"
+    "langtail": "./bin/entry.mjs"
   },
   "scripts": {
     "test": "vitest",
     "ts": "tsc --noEmit",
     "format": "prettier --write .",
-    "build": "tsup && copyfiles -u 1 src/bin/*.template dist/",
-    "prepublishOnly": "pnpm run build"
+    "build": "pnpm run clean && tsup && copyfiles -u 1 src/bin/*.template dist/ && node src/buildHelpers/moveFiles.js",
+    "clean": "node src/buildHelpers/cleanFiles.js",
+    "prepublishOnly": "pnpm run build",
+    "postpublish": "pnpm run clean"
   },
   "keywords": [
     "openai",
@@ -38,6 +40,7 @@
     "@types/node": "^20.12.11",
     "@types/react": "^18.3.3",
     "copyfiles": "^2.4.1",
+    "fs-extra": "^11.2.0",
     "jsdom": "^24.1.0",
     "nock": "14.0.0-beta.5",
     "prettier": "^3.2.5",
@@ -46,43 +49,43 @@
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
   },
-  "module": "./dist/LangtailNode.mjs",
-  "types": "./dist/LangtailNode.d.ts",
+  "module": "./LangtailNode.mjs",
+  "types": "./LangtailNode.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/LangtailNode.js",
-      "import": "./dist/LangtailNode.mjs",
-      "types": "./dist/LangtailNode.d.ts"
+      "require": "./LangtailNode.js",
+      "import": "./LangtailNode.mjs",
+      "types": "./LangtailNode.d.ts"
     },
-    "./dist/getOpenAIBody": {
-      "require": "./dist/getOpenAIBody.js",
-      "import": "./dist/getOpenAIBody.mjs",
-      "types": "./dist/getOpenAIBody.d.ts"
+    "./getOpenAIBody": {
+      "require": "./getOpenAIBody.js",
+      "import": "./getOpenAIBody.mjs",
+      "types": "./getOpenAIBody.d.ts"
     },
-    "./dist/template": {
-      "require": "./dist/template.js",
-      "import": "./dist/template.mjs",
-      "types": "./dist/template.d.ts"
+    "./template": {
+      "require": "./template.js",
+      "import": "./template.mjs",
+      "types": "./template.d.ts"
     },
-    "./dist/stream": {
-      "require": "./dist/stream/index.js",
-      "import": "./dist/stream/index.mjs",
-      "types": "./dist/stream/index.d.ts"
+    "./stream": {
+      "require": "./stream/index.js",
+      "import": "./stream/index.mjs",
+      "types": "./stream/index.d.ts"
     },
-    "./dist/react/useChatStream": {
-      "require": "./dist/react/useChatStream.js",
-      "import": "./dist/react/useChatStream.mjs",
-      "types": "./dist/react/useChatStream.d.ts"
+    "./react/useChatStream": {
+      "require": "./react/useChatStream.js",
+      "import": "./react/useChatStream.mjs",
+      "types": "./react/useChatStream.d.ts"
     },
-    "./dist/vercelAi": {
-      "require": "./dist/vercelAi/index.js",
-      "import": "./dist/vercelAi/index.mjs",
-      "types": "./dist/vercelAi/index.d.ts"
+    "./vercelAi": {
+      "require": "./vercelAi/index.js",
+      "import": "./vercelAi/index.mjs",
+      "types": "./vercelAi/index.d.ts"
     },
-    "./dist/customTypes": {
-      "require": "./dist/customTypes.js",
-      "import": "./dist/customTypes.mjs",
-      "types": "./dist/customTypes.d.ts"
+    "./customTypes": {
+      "require": "./customTypes.js",
+      "import": "./customTypes.mjs",
+      "types": "./customTypes.d.ts"
     }
   },
   "files": [
@@ -121,7 +124,7 @@
     ],
     "external": [
       "dotenv-flow",
-      "langtail/dist/customTypes"
+      "langtail/customTypes"
     ]
   }
 }

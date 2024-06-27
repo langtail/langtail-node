@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.5.0
+
+- BREAKING CHANGE: remove `dist/` from import paths
+
 # 0.4.6
 
 - IntelliSense for variables
