@@ -54,32 +54,32 @@
       "import": "./dist/LangtailNode.mjs",
       "types": "./dist/LangtailNode.d.ts"
     },
-    "./dist/getOpenAIBody": {
+    "./getOpenAIBody": {
       "require": "./dist/getOpenAIBody.js",
       "import": "./dist/getOpenAIBody.mjs",
       "types": "./dist/getOpenAIBody.d.ts"
     },
-    "./dist/template": {
+    "./template": {
       "require": "./dist/template.js",
       "import": "./dist/template.mjs",
       "types": "./dist/template.d.ts"
     },
-    "./dist/stream": {
+    "./stream": {
       "require": "./dist/stream/index.js",
       "import": "./dist/stream/index.mjs",
       "types": "./dist/stream/index.d.ts"
     },
-    "./dist/react/useChatStream": {
+    "./react/useChatStream": {
       "require": "./dist/react/useChatStream.js",
       "import": "./dist/react/useChatStream.mjs",
       "types": "./dist/react/useChatStream.d.ts"
     },
-    "./dist/vercelAi": {
+    "./vercelAi": {
       "require": "./dist/vercelAi/index.js",
       "import": "./dist/vercelAi/index.mjs",
       "types": "./dist/vercelAi/index.d.ts"
     },
-    "./dist/customTypes": {
+    "./customTypes": {
       "require": "./dist/customTypes.js",
       "import": "./dist/customTypes.mjs",
       "types": "./dist/customTypes.d.ts"
@@ -121,7 +121,7 @@
     ],
     "external": [
       "dotenv-flow",
-      "langtail/dist/customTypes"
+      "langtail/customTypes"
     ]
   }
 }

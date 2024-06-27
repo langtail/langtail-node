@@ -1,6 +1,6 @@
 // do not import from this file, import from ./types instead
 // all types exported in this file can be overridden by user
-// by redeclaring the langtail/dist/customTypes module
+// by redeclaring the langtail/customTypes module
 
 type LangtailEnvironment = "preview" | "staging" | "production";
 
