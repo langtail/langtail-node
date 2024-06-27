@@ -1,5 +1,5 @@
 import { ILangtailExtraProps } from '../LangtailNode';
-import { PromptSlug, Environment, Version, IsProductionDefined, LangtailEnvironment } from '../types';
+import { PromptSlug, Environment, Version, IsProductionDefined, LangtailEnvironment, Variables } from '../types';
 import { OpenAiBodyType } from '../getOpenAIBody';
 
 
@@ -15,5 +15,5 @@ type LangtailChatSettingsBase<P extends PromptSlug, E extends Environment<P> = u
 });
 
 export type LangtailChatSettings<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> = LangtailChatSettingsBase<P, E, V> & ILangtailExtraProps & OpenAiBodyType & {
-  variables?: Record<string, any>
+  variables?: Variables<P, E, V>
 }

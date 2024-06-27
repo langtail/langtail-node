@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.4.6
+
+- IntelliSense for variables
+
 # 0.4.4
 
 - useChatStream react hook
