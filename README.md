@@ -205,10 +205,10 @@ This way you are still using langtail prompts without exposing potentially sensi
 ## Vercel AI provider
 
 You can use Langtail with [Vercel AI SDK](https://github.com/vercel/ai).
-Import `langtail` from `langtail/dist/vercelAi` and provide your prompt slug as an argument.
+Import `langtail` from `langtail/vercelAi` and provide your prompt slug as an argument.
 ```typescript
 import { generateText } from 'ai'
-import { langtail } from 'langtail/dist/vercelAi'
+import { langtail } from 'langtail/vercelAi'
 
 async function main() {
   const result = await generateText({
@@ -232,7 +232,7 @@ async function main() {
 main().catch(console.error);
 ```
 
-You can also use `aiBridge` from `langtail/dist/vercelAi` to use already existing Langtail instance:
+You can also use `aiBridge` from `langtail/vercelAi` to use already existing Langtail instance:
 ```typescript
 const langtail = new Langtail({ apiKey })
 const lt = aiBridge(langtail)
@@ -252,7 +252,7 @@ If your prompts in Langtail contain tools, you can generate a file containing to
 After the file is generated, you can provide the Langtail tools to AI SDK like this:
 ```typescript
 import { generateText } from 'ai'
-import { langtail } from 'langtail/dist/vercelAi'
+import { langtail } from 'langtail/vercelAi'
 import tools from './langtailTools';  // generated langtailTools.ts file
 
 const ltModel = langtail('stock-simple',
@@ -296,7 +296,7 @@ Here's an example:
 import {
   chatStreamToRunner,
   type ChatCompletionStream,
-} from "langtail/dist/stream"
+} from "langtail/stream"
 
 const stream = await fetch(`/api/langtail`, {
   method: "POST",
@@ -321,13 +321,13 @@ runner.on("chunk", (chunk: ChatCompletionChunk) => {
 
 ## useChatStream React hook
 
-"You can leverage our React hook to handle AI streams more easily. We have developed a hook called `useChatStream`, which can be imported from `langtail/dist/react/useChatStream`.
+"You can leverage our React hook to handle AI streams more easily. We have developed a hook called `useChatStream`, which can be imported from `langtail/react/useChatStream`.
 
 Here's an example:
 
 ```ts
 // NOTE: your FE code
-import { useChatStream } from "langtail/dist/react/useChatStream";
+import { useChatStream } from "langtail/react/useChatStream";
 
 function YourComponent() {
   const { isLoading, messages, send } = useChatStream({

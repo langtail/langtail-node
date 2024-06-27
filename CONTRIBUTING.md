@@ -9,7 +9,7 @@ pnpm install
 pnpm build
 ```
 
-This will install all the required dependencies and build output files to `dist/`.
+This will install all the required dependencies and build output files to the root directory.
 
 ## Using the repository from source
 
