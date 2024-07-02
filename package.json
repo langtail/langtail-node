@@ -88,9 +88,6 @@
       "types": "./customTypes.d.ts"
     }
   },
-  "files": [
-    "dist"
-  ],
   "dependencies": {
     "@ai-sdk/provider": "^0.0.5",
     "@ai-sdk/provider-utils": "^0.0.8",
