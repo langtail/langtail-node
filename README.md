@@ -162,7 +162,9 @@ const playgroundState = await lt.get({
 render your template and builds the final open AI compatible payload:
 
 ```ts
-const openAiBody = lt.build(playgroundState, {
+import { getOpenAIBody } from "langtail/getOpenAIBody"
+
+const openAiBody = getOpenAIBody(playgroundState, {
   stream: true,
   variables: {
     topic: "iron man",

@@ -1,55 +1,9 @@
-import type OpenAI from "openai"
-import { z } from "zod"
 
-import {
-  MessageSchema,
-  PlaygroundState,
-  ToolChoiceSchema,
-  ToolSchema,
-} from "./schemas"
+import type OpenAI from "openai"
+
 import { compileLTTemplate } from "./template"
 import { ChatCompletionsCreateParams } from "./LangtailNode"
-
-export const bodyMetadataSchema = z
-  .record(z.string().max(64), z.union([z.string(), z.number()]))
-  .optional()
-
-export const langtailBodySchema = z.object({
-  doNotRecord: z.boolean().optional(),
-  metadata: bodyMetadataSchema,
-  _langtailTestRunId: z.string().optional(),
-  _langtailTestInputId: z.string().optional(),
-})
-
-export const openAIBodySchemaObjectDefinition = {
-  stream: z.boolean().optional(),
-  user: z.string().optional(),
-
-  seed: z.number().optional(),
-  max_tokens: z.number().optional(),
-  temperature: z.number().optional(),
-  top_p: z.number().optional(),
-  presence_penalty: z.number().optional(),
-  frequency_penalty: z.number().optional(),
-  model: z.string().optional(),
-  tools: z.array(ToolSchema).optional(),
-  stop: z.union([z.string(), z.array(z.string())]).optional(),
-  template: z.array(MessageSchema).optional(),
-  variables: z.record(z.string(), z.string()).optional(),
-  tool_choice: ToolChoiceSchema.optional(),
-  response_format: z
-    .object({
-      type: z.enum(["json_object"]),
-    })
-    .optional(),
-  messages: z.array(MessageSchema).optional(),
-}
-export const openAIBodySchema = z.object(openAIBodySchemaObjectDefinition)
-
-export const bothBodySchema = langtailBodySchema.merge(openAIBodySchema)
-
-export type IncomingBodyType = z.infer<typeof bothBodySchema>
-export type OpenAiBodyType = z.infer<typeof openAIBodySchema>
+import { IncomingBodyType, PlaygroundState } from "./schemas"
 
 /**
  * Get the body for the OpenAI API request. Used in the langtail prompt API. // TODO remove this from our prompt-API when this is merged so that we don't have this code duplicated
