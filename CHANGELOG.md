@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.5.1
+
+- BREAKING CHANGE: remove `langtail.build` method, use `getOpenAIBody` instead
+
 # 0.5.0
 
 - BREAKING CHANGE: remove `dist/` from import paths
