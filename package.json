@@ -77,10 +77,10 @@
       "import": "./react/useChatStream.mjs",
       "types": "./react/useChatStream.d.ts"
     },
-    "./vercelAi": {
-      "require": "./vercelAi/index.js",
-      "import": "./vercelAi/index.mjs",
-      "types": "./vercelAi/index.d.ts"
+    "./vercel-ai": {
+      "require": "./vercel-ai/index.js",
+      "import": "./vercel-ai/index.mjs",
+      "types": "./vercel-ai/index.d.ts"
     },
     "./customTypes": {
       "require": "./customTypes.js",
@@ -114,7 +114,7 @@
       "src/customTypes.ts",
       "src/template.ts",
       "src/getOpenAIBody.ts",
-      "src/vercelAi/index.ts",
+      "src/vercel-ai/index.ts",
       "src/bin/entry.ts",
       "src/stream/index.ts",
       "src/react/useChatStream.ts"

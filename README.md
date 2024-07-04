@@ -207,10 +207,10 @@ This way you are still using langtail prompts without exposing potentially sensi
 ## Vercel AI provider
 
 You can use Langtail with [Vercel AI SDK](https://github.com/vercel/ai).
-Import `langtail` from `langtail/vercelAi` and provide your prompt slug as an argument.
+Import `langtail` from `langtail/vercel-ai` and provide your prompt slug as an argument.
 ```typescript
 import { generateText } from 'ai'
-import { langtail } from 'langtail/vercelAi'
+import { langtail } from 'langtail/vercel-ai'
 
 async function main() {
   const result = await generateText({
@@ -234,7 +234,7 @@ async function main() {
 main().catch(console.error);
 ```
 
-You can also use `aiBridge` from `langtail/vercelAi` to use already existing Langtail instance:
+You can also use `aiBridge` from `langtail/vercel-ai` to use already existing Langtail instance:
 ```typescript
 const langtail = new Langtail({ apiKey })
 const lt = aiBridge(langtail)
@@ -254,7 +254,7 @@ If your prompts in Langtail contain tools, you can generate a file containing to
 After the file is generated, you can provide the Langtail tools to AI SDK like this:
 ```typescript
 import { generateText } from 'ai'
-import { langtail } from 'langtail/vercelAi'
+import { langtail } from 'langtail/vercel-ai'
 import tools from './langtailTools';  // generated langtailTools.ts file
 
 const ltModel = langtail('stock-simple',
