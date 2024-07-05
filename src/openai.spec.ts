@@ -1,12 +1,14 @@
-import { Langtail, baseURL } from "./Langtail"
+import { createOpenAIProxy, baseURL } from "./openai"
 import "dotenv-flow/config"
 import { describe, expect, it } from "vitest"
 import nock from "nock"
 import { ChatCompletionChunkSchema } from "./dataSchema"
+import OpenAI from "openai"
 
-const lt = new Langtail()
 
-describe("Langtail", () => {
+const lt = createOpenAIProxy(new OpenAI({ apiKey: process.env.LANGTAIL_API_KEY }))
+
+describe("Langtail Proxy", () => {
   it("should support streaming", async () => {
     const proxyCompletion = await lt.chat.completions.create({
       messages: [

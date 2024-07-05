@@ -3,7 +3,7 @@ import path from 'path';
 import { LangtailEnvironment, LangtailPrompts } from "../LangtailPrompts";
 import { dirExists, getApiKey, prepareOutputFilePath } from "./utils";
 import SDK_VERSION from '../version'
-import { Environment, PromptOptions, PromptSlug, Version } from 'src/types';
+import { Environment, PromptOptions, PromptSlug, Version } from '../types';
 
 const DEFAULT_FILENAME = 'langtailTypes.d.ts';
 const TEMPLATE_PATH = new URL('./langtailTypes.d.ts.template', import.meta.url);

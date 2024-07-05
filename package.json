@@ -67,6 +67,11 @@
       "import": "./template.mjs",
       "types": "./template.d.ts"
     },
+    "./openai": {
+      "require": "./openai.js",
+      "import": "./openai.mjs",
+      "types": "./openai.d.ts"
+    },
     "./stream": {
       "require": "./stream/index.js",
       "import": "./stream/index.mjs",
@@ -114,6 +119,7 @@
       "src/customTypes.ts",
       "src/template.ts",
       "src/getOpenAIBody.ts",
+      "src/openai.ts",
       "src/vercel-ai/index.ts",
       "src/bin/entry.ts",
       "src/stream/index.ts",

@@ -1,5 +1,18 @@
 import { z } from "zod"
 import { Environment, LangtailEnvironment, PromptSlug, Version } from "./types"
+import type { ChatCompletionCreateParamsStreaming } from "openai/resources/index"
+import type {
+  ChatCompletionCreateParamsNonStreaming,
+} from "openai/resources/chat/completions"
+
+export interface ILangtailExtraProps {
+  doNotRecord?: boolean
+  metadata?: Record<string, any>
+}
+
+export type ChatCompletionsCreateParams =
+  | (ChatCompletionCreateParamsStreaming & ILangtailExtraProps)
+  | (ChatCompletionCreateParamsNonStreaming & ILangtailExtraProps)
 
 export interface ChatState {
   type: "chat"

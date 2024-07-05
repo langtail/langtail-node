@@ -1,11 +1,11 @@
-import {
+import type {
   ChatCompletion,
 } from "openai/resources/chat/completions"
-import { ChatCompletionChunk } from "openai/resources/chat/completions"
+import type { ChatCompletionChunk } from "openai/resources/chat/completions"
+import type { Fetch } from "openai/core"
 
 import { Stream } from "openai/streaming"
-import { ILangtailExtraProps } from "./Langtail"
-import { Fetch } from "openai/core"
+import { ILangtailExtraProps } from "./schemas"
 import { userAgent } from "./userAgent"
 import queryString from "query-string"
 import { OpenAiBodyType, Deployment, PlaygroundState } from "./schemas"

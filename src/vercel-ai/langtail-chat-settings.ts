@@ -1,6 +1,5 @@
-import { ILangtailExtraProps } from '../Langtail';
 import { PromptSlug, Environment, Version, IsProductionDefined, LangtailEnvironment, Variables } from '../types';
-import { OpenAiBodyType } from '../schemas';
+import { OpenAiBodyType, ILangtailExtraProps } from '../schemas';
 
 
 type LangtailChatSettingsBase<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> = IsProductionDefined<P> extends true ? {

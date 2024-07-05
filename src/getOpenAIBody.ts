@@ -2,7 +2,7 @@
 import type OpenAI from "openai"
 
 import { compileLTTemplate } from "./template"
-import { ChatCompletionsCreateParams } from "./Langtail"
+import { ChatCompletionsCreateParams } from "./schemas"
 import { IncomingBodyType, PlaygroundState } from "./schemas"
 
 /**

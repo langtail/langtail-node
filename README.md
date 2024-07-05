@@ -19,11 +19,13 @@ npm i langtail
 basic completion without any prompt. This just wraps openAI api and adds a few extra parameters you can use to affect how the request gets logged in langtail.
 
 ```ts
+import OpenAI from "openai"
 import { Langtail } from "langtail"
 
-const lt = new Langtail({
+const openai = new OpenAI({
   apiKey: "<LANGTAIL_API_KEY>",
 })
+const lt = createOpenAIProxy(openai)
 
 const rawCompletion = await lt.chat.completions.create({
   // Required
@@ -74,8 +76,6 @@ const deployedPromptCompletion = await lt.invoke({
   },
 })
 ```
-
-this way whole `Langtail` can get tree shaken away.
 
 You can initialize LangtailPrompts with workspace and project slugs like so:
 

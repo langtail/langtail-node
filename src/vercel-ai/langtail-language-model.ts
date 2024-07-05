@@ -20,10 +20,11 @@ import { mapOpenAIFinishReason } from './map-openai-finish-reason';
 import { LangtailChatSettings } from './langtail-chat-settings';
 import { openaiFailedResponseHandler } from './openai-error';
 import { mapOpenAIChatLogProbsOutput } from './map-openai-chat-logprobs';
-import { ILangtailExtraProps, LangtailPrompts } from '../Langtail';
+import { LangtailPrompts } from '../Langtail';
 import { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions';
 import { FunctionParameters } from 'openai/resources';
 import type { PromptSlug, Environment, Version, LangtailEnvironment } from '../types';
+import { ILangtailExtraProps } from '../schemas';
 
 type LangtailChatConfig = {
   provider: string;
