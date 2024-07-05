@@ -25,7 +25,7 @@ export type ChatCompletionsCreateParams =
   | (ChatCompletionCreateParamsStreaming & ILangtailExtraProps)
   | (ChatCompletionCreateParamsNonStreaming & ILangtailExtraProps)
 
-export class LangtailNode {
+export class Langtail {
   prompts: LangtailPrompts
   chat: {
     completions: {
@@ -143,5 +143,4 @@ export class LangtailNode {
   }
 }
 
-export { LangtailNode as Langtail }
-export { LangtailPrompts as LangtailPrompts }
+export { LangtailPrompts }

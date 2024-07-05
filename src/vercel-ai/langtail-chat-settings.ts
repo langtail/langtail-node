@@ -1,4 +1,4 @@
-import { ILangtailExtraProps } from '../LangtailNode';
+import { ILangtailExtraProps } from '../Langtail';
 import { PromptSlug, Environment, Version, IsProductionDefined, LangtailEnvironment, Variables } from '../types';
 import { OpenAiBodyType } from '../schemas';
 

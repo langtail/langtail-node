@@ -1,12 +1,12 @@
-import { LangtailNode, baseURL } from "./LangtailNode"
+import { Langtail, baseURL } from "./Langtail"
 import "dotenv-flow/config"
 import { describe, expect, it } from "vitest"
 import nock from "nock"
 import { ChatCompletionChunkSchema } from "./dataSchema"
 
-const lt = new LangtailNode()
+const lt = new Langtail()
 
-describe("LangtailNode", () => {
+describe("Langtail", () => {
   it("should support streaming", async () => {
     const proxyCompletion = await lt.chat.completions.create({
       messages: [

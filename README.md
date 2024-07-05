@@ -75,7 +75,7 @@ const deployedPromptCompletion = await lt.invoke({
 })
 ```
 
-this way whole `LangtailNode` can get tree shaken away.
+this way whole `Langtail` can get tree shaken away.
 
 You can initialize LangtailPrompts with workspace and project slugs like so:
 

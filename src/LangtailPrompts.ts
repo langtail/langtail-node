@@ -4,7 +4,7 @@ import {
 import { ChatCompletionChunk } from "openai/resources/chat/completions"
 
 import { Stream } from "openai/streaming"
-import { ILangtailExtraProps } from "./LangtailNode"
+import { ILangtailExtraProps } from "./Langtail"
 import { Fetch } from "openai/core"
 import { userAgent } from "./userAgent"
 import queryString from "query-string"

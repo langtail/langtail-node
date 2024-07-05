@@ -1,8 +1,8 @@
 {
   "name": "langtail",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "",
-  "main": "./LangtailNode.js",
+  "main": "./Langtail.js",
   "packageManager": "pnpm@8.15.6",
   "engines": {
     "node": ">=18"
@@ -49,13 +49,13 @@
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
   },
-  "module": "./LangtailNode.mjs",
-  "types": "./LangtailNode.d.ts",
+  "module": "./Langtail.mjs",
+  "types": "./Langtail.d.ts",
   "exports": {
     ".": {
-      "require": "./LangtailNode.js",
-      "import": "./LangtailNode.mjs",
-      "types": "./LangtailNode.d.ts"
+      "require": "./Langtail.js",
+      "import": "./Langtail.mjs",
+      "types": "./Langtail.d.ts"
     },
     "./getOpenAIBody": {
       "require": "./getOpenAIBody.js",
@@ -110,7 +110,7 @@
     ],
     "clean": true,
     "entryPoints": [
-      "src/LangtailNode.ts",
+      "src/Langtail.ts",
       "src/customTypes.ts",
       "src/template.ts",
       "src/getOpenAIBody.ts",
