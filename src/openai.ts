@@ -12,6 +12,7 @@ import { Stream } from "openai/streaming"
 
 import { userAgent } from "./userAgent"
 import { ILangtailExtraProps } from "./schemas"
+import { PromptSlug, PromptSlugOption } from "./types"
 
 export const baseURL = "https://proxy.langtail.com/v1"
 
@@ -32,23 +33,25 @@ interface OpenAIClient {
   }
 }
 
+type LangtailSpecificProps = Partial<PromptSlugOption<PromptSlug>> & ILangtailExtraProps
+
 export class OpenAIProxy {
   chat: {
     completions: {
       create(
-        body: ChatCompletionCreateParamsNonStreaming & ILangtailExtraProps,
+        body: ChatCompletionCreateParamsNonStreaming & LangtailSpecificProps,
         options?: RequestOptions,
       ): APIPromise<ChatCompletion>
       create(
-        body: ChatCompletionCreateParamsStreaming & ILangtailExtraProps,
+        body: ChatCompletionCreateParamsStreaming & LangtailSpecificProps,
         options?: RequestOptions,
       ): APIPromise<Stream<ChatCompletionChunk>>
       create(
-        body: ChatCompletionCreateParamsBase & ILangtailExtraProps,
+        body: ChatCompletionCreateParamsBase & LangtailSpecificProps,
         options?: RequestOptions,
       ): APIPromise<Stream<ChatCompletionChunk> | ChatCompletion>
       create(
-        body: ChatCompletionCreateParams & ILangtailExtraProps,
+        body: ChatCompletionCreateParams & LangtailSpecificProps,
         options?: RequestOptions,
       ): APIPromise<ChatCompletion> | APIPromise<Stream<ChatCompletionChunk>>
     }
@@ -72,7 +75,7 @@ export class OpenAIProxy {
       completions: {
         // @ts-expect-error
         create: async (
-          params: ChatCompletionCreateParamsBase & ILangtailExtraProps,
+          params: ChatCompletionCreateParamsBase & LangtailSpecificProps,
           options: RequestOptions = {},
         ) => {
           let headers = {
@@ -83,7 +86,12 @@ export class OpenAIProxy {
           if (params.doNotRecord) {
             headers["x-langtail-do-not-record"] = "true"
           }
-          delete params.doNotRecord // openAI does not support these parameters
+          if (params.prompt) {
+            headers["x-langtail-prompt"] = params.prompt
+          }
+          // openAI does not support these parameters
+          delete params.doNotRecord
+          delete params.prompt
 
           if (params.metadata) {
             const metadataHeaders = Object.entries(params.metadata).reduce(

@@ -16,7 +16,7 @@ export type LangtailEnvironment = "preview" | "staging" | "production"
 
 export type IsProductionDefined<P extends PromptSlug> = 'production' extends Environment<P> ? true : false;
 
-type PromptOptionsBase<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> = IsProductionDefined<P> extends true ? {
+type ExtraPromptOptions<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> = IsProductionDefined<P> extends true ? {
   environment?: E,
   version?: V
 } : (E extends undefined ? {
@@ -27,4 +27,6 @@ type PromptOptionsBase<P extends PromptSlug, E extends Environment<P> = undefine
   version?: V
 });
 
-export type PromptOptions<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> = PromptOptionsBase<P, E, V> & { prompt: P };
+export type PromptSlugOption<P extends PromptSlug> = { prompt: P };
+
+export type PromptOptions<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> = PromptSlugOption<P> & ExtraPromptOptions<P, E, V>;
