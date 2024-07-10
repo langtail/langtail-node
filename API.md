@@ -1,6 +1,6 @@
 # API reference
 
-## LangtailNode
+## Langtail
 
 ### Constructor
 

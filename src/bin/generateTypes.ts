@@ -3,7 +3,7 @@ import path from 'path';
 import { LangtailEnvironment, LangtailPrompts } from "../LangtailPrompts";
 import { dirExists, getApiKey, prepareOutputFilePath } from "./utils";
 import SDK_VERSION from '../version'
-import { Environment, PromptOptions, PromptSlug, Version } from 'src/types';
+import { Environment, PromptOptions, PromptSlug, Version } from '../types';
 
 const DEFAULT_FILENAME = 'langtailTypes.d.ts';
 const TEMPLATE_PATH = new URL('./langtailTypes.d.ts.template', import.meta.url);
@@ -95,7 +95,7 @@ const generateTypes = async ({ out }: GenerateTypesOptions) => {
     if (promptSlug && environment) {
       const variables = await fetchVariables({ langtailPrompts, prompt: promptSlug, environment: environment, version });
       Object.entries(variables).forEach(([key, value]) => {
-        variables[key] = JSON.stringify(value) + ' | (string & {})';
+        variables[key] = `"${value}" | (string & {})`;
       });
       if (!promptObject[promptSlug]) {
         promptObject[promptSlug] = {};
@@ -123,7 +123,7 @@ const generateTypes = async ({ out }: GenerateTypesOptions) => {
 
   const template = fs.readFileSync(TEMPLATE_PATH, 'utf8');
   const jsonPO = JSON.stringify(promptObject, null, 2)
-  const unpackedVariablesPO = jsonPO.replace(/\: \"\\\"(\w+)\\\" \| \(string & {}\)\"/g, '?: "$1" | (string & {})')
+  const unpackedVariablesPO = jsonPO.replace(/\: "\\"(.*?)\\" \| \(string & {}\)"/g, '?: "$1" | (string & {})');
   const indentedPO = unpackedVariablesPO.split("\n").join("\n  ")
   const fileString = fileInfo + template
     .replace(

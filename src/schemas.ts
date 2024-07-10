@@ -1,5 +1,18 @@
 import { z } from "zod"
 import { Environment, LangtailEnvironment, PromptSlug, Version } from "./types"
+import type { ChatCompletionCreateParamsStreaming } from "openai/resources/index"
+import type {
+  ChatCompletionCreateParamsNonStreaming,
+} from "openai/resources/chat/completions"
+
+export interface ILangtailExtraProps {
+  doNotRecord?: boolean
+  metadata?: Record<string, any>
+}
+
+export type ChatCompletionsCreateParams =
+  | (ChatCompletionCreateParamsStreaming & ILangtailExtraProps)
+  | (ChatCompletionCreateParamsNonStreaming & ILangtailExtraProps)
 
 export interface ChatState {
   type: "chat"
@@ -175,3 +188,44 @@ export const ToolSchema = z.object({
   type: z.literal("function"),
   function: FunctionSchema,
 }) satisfies z.ZodType<Tools>
+
+export const bodyMetadataSchema = z
+  .record(z.string().max(64), z.union([z.string(), z.number()]))
+  .optional()
+
+export const langtailBodySchema = z.object({
+  doNotRecord: z.boolean().optional(),
+  metadata: bodyMetadataSchema,
+  _langtailTestRunId: z.string().optional(),
+  _langtailTestInputId: z.string().optional(),
+})
+
+export const openAIBodySchemaObjectDefinition = {
+  stream: z.boolean().optional(),
+  user: z.string().optional(),
+
+  seed: z.number().optional(),
+  max_tokens: z.number().optional(),
+  temperature: z.number().optional(),
+  top_p: z.number().optional(),
+  presence_penalty: z.number().optional(),
+  frequency_penalty: z.number().optional(),
+  model: z.string().optional(),
+  tools: z.array(ToolSchema).optional(),
+  stop: z.union([z.string(), z.array(z.string())]).optional(),
+  template: z.array(MessageSchema).optional(),
+  variables: z.record(z.string(), z.string()).optional(),
+  tool_choice: ToolChoiceSchema.optional(),
+  response_format: z
+    .object({
+      type: z.enum(["json_object"]),
+    })
+    .optional(),
+  messages: z.array(MessageSchema).optional(),
+}
+export const openAIBodySchema = z.object(openAIBodySchemaObjectDefinition)
+
+export const bothBodySchema = langtailBodySchema.merge(openAIBodySchema)
+
+export type IncomingBodyType = z.infer<typeof bothBodySchema>
+export type OpenAiBodyType = z.infer<typeof openAIBodySchema>

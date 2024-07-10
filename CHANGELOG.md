@@ -1,5 +1,17 @@
 # Changelog
 
+# 0.5.2
+
+- Fix generating quoted variable values with
+- BREAKING CHANGE: rename vercelAi -> vercel-ai
+- BREAKING CHANGE: rename `LangtailNode` class to `Langtail`
+- add `langtail/openai` with `OpenAIProxy` class
+- BREAKING CHANGE: remove `Langtail.chat`, use `OpenAIProxy` instead
+
+# 0.5.1
+
+- BREAKING CHANGE: remove `langtail.build` method, use `getOpenAIBody` instead
+
 # 0.5.0
 
 - BREAKING CHANGE: remove `dist/` from import paths

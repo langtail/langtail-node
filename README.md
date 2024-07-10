@@ -19,11 +19,13 @@ npm i langtail
 basic completion without any prompt. This just wraps openAI api and adds a few extra parameters you can use to affect how the request gets logged in langtail.
 
 ```ts
+import OpenAI from "openai"
 import { Langtail } from "langtail"
 
-const lt = new Langtail({
+const openai = new OpenAI({
   apiKey: "<LANGTAIL_API_KEY>",
 })
+const lt = createOpenAIProxy(openai)
 
 const rawCompletion = await lt.chat.completions.create({
   // Required
@@ -74,8 +76,6 @@ const deployedPromptCompletion = await lt.invoke({
   },
 })
 ```
-
-this way whole `LangtailNode` can get tree shaken away.
 
 You can initialize LangtailPrompts with workspace and project slugs like so:
 
@@ -162,7 +162,9 @@ const playgroundState = await lt.get({
 render your template and builds the final open AI compatible payload:
 
 ```ts
-const openAiBody = lt.build(playgroundState, {
+import { getOpenAIBody } from "langtail/getOpenAIBody"
+
+const openAiBody = getOpenAIBody(playgroundState, {
   stream: true,
   variables: {
     topic: "iron man",
@@ -205,10 +207,10 @@ This way you are still using langtail prompts without exposing potentially sensi
 ## Vercel AI provider
 
 You can use Langtail with [Vercel AI SDK](https://github.com/vercel/ai).
-Import `langtail` from `langtail/vercelAi` and provide your prompt slug as an argument.
+Import `langtail` from `langtail/vercel-ai` and provide your prompt slug as an argument.
 ```typescript
 import { generateText } from 'ai'
-import { langtail } from 'langtail/vercelAi'
+import { langtail } from 'langtail/vercel-ai'
 
 async function main() {
   const result = await generateText({
@@ -232,7 +234,7 @@ async function main() {
 main().catch(console.error);
 ```
 
-You can also use `aiBridge` from `langtail/vercelAi` to use already existing Langtail instance:
+You can also use `aiBridge` from `langtail/vercel-ai` to use already existing Langtail instance:
 ```typescript
 const langtail = new Langtail({ apiKey })
 const lt = aiBridge(langtail)
@@ -252,7 +254,7 @@ If your prompts in Langtail contain tools, you can generate a file containing to
 After the file is generated, you can provide the Langtail tools to AI SDK like this:
 ```typescript
 import { generateText } from 'ai'
-import { langtail } from 'langtail/vercelAi'
+import { langtail } from 'langtail/vercel-ai'
 import tools from './langtailTools';  // generated langtailTools.ts file
 
 const ltModel = langtail('stock-simple',

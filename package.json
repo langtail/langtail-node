@@ -1,8 +1,8 @@
 {
   "name": "langtail",
-  "version": "0.5.0",
+  "version": "0.5.2",
   "description": "",
-  "main": "./LangtailNode.js",
+  "main": "./Langtail.js",
   "packageManager": "pnpm@8.15.6",
   "engines": {
     "node": ">=18"
@@ -49,13 +49,13 @@
     "typescript": "^5.4.5",
     "vitest": "^1.6.0"
   },
-  "module": "./LangtailNode.mjs",
-  "types": "./LangtailNode.d.ts",
+  "module": "./Langtail.mjs",
+  "types": "./Langtail.d.ts",
   "exports": {
     ".": {
-      "require": "./LangtailNode.js",
-      "import": "./LangtailNode.mjs",
-      "types": "./LangtailNode.d.ts"
+      "require": "./Langtail.js",
+      "import": "./Langtail.mjs",
+      "types": "./Langtail.d.ts"
     },
     "./getOpenAIBody": {
       "require": "./getOpenAIBody.js",
@@ -67,6 +67,11 @@
       "import": "./template.mjs",
       "types": "./template.d.ts"
     },
+    "./openai": {
+      "require": "./openai.js",
+      "import": "./openai.mjs",
+      "types": "./openai.d.ts"
+    },
     "./stream": {
       "require": "./stream/index.js",
       "import": "./stream/index.mjs",
@@ -77,10 +82,10 @@
       "import": "./react/useChatStream.mjs",
       "types": "./react/useChatStream.d.ts"
     },
-    "./vercelAi": {
-      "require": "./vercelAi/index.js",
-      "import": "./vercelAi/index.mjs",
-      "types": "./vercelAi/index.d.ts"
+    "./vercel-ai": {
+      "require": "./vercel-ai/index.js",
+      "import": "./vercel-ai/index.mjs",
+      "types": "./vercel-ai/index.d.ts"
     },
     "./customTypes": {
       "require": "./customTypes.js",
@@ -88,9 +93,6 @@
       "types": "./customTypes.d.ts"
     }
   },
-  "files": [
-    "dist"
-  ],
   "dependencies": {
     "@ai-sdk/provider": "^0.0.5",
     "@ai-sdk/provider-utils": "^0.0.8",
@@ -113,11 +115,12 @@
     ],
     "clean": true,
     "entryPoints": [
-      "src/LangtailNode.ts",
+      "src/Langtail.ts",
       "src/customTypes.ts",
       "src/template.ts",
       "src/getOpenAIBody.ts",
-      "src/vercelAi/index.ts",
+      "src/openai.ts",
+      "src/vercel-ai/index.ts",
       "src/bin/entry.ts",
       "src/stream/index.ts",
       "src/react/useChatStream.ts"

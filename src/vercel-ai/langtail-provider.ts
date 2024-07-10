@@ -2,7 +2,7 @@ import { loadApiKey, withoutTrailingSlash } from '@ai-sdk/provider-utils';
 import { LangtailChatLanguageModel } from './langtail-language-model';
 import { userAgent } from '../userAgent';
 import { LangtailChatSettings } from './langtail-chat-settings';
-import { LangtailNode } from '../LangtailNode';
+import { Langtail } from '../Langtail';
 import { LangtailPrompts } from '../LangtailPrompts';
 import { Environment, IsProductionDefined, LangtailEnvironment, PromptSlug, Version } from '../types';
 
@@ -44,7 +44,7 @@ export function createLangtail(
 }
 
 export function aiBridge(
-  langtail: LangtailPrompts | LangtailNode,
+  langtail: LangtailPrompts | Langtail,
   options: AIBridgeSettings = {},
 ): LangtailProviderFunction {
 

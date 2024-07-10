@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 
 import { LangtailPrompts } from "./LangtailPrompts"
 import { ChatCompletionChunkSchema } from "./dataSchema"
+import { getOpenAIBody } from "./getOpenAIBody"
 
 const lt = new LangtailPrompts({
   apiKey: process.env.LANGTAIL_API_KEY!,
@@ -208,7 +209,7 @@ describe.skipIf(!liveTesting)(
           }
         `)
 
-        const openAiBody = ltLocal.build(playgroundState, {
+        const openAiBody = getOpenAIBody(playgroundState, {
           stream: true,
           variables: {
             optionalExtra: "This is an optional extra",

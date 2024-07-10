@@ -1,1 +1,7 @@
 **/*.test.ts
+
+src/
+
+.*
+*.json
+*.yaml

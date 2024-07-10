@@ -1,16 +1,14 @@
-import {
+import type {
   ChatCompletion,
-  ChatCompletionAssistantMessageParam,
 } from "openai/resources/chat/completions"
-import { ChatCompletionChunk } from "openai/resources/chat/completions"
+import type { ChatCompletionChunk } from "openai/resources/chat/completions"
+import type { Fetch } from "openai/core"
 
 import { Stream } from "openai/streaming"
-import { ILangtailExtraProps } from "./LangtailNode"
-import { Fetch } from "openai/core"
+import { ILangtailExtraProps } from "./schemas"
 import { userAgent } from "./userAgent"
 import queryString from "query-string"
-import { Deployment, PlaygroundState } from "./schemas"
-import { OpenAiBodyType, getOpenAIBody } from "./getOpenAIBody"
+import { OpenAiBodyType, Deployment, PlaygroundState } from "./schemas"
 import { Environment, PromptOptions, PromptSlug, Version, LangtailEnvironment, Variables } from "./types"
 
 interface LangtailPromptVariables { } // TODO use this when generating schema for deployed prompts
@@ -207,6 +205,6 @@ export class LangtailPrompts {
   }
 
   build(completionConfig: PlaygroundState, parsedBody: OpenAiBodyType) {
-    return getOpenAIBody(completionConfig, parsedBody)
+    throw new Error("Deprecated, use getOpenAIBody instead")
   }
 }

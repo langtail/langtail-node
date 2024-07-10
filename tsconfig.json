@@ -24,7 +24,6 @@
       "node",
       "vitest/globals"
     ],
-    "baseUrl": "./",
     "paths": {
       "langtail/customTypes": [
         "./src/customTypes.ts"
