@@ -1,5 +1,10 @@
 # Changelog
 
+# 0.5.3
+
+- Fix CommonJS support
+- Add `prompt` parameter to OpenAI proxy
+
 # 0.5.2
 
 - Fix generating quoted variable values with
