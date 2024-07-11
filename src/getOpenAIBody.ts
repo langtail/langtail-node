@@ -67,8 +67,8 @@ export function getOpenAIBody(
     }
   }
 
-  if (completionArgs.stop || parsedBody.stop) {
-    openAIbody.stop = parsedBody.stop ?? completionArgs.stop
+  if (parsedBody.stop) {
+    openAIbody.stop = parsedBody.stop
   }
 
   const toolChoice = parsedBody.tool_choice ?? completionArgs.tool_choice

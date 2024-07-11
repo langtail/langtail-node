@@ -1,5 +1,9 @@
 # Changelog
 
+# 0.5.4
+
+- Fix: don't send `stop` parameter if it's empty (this causes validation error in OpenAI in some cases)
+
 # 0.5.3
 
 - Fix CommonJS support
