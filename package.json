@@ -1,6 +1,6 @@
 {
   "name": "langtail",
-  "version": "0.5.4-beta.0",
+  "version": "0.5.4-beta.1",
   "description": "",
   "main": "./Langtail.js",
   "packageManager": "pnpm@8.15.6",
@@ -72,6 +72,11 @@
       "import": "./openai.mjs",
       "types": "./openai.d.ts"
     },
+    "./schemas": {
+      "require": "./schemas.js",
+      "import": "./schemas.mjs",
+      "types": "./schemas.d.ts"
+    },
     "./stream": {
       "require": "./stream/index.js",
       "import": "./stream/index.mjs",
@@ -122,6 +127,7 @@
       "src/openai.ts",
       "src/vercel-ai/index.ts",
       "src/bin/entry.ts",
+      "src/schemas.ts",
       "src/stream/index.ts",
       "src/react/useChatStream.ts"
     ],
