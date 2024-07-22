@@ -12,7 +12,7 @@ const defaultReturn = {
   abort: () => { },
 }
 
-type ChatMessage =
+export type ChatMessage =
   | {
     role: "user" | "assistant" | "system"
     content: string | null
@@ -119,22 +119,26 @@ export function combineAIMessageChunkWithCompleteMessages(
 }
 
 function parameterToMessage(
-  parameter: ChatMessage[] | string,
+  parameter: ChatMessage | ChatMessage[] | string,
 ): ChatMessage[] {
   if (Array.isArray(parameter)) {
     return parameter
   }
 
-  return [
-    {
-      role: "user",
-      content: parameter,
-    },
-  ]
+  if (typeof parameter === "string") {
+    return [
+      {
+        role: "user",
+        content: parameter,
+      },
+    ]
+  }
+
+  return [parameter]
 }
 
 export function useChatStream<
-  P extends ChatMessage[] | string,
+  P extends ChatMessage[] | ChatMessage | string,
   O extends Record<string, any> = Record<string, any>,
 >(
   options: {

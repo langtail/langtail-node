@@ -1,7 +1,7 @@
 
 import { describe, expect, it, vi } from "vitest"
 import { renderHook, act } from "@testing-library/react"
-import { useChatStream } from "./useChatStream"
+import { type ChatMessage, useChatStream } from "./useChatStream"
 import { EventEmitter } from "stream"
 import { JSDOM } from 'jsdom'
 
@@ -64,6 +64,25 @@ describe("useAIStream", () => {
   })
 
   describe("public API", () => {
+    it("type test: passing one message to send()", async () => {
+      const mockedStream = new ReadableStream()
+
+      const createReadableStream = vi.fn((parameter) => {
+        expect(parameter).toEqual({ role: 'user', content: 'hello' })
+        return Promise.resolve(mockedStream)
+      })
+
+      const { result } = renderHook(() => useChatStream<ChatMessage | ChatMessage[] | string>({ fetcher: createReadableStream }))
+
+      act(() => {
+        result.current.send({ role: 'user', content: 'hello' })
+      })
+
+      await vi.waitFor(() => {
+        expect(createReadableStream).toHaveBeenCalledTimes(1)
+      })
+    })
+
     it("should pass paramters of send() to the createReadableStream()", async () => {
       const mockedStream = new ReadableStream()
 
