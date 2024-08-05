@@ -353,10 +353,12 @@ export function useChatStream<
           runnerRef.current = runner
           if (abortControllerRef.current?.signal.aborted) {
             runner.abort()
+            setIsLoadingState(false)
             runnerRef.current = { abort: () => { } }
             return
           }
         }, (error) => {
+          setIsLoadingState(false)
           options.onError?.(error)
           setErrorState(error)
         },

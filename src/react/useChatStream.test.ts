@@ -166,6 +166,52 @@ describe("useAIStream", () => {
       })
     })
 
+    it("should change loading state to false when aborted", async () => {
+      const abortAgent = vi.fn()
+      function createMockReadadbleStream(dataEmitter: DataEventListener) {
+        return new ReadableStream({
+          start(controller) {
+            dataEmitter.addEventListener('data', (data: string) => {
+              controller.enqueue(data)
+            })
+            dataEmitter.addEventListener('close', (data: string) => {
+              controller.close();
+            })
+          },
+        });
+      }
+
+      const dataEmitter = new DataEventListener()
+
+      const stream = createMockReadadbleStream(dataEmitter)
+
+      const createReadableStream = vi.fn(() =>
+        Promise.resolve(stream)
+      )
+
+      const { result } = renderHook(() =>
+        useChatStream({
+          fetcher: createReadableStream,
+          onAbort: abortAgent
+        }),
+      )
+
+      act(() => {
+        result.current.send('user input')
+        dataEmitter.dispatchEvent('data',
+          `${JSON.stringify({ "id": "chatcmpl-9a0ckk5rq36dtBFE2ail2G2AZbk9s", "object": "chat.completion.chunk", "created": 1718369234, "model": "gpt-4o-2024-05-13", "system_fingerprint": "fp_319be4768e", "choices": [{ "index": 0, "delta": { "role": "assistant", "content": "hello" }, "logprobs": null, "finish_reason": null }], "usage": null })}\n
+          ${JSON.stringify({ "id": "chatcmpl-9a0ckk5rq36dtBFE2ail2G2AZbk9s", "object": "chat.completion.chunk", "created": 1718369234, "model": "gpt-4o-2024-05-13", "system_fingerprint": "fp_319be4768e", "choices": [{ "index": 0, "delta": { "role": "assistant", "content": "." }, "logprobs": null, "finish_reason": "stop" }], "usage": null })}\n`
+        )
+        dataEmitter.dispatchEvent('close')
+        result.current.abort()
+      })
+
+      await vi.waitFor(() => {
+        expect(abortAgent).toHaveBeenCalledTimes(1)
+        expect(result.current.isLoading).to.be.false
+      })
+    })
+
     it("should call onError callback when an error occurs", async () => {
       const createReadableStream = vi.fn(() => {
         return Promise.reject(new Error('threw by test'))
@@ -182,6 +228,26 @@ describe("useAIStream", () => {
 
       await vi.waitFor(() => {
         expect(onError).toHaveBeenCalledTimes(1)
+      })
+    })
+
+    it("should change the loading state to false when error occurs", async () => {
+      const createReadableStream = vi.fn(() => {
+        return Promise.reject(new Error('threw by test'))
+      })
+
+      const onError = vi.fn()
+
+
+      const { result } = renderHook(() => useChatStream({ fetcher: createReadableStream, onError }))
+
+      act(() => {
+        result.current.send('')
+      })
+
+      await vi.waitFor(() => {
+        expect(onError).toHaveBeenCalledTimes(1)
+        expect(result.current.isLoading).to.be.false
       })
     })
 
