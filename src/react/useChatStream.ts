@@ -218,6 +218,7 @@ export function useChatStream<
       setMessagesState(messages)
     },
     abort: () => {
+      setIsLoadingState(false)
       runnerRef.current.abort()
       abortControllerRef.current?.abort()
     },
