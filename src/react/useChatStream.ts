@@ -27,7 +27,7 @@ export function mapAIMessagesToChatCompletions(
   messages: (ChatCompletion | ChatMessage)[],
 ): ChatMessage[] {
   return messages.flatMap((message) => {
-    if ("id" in message) {
+    if ("id" in message && "choices" in message) {
       return message.choices.map((choice) => {
         return choice.message
       })
