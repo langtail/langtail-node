@@ -4,6 +4,7 @@ import {
   ChatCompletionMessageToolCall,
   ChatCompletionChunk,
   ChatCompletionMessageParam,
+  ChatCompletionMessage,
 } from "openai/resources"
 import { chatStreamToRunner, type ChatCompletionStream } from "../stream"
 import { useRef, useState } from "react"
@@ -118,6 +119,14 @@ export function combineAIMessageChunkWithCompleteMessages(
   })
 }
 
+function normalizeMessage(message: ChatCompletionMessage) {
+  return {
+    ...message,
+    // NOTE: ensure that message isn't null or undefined
+    content: message.content ?? "",
+  }
+}
+
 function parameterToMessage(
   parameter: ChatMessage | ChatMessage[] | string,
 ): ChatMessage[] {
@@ -183,6 +192,7 @@ export function useChatStream<
   const generatingRef = useRef<boolean>(false)
   const endedRef = useRef<boolean>(false)
   const errorRef = useRef<Error | null>(null)
+  const messageMode = options.messageMode ?? 'append'
 
   function setIsLoadingState(generating: boolean) {
     generatingRef.current = generating
@@ -226,7 +236,7 @@ export function useChatStream<
       const abortController = new AbortController()
       abortControllerRef.current = abortController
 
-      switch (options.messageMode ?? 'append') {
+      switch (messageMode) {
         case 'replace':
           setMessagesState(parameterToMessage(parameter))
         case 'append':
@@ -255,7 +265,7 @@ export function useChatStream<
                   !("id" in currentMessage) ||
                   currentMessage.id !== finalMessage.id,
               )
-              .concat(finalMessage.choices.flatMap((choice) => choice.message))
+              .concat(finalMessage.choices.flatMap((choice) => normalizeMessage(choice.message)))
 
             const userChatMessages = mapAIMessagesToChatCompletions(
               messagesRef.current,

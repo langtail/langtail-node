@@ -562,6 +562,80 @@ describe("useAIStream", () => {
         })
       })
 
+
+      it("should ensure that the content isn't nullish", async () => {
+        function createMockReadadbleStream(dataEmitter: DataEventListener) {
+          return new ReadableStream({
+            start(controller) {
+              dataEmitter.addEventListener('data', (data: string) => {
+                controller.enqueue(data)
+                controller.close();
+              })
+            },
+          });
+        }
+
+        const dataEmitter = new DataEventListener()
+
+        const stream = createMockReadadbleStream(dataEmitter)
+
+        let ran = false
+        const createReadableStream = vi.fn(() => {
+          // NOTE: run this only once
+          if (ran) {
+            return Promise.reject('Error in tools!')
+          }
+
+          ran = true
+          return Promise.resolve(stream)
+        })
+
+        const onToolCall = () => Promise.resolve('Result in test')
+
+        const { result } = renderHook(() =>
+          useChatStream({
+            fetcher: createReadableStream,
+            onToolCall
+          }),
+        )
+
+        act(() => {
+          result.current.send('user input')
+          dataEmitter.dispatchEvent('data',
+            `{"id":"chatcmpl-9aJwNzlnvn1jG845CJe2QZH6AKcow","object":"chat.completion.chunk","created":1718443487,"model":"gpt-4o-2024-05-13","system_fingerprint":"fp_319be4768e","choices":[{"index":0,"delta":{"role":"assistant","content":null},"logprobs":null,"finish_reason":null}],"usage":null}\n
+{"id":"chatcmpl-9aJwNzlnvn1jG845CJe2QZH6AKcow","object":"chat.completion.chunk","created":1718443487,"model":"gpt-4o-2024-05-13","system_fingerprint":"fp_319be4768e","choices":[{"index":0,"delta":{"content": null},"logprobs":null,"finish_reason":null}],"usage":null}\n
+{"id":"chatcmpl-9aJwNzlnvn1jG845CJe2QZH6AKcow","object":"chat.completion.chunk","created":1718443487,"model":"gpt-4o-2024-05-13","system_fingerprint":"fp_319be4768e","choices":[{"index":0,"delta":{"tool_calls":[{"index":0, "id":"call_tNW2f79DhRvuuwrslSYt3yVT", "type": "function", "function":{"name":"get_weather", "arguments":"{\\"location\\":\\"Prague, Czech Republic\\"}"}}]},"logprobs":null,"finish_reason":null}],"usage":null}\n
+{"id":"chatcmpl-9aJwNzlnvn1jG845CJe2QZH6AKcow","object":"chat.completion.chunk","created":1718443487,"model":"gpt-4o-2024-05-13","system_fingerprint":"fp_319be4768e","choices":[{"index":0,"delta":{},"logprobs":null,"finish_reason":"tool_calls"}],"usage":null}\n
+{"id":"chatcmpl-9aJwNzlnvn1jG845CJe2QZH6AKcow","object":"chat.completion.chunk","created":1718443487,"model":"gpt-4o-2024-05-13","system_fingerprint":"fp_319be4768e","choices":[],"usage":{"prompt_tokens":284,"completion_tokens":34,"total_tokens":318}}\n\n`
+          )
+        })
+
+        await vi.waitFor(() => {
+          expect(result.current.messages).toEqual([
+            { role: 'user', content: 'user input' },
+            {
+              "content": "",
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "function": {
+                    "arguments": "{\"location\":\"Prague, Czech Republic\"}",
+                    "name": "get_weather",
+                  },
+                  "id": "call_tNW2f79DhRvuuwrslSYt3yVT",
+                  "type": "function",
+                },
+              ]
+            },
+            {
+              "content": "Result in test",
+              "role": "tool",
+              "tool_call_id": "call_tNW2f79DhRvuuwrslSYt3yVT",
+            }
+          ])
+        })
+      })
+
       it("should pass tool call result to the messages", async () => {
         function createMockReadadbleStream(dataEmitter: DataEventListener) {
           return new ReadableStream({
