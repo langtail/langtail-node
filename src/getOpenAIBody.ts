@@ -2,8 +2,28 @@
 import type OpenAI from "openai"
 
 import { compileLTTemplate } from "./template"
-import { ChatCompletionsCreateParams } from "./schemas"
+import { ChatCompletionsCreateParams, PlaygroundMessage } from "./schemas"
 import { IncomingBodyType, PlaygroundState } from "./schemas"
+import { ChatCompletionMessageParam } from "openai/resources"
+
+function compileMessages(
+  messages: PlaygroundMessage[],
+  variables: Record<string, any>,
+): ChatCompletionMessageParam[] {
+  return messages.map((item) => {
+    const needsCompilation =
+      typeof item.content === "string" ? item.content?.includes("{{") : true
+
+    return {
+      ...item,
+      content:
+        item.content &&
+        (needsCompilation
+          ? compileLTTemplate(item.content, variables)
+          : item.content),
+    } as ChatCompletionMessageParam
+  })
+}
 
 /**
  * Get the body for the OpenAI API request. Used in the langtail prompt API. // TODO remove this from our prompt-API when this is merged so that we don't have this code duplicated
@@ -11,30 +31,22 @@ import { IncomingBodyType, PlaygroundState } from "./schemas"
 export function getOpenAIBody(
   completionConfig: PlaygroundState,
   parsedBody: IncomingBodyType,
+  threadParams?: {
+    threadMessages?: PlaygroundMessage[]
+  }
 ): ChatCompletionsCreateParams {
   const completionArgs = completionConfig.state.args
 
   const template = parsedBody.template ?? completionConfig.state.template
   const inputMessages = [
-    ...template.map((item) => {
-      const needsCompilation =
-        typeof item.content === "string" ? item.content?.includes("{{") : true
-
-      const variables = Object.assign(
-        completionConfig.chatInput,
-        parsedBody.variables ?? {},
-      )
-      return {
-        ...item,
-        content:
-          item.content &&
-          (needsCompilation
-            ? compileLTTemplate(item.content, variables)
-            : item.content),
-      }
-    }),
-    ...(parsedBody.messages ?? []),
+    ...compileMessages(template, Object.assign(
+      completionConfig.chatInput,
+      parsedBody.variables ?? {},
+    )),
+    ...[...(threadParams?.threadMessages ?? []) as ChatCompletionMessageParam[]],
+    ...(parsedBody.messages ?? []) as ChatCompletionMessageParam[]
   ]
+
   const openAIbody: OpenAI.Chat.ChatCompletionCreateParams = {
     model: parsedBody.model ?? completionArgs.model,
     temperature: parsedBody.temperature ?? completionArgs.temperature,

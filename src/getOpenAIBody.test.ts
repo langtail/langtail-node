@@ -246,4 +246,181 @@ describe("getOpenAIBody", () => {
       }
     `) // template is overridden by the one in parsedBody
   })
+
+
+  describe('thread messages', () => {
+    it('should compile thread messages with passed variables', () => {
+      const completionConfig = {
+        state: {
+          type: "chat" as const,
+          args: {
+            model: "gpt-3.5-turbo",
+            max_tokens: 100,
+            temperature: 0.8,
+            top_p: 1,
+            presence_penalty: 0,
+            frequency_penalty: 0,
+            jsonmode: false,
+            seed: null,
+            stop: [],
+          },
+          template: [
+            {
+              role: "user" as const,
+              content: "TEAMPLTE: This use previous user message.",
+            },
+          ]
+        },
+        chatInput: {},
+      }
+
+      const openAIbody = getOpenAIBody(completionConfig, {
+        variables: {
+          footballClub: "Slavia Praha",
+        },
+        messages: [],
+      }, {
+        threadMessages: [
+          {
+            role: "system" as const,
+            content: "THREAD: Your favourite football club is {{ footballClub }}",
+          },
+        ]
+      })
+
+      expect(openAIbody).toMatchInlineSnapshot(`
+        {
+          "frequency_penalty": 0,
+          "max_tokens": 100,
+          "messages": [
+            {
+              "content": "TEAMPLTE: This use previous user message.",
+              "role": "user",
+            },
+            {
+              "content": "THREAD: Your favourite football club is {{ footballClub }}",
+              "role": "system",
+            },
+          ],
+          "model": "gpt-3.5-turbo",
+          "presence_penalty": 0,
+          "temperature": 0.8,
+          "top_p": 1,
+        }
+      `)
+    })
+
+    it('should combine template messages with other messages', () => {
+      const completionConfig = {
+        state: {
+          type: "chat" as const,
+          args: {
+            model: "gpt-3.5-turbo",
+            max_tokens: 100,
+            temperature: 0.8,
+            top_p: 1,
+            presence_penalty: 0,
+            frequency_penalty: 0,
+            jsonmode: false,
+            seed: null,
+            stop: [],
+          },
+          template: [
+            {
+              role: "system" as const,
+              content: "TEMPLATE MESSAGE: This use previous user message. With variable {{ footballClub }}",
+            },
+          ]
+        },
+        chatInput: {
+          footballClub: "Sparta Praha",
+        },
+      }
+
+      const openAIbody = getOpenAIBody(completionConfig, {
+        variables: {},
+        messages: [],
+      }, {
+        threadMessages: [
+          {
+            role: "user" as const,
+            content: "THREAD message: Your favourite football club is NOT SPARTA",
+          },
+        ]
+      })
+
+      expect(openAIbody).toMatchInlineSnapshot(`
+        {
+          "frequency_penalty": 0,
+          "max_tokens": 100,
+          "messages": [
+            {
+              "content": "TEMPLATE MESSAGE: This use previous user message. With variable Sparta Praha",
+              "role": "system",
+            },
+            {
+              "content": "THREAD message: Your favourite football club is NOT SPARTA",
+              "role": "user",
+            },
+          ],
+          "model": "gpt-3.5-turbo",
+          "presence_penalty": 0,
+          "temperature": 0.8,
+          "top_p": 1,
+        }
+      `)
+    })
+
+    it('should NOT compile thread messages with variables', () => {
+      const completionConfig = {
+        state: {
+          type: "chat" as const,
+          args: {
+            model: "gpt-3.5-turbo",
+            max_tokens: 100,
+            temperature: 0.8,
+            top_p: 1,
+            presence_penalty: 0,
+            frequency_penalty: 0,
+            jsonmode: false,
+            seed: null,
+            stop: [],
+          },
+          template: []
+        },
+        chatInput: {
+          footballClub: "Sparta Praha",
+        },
+      }
+
+      const openAIbody = getOpenAIBody(completionConfig, {
+        variables: {},
+        messages: [],
+      }, {
+        threadMessages: [
+          {
+            role: "user" as const,
+            content: "THREAD message: Your favourite football club is {{ footballClub }}",
+          },
+        ]
+      })
+
+      expect(openAIbody).toMatchInlineSnapshot(`
+        {
+          "frequency_penalty": 0,
+          "max_tokens": 100,
+          "messages": [
+            {
+              "content": "THREAD message: Your favourite football club is {{ footballClub }}",
+              "role": "user",
+            },
+          ],
+          "model": "gpt-3.5-turbo",
+          "presence_penalty": 0,
+          "temperature": 0.8,
+          "top_p": 1,
+        }
+      `)
+    })
+  })
 })
