@@ -976,5 +976,144 @@ describe("useAIStream", () => {
         })
       })
     })
+
+
+    describe("image support", () => {
+      it("should should accept the user message containing an image without any problems", async () => {
+        function createMockReadadbleStream(dataEmitter: DataEventListener) {
+          return new ReadableStream({
+            start(controller) {
+              dataEmitter.addEventListener('data', (data: string) => {
+                controller.enqueue(data)
+                controller.close();
+              })
+            },
+          });
+        }
+
+        const dataEmitter = new DataEventListener()
+
+        const stream = createMockReadadbleStream(dataEmitter)
+
+        const createReadableStream = vi.fn(() =>
+          Promise.resolve(stream)
+        )
+
+        const { result } = renderHook(() =>
+          useChatStream({
+            fetcher: createReadableStream,
+          }),
+        )
+
+        act(() => {
+          result.current.send({
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: {
+                  detail: "auto",
+                  url: 'https://example.com/image.jpg'
+                }
+              }
+            ]
+          })
+          dataEmitter.dispatchEvent('data',
+            `{"id":"chatcmpl-9aJwNzlnvn1jG845CJe2QZH6AKcow","object":"chat.completion.chunk","created":1718443487,"model":"gpt-4o-2024-05-13","system_fingerprint":"fp_319be4768e","choices":[{"index":0,"delta":{"role":"assistant","content":"Ahoj."},"logprobs":null,"finish_reason":"stop"}],"usage":null}\n`)
+        })
+
+        await vi.waitFor(() => {
+          expect(result.current.messages).toEqual([
+            {
+              role: 'user', content: [
+                {
+                  "image_url": {
+                    "detail": "auto",
+                    "url": "https://example.com/image.jpg",
+                  },
+                  "type": "image_url",
+                },
+              ]
+            },
+            {
+              "content": "Ahoj.",
+              "role": "assistant",
+            },
+          ])
+        })
+      })
+
+      it("should should accept the user message containing an image and message without any problems", async () => {
+        function createMockReadadbleStream(dataEmitter: DataEventListener) {
+          return new ReadableStream({
+            start(controller) {
+              dataEmitter.addEventListener('data', (data: string) => {
+                controller.enqueue(data)
+                controller.close();
+              })
+            },
+          });
+        }
+
+        const dataEmitter = new DataEventListener()
+
+        const stream = createMockReadadbleStream(dataEmitter)
+
+        const createReadableStream = vi.fn(() =>
+          Promise.resolve(stream)
+        )
+
+        const { result } = renderHook(() =>
+          useChatStream({
+            fetcher: createReadableStream,
+          }),
+        )
+
+        act(() => {
+          result.current.send({
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: {
+                  detail: "auto",
+                  url: 'https://example.com/image.jpg'
+                }
+              },
+              {
+                type: "text",
+                text: "Čau!"
+              }
+            ]
+          })
+          dataEmitter.dispatchEvent('data',
+            `{"id":"chatcmpl-9aJwNzlnvn1jG845CJe2QZH6AKcow","object":"chat.completion.chunk","created":1718443487,"model":"gpt-4o-2024-05-13","system_fingerprint":"fp_319be4768e","choices":[{"index":0,"delta":{"role":"assistant","content":"Ahoj."},"logprobs":null,"finish_reason":"stop"}],"usage":null}\n`)
+        })
+
+        await vi.waitFor(() => {
+          expect(result.current.messages).toEqual([
+            {
+              role: 'user', content: [
+                {
+                  "image_url": {
+                    "detail": "auto",
+                    "url": "https://example.com/image.jpg",
+                  },
+                  "type": "image_url",
+                },
+                {
+                  "text": "Čau!",
+                  "type": "text",
+                }
+              ]
+            },
+            {
+              "content": "Ahoj.",
+              "role": "assistant",
+            },
+          ])
+        })
+      })
+    })
   })
 })

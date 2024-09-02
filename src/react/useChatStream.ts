@@ -21,7 +21,30 @@ export type ChatMessage =
   | {
     role: "tool"
     tool_call_id: string
-    content: string
+    content: string | null
+  } | {
+    role: "assistant" | "user" | "system" | "tool"
+    content: [
+      {
+        type: "image_url",
+        image_url: {
+          detail: "auto",
+          url: string,
+        },
+      },
+    ] | [
+      {
+        type: "image_url",
+        image_url: {
+          detail: "auto",
+          url: string,
+        },
+      },
+      {
+        type: "text",
+        text: string,
+      },
+    ]
   }
 
 export function mapAIMessagesToChatCompletions(
