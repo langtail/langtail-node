@@ -9,15 +9,15 @@ import { ILangtailExtraProps } from "./schemas"
 import { userAgent } from "./userAgent"
 import queryString from "query-string"
 import { OpenAiBodyType, Deployment, PlaygroundState } from "./schemas"
-import { Environment, PromptOptions, PromptSlug, Version, LangtailEnvironment, Variables } from "./types"
+import { Environment, PromptOptions, PromptSlug, Version, LangtailEnvironment, Variables, PublicAPI } from "./types"
 
 interface LangtailPromptVariables { } // TODO use this when generating schema for deployed prompts
 
 export { LangtailEnvironment }
 
-type StreamResponseType = Stream<ChatCompletionChunk>
+export type StreamResponseType = Stream<ChatCompletionChunk>
 
-type OpenAIResponseWithHttp = ChatCompletion & {
+export type OpenAIResponseWithHttp = ChatCompletion & {
   httpResponse: Response | globalThis.Response
 }
 
@@ -28,7 +28,7 @@ interface CreatePromptPathOptions<P extends PromptSlug, E extends Environment<P>
   configGet?: boolean
 }
 
-type Options = {
+export type Options = {
   apiKey: string
   baseURL?: string | undefined
   workspace?: string | undefined
@@ -43,9 +43,11 @@ export type IRequestParams<P extends PromptSlug, E extends Environment<P> = unde
   variables?: Variables<P, E, V>
 }
 
-type IRequestParamsStream<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined, S extends boolean | undefined = false> = IRequestParams<P, E, V> & {
+export type IRequestParamsStream<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined, S extends boolean | undefined = false> = IRequestParams<P, E, V> & {
   stream?: S
 }
+
+export type ILangtailPrompts = PublicAPI<LangtailPrompts>
 
 export class LangtailPrompts {
   apiKey: string
