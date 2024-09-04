@@ -4,16 +4,44 @@ import { LangtailPrompts } from "./LangtailPrompts"
 import { ILangtailThreads, LangtailThreads } from "./LangtailThreads"
 import { LangtailThreadsOptions } from "./types"
 
+export class ErrorResponse extends Error {
+  statusCode: number
+  extra_data?: Record<string, any>
+  constructor(
+    message: string,
+    statusCode = 400,
+    extra_data?: Record<string, any>,
+  ) {
+    super(message)
+    this.statusCode = statusCode
+    this.extra_data = extra_data
+  }
+}
+
 export const createFetcher = (baseUrl: string, apiKey: string) => {
   return {
     fetch: async (url: string, options?: RequestInit) => {
-      return fetch(`${baseUrl}${url}`, {
+      const response = await fetch(`${baseUrl}${url}`, {
         headers: {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
         ...options,
-      })
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json();
+        throw new ErrorResponse(
+          errorBody.error?.message || response.statusText,
+          response.status,
+          {
+            statusText: response.statusText,
+            body: errorBody,
+          }
+        );
+      }
+
+      return response;
     },
   }
 }

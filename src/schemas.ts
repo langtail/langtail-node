@@ -237,7 +237,7 @@ export const threadSchema = z.object({
   deletedAt: z.string().nullable().optional(),
   projectId: z.string(),
   createLog: z.unknown(),
-  metadata: bodyMetadataSchema,
+  metadata: bodyMetadataSchema.nullable().optional(),
 })
 
 export type Thread = z.infer<typeof threadSchema>
@@ -260,7 +260,7 @@ export const assistantMessageSchema = z.object({
   createdAt: z.string(),
   content: MessageSchema,
   requestLogId: z.string().optional(),
-  metadata: bodyMetadataSchema,
+  metadata: bodyMetadataSchema.nullable().optional(),
 })
 
 export type AssistantMessage = z.infer<typeof assistantMessageSchema>
