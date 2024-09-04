@@ -236,7 +236,7 @@ export const threadSchema = z.object({
   createdAt: z.string(),
   deletedAt: z.string().nullable().optional(),
   projectId: z.string(),
-  createLog: z.unknown(),
+  createLog: z.unknown().nullable(),
   metadata: bodyMetadataSchema.nullable().optional(),
 })
 
@@ -259,7 +259,7 @@ export const assistantMessageSchema = z.object({
   threadId: z.string(),
   createdAt: z.string(),
   content: MessageSchema,
-  requestLogId: z.string().optional(),
+  requestLogId: z.string().nullable().optional(),
   metadata: bodyMetadataSchema.nullable().optional(),
 })
 
