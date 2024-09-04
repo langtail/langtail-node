@@ -1,3 +1,5 @@
+import { Fetch } from "openai/core"
+import { ILangtailAssistants, LangtailAssistants } from "./LangtailAssistants"
 import { LangtailPrompts } from "./LangtailPrompts"
 import { ILangtailThreads, LangtailThreads } from "./LangtailThreads"
 import { LangtailThreadsOptions } from "./types"
@@ -19,12 +21,14 @@ export const createFetcher = (baseUrl: string, apiKey: string) => {
 export class Langtail {
   prompts: LangtailPrompts
   threads: ILangtailThreads
+  assistants: ILangtailAssistants
 
   constructor(clientOptions?: {
     apiKey: string
     organization?: string
     project?: string
     baseURL?: string
+    fetch?: Fetch
   }) {
     const apiKey = clientOptions?.apiKey || process.env.LANGTAIL_API_KEY
     if (!apiKey) {
@@ -41,7 +45,10 @@ export class Langtail {
       baseURL,
       workspace: clientOptions?.organization,
       project: clientOptions?.project,
+      fetch: clientOptions?.fetch,
     })
+
+    this.assistants = new LangtailAssistants(this.prompts)
 
     this.threads = new LangtailThreads(createFetcher(baseURL, apiKey), {
       apiVersion: threadsAPIVersion,
@@ -51,4 +58,4 @@ export class Langtail {
   }
 }
 
-export { LangtailPrompts, LangtailThreads }
+export { LangtailPrompts, LangtailThreads, LangtailAssistants }
