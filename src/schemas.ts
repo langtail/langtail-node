@@ -7,6 +7,8 @@ import type {
 
 export interface ILangtailExtraProps {
   doNotRecord?: boolean
+  threadId?: string
+  assistant?: boolean
   metadata?: Record<string, any>
 }
 
