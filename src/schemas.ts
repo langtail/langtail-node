@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z, ZodSchema } from "zod"
 import { Environment, LangtailEnvironment, PromptSlug, Version } from "./types"
 import type { ChatCompletionCreateParamsStreaming } from "openai/resources/index"
 import type {
@@ -229,3 +229,52 @@ export const bothBodySchema = langtailBodySchema.merge(openAIBodySchema)
 
 export type IncomingBodyType = z.infer<typeof bothBodySchema>
 export type OpenAiBodyType = z.infer<typeof openAIBodySchema>
+
+
+export const threadSchema = z.object({
+  id: z.string(),
+  createdAt: z.string(),
+  deletedAt: z.string().nullable().optional(),
+  projectId: z.string(),
+  createLog: z.unknown(),
+  metadata: bodyMetadataSchema,
+})
+
+export type Thread = z.infer<typeof threadSchema>
+
+export const threadCreateSchema = z.object({
+  createLog: openAIBodySchema
+})
+
+export type ThreadCreate = z.infer<typeof threadCreateSchema>
+
+export const deleteEntitySchema = z.object({
+  id: z.string(),
+  object: z.string(),
+  deleted: z.boolean(),
+})
+
+export const assistantMessageSchema = z.object({
+  id: z.string(),
+  threadId: z.string(),
+  createdAt: z.string(),
+  content: MessageSchema,
+  requestLogId: z.string().optional(),
+  metadata: bodyMetadataSchema,
+})
+
+export type AssistantMessage = z.infer<typeof assistantMessageSchema>
+
+export const createListResponseSchema = <Z extends ZodSchema>(listItemType: Z) => z.object({
+  object: z.enum(["list"]),
+  data: z.array(listItemType),
+  first_id: z.string().nullable(),
+  last_id: z.string().nullable(),
+  has_more: z.boolean(),
+})
+
+export const threadListResponseSchema = createListResponseSchema(threadSchema)
+export type ThreadListResponse = z.infer<typeof threadListResponseSchema>
+
+export const assistantMessageListResponseSchema = createListResponseSchema(assistantMessageSchema)
+export type AssistantMessageListResponse = z.infer<typeof assistantMessageListResponseSchema>

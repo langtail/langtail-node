@@ -30,3 +30,28 @@ type ExtraPromptOptions<P extends PromptSlug, E extends Environment<P> = undefin
 export type PromptSlugOption<P extends PromptSlug> = { prompt: P };
 
 export type PromptOptions<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> = PromptSlugOption<P> & ExtraPromptOptions<P, E, V>;
+
+type PublicKeys<T> = keyof T extends infer K
+  ? K extends keyof T
+  ? T[K] extends (...args: any) => any
+  ? K
+  : T[K] extends never
+  ? never
+  : K
+  : never
+  : never;
+
+export type PublicAPI<T> = Pick<T, PublicKeys<T>>;
+
+export type PaginationOptions = {
+  after?: string
+  limit?: number
+}
+
+export type LangtailThreadsOptions = {
+  apiVersion?: '/' | '/v2/'
+}
+
+export interface IFetcher {
+  fetch: (url: `/${string}`, init?: RequestInit) => Promise<Response>
+}
