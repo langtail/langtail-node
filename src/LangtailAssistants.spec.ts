@@ -26,15 +26,15 @@ class MockLangtailPrompts implements ILangtailPrompts {
 }
 
 describe("LangtailAssistants", () => {
-  describe("public API", () => {
-    const createLt = () => {
-      const promptsMock = new MockLangtailPrompts()
-      return {
-        lt: new LangtailAssistants(promptsMock),
-        promptsMock
-      }
+  const createLt = () => {
+    const promptsMock = new MockLangtailPrompts()
+    return {
+      lt: new LangtailAssistants(promptsMock),
+      promptsMock
     }
+  }
 
+  describe("public API", () => {
     it("should translate assistant to prompt option in langtailPrompts.invoke call", async () => {
       const { lt, promptsMock } = createLt();
       const assistant = "test-assistant";
@@ -43,6 +43,7 @@ describe("LangtailAssistants", () => {
 
       expect(promptsMock.invoke).toHaveBeenCalledWith(
         expect.objectContaining({
+          assistant: true,
           prompt: assistant,
         })
       );
@@ -90,6 +91,7 @@ describe("LangtailAssistants", () => {
       });
 
       expect(promptsMock.invoke).toHaveBeenCalledWith({
+        assistant: true,
         prompt: assistant,
         messages,
       });
@@ -106,4 +108,35 @@ describe("LangtailAssistants", () => {
       expect(result).toBe(mockResponse);
     });
   })
+
+  it("should pass assistant: true by default to langtailPrompts.invoke call", async () => {
+    const { lt, promptsMock } = createLt();
+    const assistant = "test-assistant";
+
+    await lt.invoke({ assistant });
+
+    expect(promptsMock.invoke).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assistant: true,
+        prompt: "test-assistant",
+      })
+    );
+  });
+
+  it("should pass threadId to langtailPrompts.invoke call when provided", async () => {
+    const { lt, promptsMock } = createLt();
+    const assistant = "test-assistant";
+    const threadId = "test-thread-id";
+
+    await lt.invoke({ assistant, threadId });
+
+    expect(promptsMock.invoke).toHaveBeenCalledWith(
+      expect.objectContaining({
+        assistant: true,
+        prompt: assistant,
+        threadId: threadId,
+      })
+    );
+  });
+
 })
