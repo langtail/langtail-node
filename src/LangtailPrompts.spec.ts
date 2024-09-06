@@ -135,6 +135,7 @@ describe.skipIf(!liveTesting)(
             return {
               ok: true,
               status: 200,
+              headers: new Headers({}),
               json: async () => ({
                 choices: [
                   {
@@ -164,6 +165,7 @@ describe.skipIf(!liveTesting)(
         // TODO when we have some API for logs we could assert on that too that the log record does not have any payload
       })
     })
+
 
     describe("build", () => {
       const ltLocal = new LangtailPrompts({
@@ -240,3 +242,129 @@ describe.skipIf(!liveTesting)(
   },
   { timeout: 20000 },
 )
+
+describe("LangtailPrompts", () => {
+  describe("invoke with optional callbacks", () => {
+    it("should trigger onRawResponse callback when response is returned", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content: "Test response",
+              },
+            },
+          ],
+        }),
+        headers: new Headers({
+          'Content-Type': 'application/json',
+          'X-API-Key': 'test-api-key',
+          'x-langtail-thread-id': 'test-thread-id'
+        }),
+      });
+
+      const lt = new LangtailPrompts({
+        apiKey: "test-api-key",
+        fetch: mockFetch,
+      });
+
+      const onRawResponse = vi.fn();
+
+      await lt.invoke({
+        prompt: "test-prompt",
+        environment: "production",
+      }, { onRawResponse });
+
+      expect(mockFetch).toHaveBeenCalled();
+      expect(onRawResponse).toHaveBeenCalledTimes(1);
+      expect(onRawResponse).toHaveBeenCalledWith(expect.objectContaining({
+        ok: true,
+        status: 200,
+      }));
+    });
+
+    it("should trigger onThreadId callback when thread ID is present in headers", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content: "Test response",
+              },
+            },
+          ],
+        }),
+        headers: new Headers({
+          'x-langtail-thread-id': 'test-thread-id'
+        }),
+      });
+
+      const lt = new LangtailPrompts({
+        apiKey: "test-api-key",
+        fetch: mockFetch,
+      });
+
+      const onThreadId = vi.fn();
+
+      await lt.invoke({
+        prompt: "test-prompt",
+        environment: "production",
+      }, { onThreadId });
+
+      expect(mockFetch).toHaveBeenCalled();
+      expect(onThreadId).toHaveBeenCalledTimes(1);
+      expect(onThreadId).toHaveBeenCalledWith('test-thread-id');
+    });
+
+    it("should trigger both onThreadId and onRawResponse callbacks with the same headers", async () => {
+      const testHeaders = new Headers({
+        'x-langtail-thread-id': 'test-thread-id',
+        'content-type': 'application/json'
+      });
+
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content: "Test response",
+              },
+            },
+          ],
+        }),
+        headers: testHeaders,
+      });
+
+      const lt = new LangtailPrompts({
+        apiKey: "test-api-key",
+        fetch: mockFetch,
+      });
+
+      const onThreadId = vi.fn();
+      const onRawResponse = vi.fn();
+
+      await lt.invoke({
+        prompt: "test-prompt",
+        environment: "production",
+      }, { onThreadId, onRawResponse });
+
+      expect(mockFetch).toHaveBeenCalled();
+      expect(onThreadId).toHaveBeenCalledTimes(1);
+      expect(onThreadId).toHaveBeenCalledWith('test-thread-id');
+      expect(onRawResponse).toHaveBeenCalledTimes(1);
+      expect(onRawResponse).toHaveBeenCalledWith(expect.objectContaining({
+        headers: testHeaders
+      }));
+
+      // Verify that the headers in onRawResponse match the original headers
+      const rawResponseHeaders = onRawResponse.mock.calls[0][0].headers;
+      expect(rawResponseHeaders.get('x-langtail-thread-id')).toBe('test-thread-id');
+    });
+  })
+})
