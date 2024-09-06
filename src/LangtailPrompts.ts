@@ -47,6 +47,11 @@ export type IRequestParamsStream<P extends PromptSlug, E extends Environment<P> 
   stream?: S
 }
 
+export type IInvokeOptionalCallbacks = {
+  onRawResponse?: (response: Response) => void
+  onThreadId?: (threadId: string) => void
+}
+
 export type ILangtailPrompts = PublicAPI<LangtailPrompts>
 
 export class LangtailPrompts {
@@ -103,7 +108,7 @@ export class LangtailPrompts {
     metadata,
     stream,
     ...rest
-  }: IRequestParamsStream<P, E, V, S>): Promise<S extends true ? StreamResponseType : OpenAIResponseWithHttp> {
+  }: IRequestParamsStream<P, E, V, S>, optionalCallbacks: IInvokeOptionalCallbacks = {}): Promise<S extends true ? StreamResponseType : OpenAIResponseWithHttp> {
     type OutputType = S extends true ? StreamResponseType : OpenAIResponseWithHttp
 
     const metadataHeaders = metadata
@@ -136,6 +141,13 @@ export class LangtailPrompts {
       res = await this.options.fetch(promptPath, fetchInit)
     } else {
       res = await fetch(promptPath, fetchInit)
+    }
+
+    optionalCallbacks.onRawResponse?.(res)
+
+    const threadId = res.headers.get("x-langtail-thread-id")
+    if (threadId) {
+      optionalCallbacks.onThreadId?.(threadId)
     }
 
     if (!res.ok) {

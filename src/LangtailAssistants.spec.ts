@@ -44,7 +44,7 @@ describe("LangtailAssistants", () => {
       expect(promptsMock.invoke).toHaveBeenCalledWith(
         expect.objectContaining({
           prompt: assistant,
-        })
+        }), {}
       );
     });
 
@@ -58,7 +58,7 @@ describe("LangtailAssistants", () => {
       expect(promptsMock.invoke).toHaveBeenCalledWith(
         expect.objectContaining({
           environment,
-        })
+        }), {}
       );
     });
 
@@ -72,7 +72,7 @@ describe("LangtailAssistants", () => {
       expect(promptsMock.invoke).toHaveBeenCalledWith(
         expect.objectContaining({
           variables,
-        })
+        }), {}
       );
     });
 
@@ -92,7 +92,7 @@ describe("LangtailAssistants", () => {
       expect(promptsMock.invoke).toHaveBeenCalledWith({
         prompt: assistant,
         messages,
-      });
+      }, {});
     });
 
     it("should return the same result as langtailPrompts.invoke", async () => {
@@ -116,8 +116,26 @@ describe("LangtailAssistants", () => {
     expect(promptsMock.invoke).toHaveBeenCalledWith(
       expect.not.objectContaining({
         assistant: true,
-      })
+      }), {}
     );
     expect(promptsMock.invoke.mock.calls[0][0]).not.toHaveProperty('assistant');
+  });
+
+  it("should pass optionalCallbacks to langtailPrompts.invoke call", async () => {
+    const { lt, promptsMock } = createLt();
+    const assistant = "test-assistant";
+    const optionalCallbacks = {
+      onRawResponse: vi.fn(),
+      onThreadId: vi.fn(),
+    };
+
+    await lt.invoke({ assistant }, optionalCallbacks);
+
+    expect(promptsMock.invoke).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: assistant,
+      }),
+      optionalCallbacks
+    );
   });
 })
