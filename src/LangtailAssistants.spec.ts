@@ -43,7 +43,6 @@ describe("LangtailAssistants", () => {
 
       expect(promptsMock.invoke).toHaveBeenCalledWith(
         expect.objectContaining({
-          assistant: true,
           prompt: assistant,
         })
       );
@@ -91,7 +90,6 @@ describe("LangtailAssistants", () => {
       });
 
       expect(promptsMock.invoke).toHaveBeenCalledWith({
-        assistant: true,
         prompt: assistant,
         messages,
       });
@@ -109,34 +107,17 @@ describe("LangtailAssistants", () => {
     });
   })
 
-  it("should pass assistant: true by default to langtailPrompts.invoke call", async () => {
+  it("should not pass assistant: true to langtailPrompts.invoke call", async () => {
     const { lt, promptsMock } = createLt();
     const assistant = "test-assistant";
 
     await lt.invoke({ assistant });
 
     expect(promptsMock.invoke).toHaveBeenCalledWith(
-      expect.objectContaining({
+      expect.not.objectContaining({
         assistant: true,
-        prompt: "test-assistant",
       })
     );
+    expect(promptsMock.invoke.mock.calls[0][0]).not.toHaveProperty('assistant');
   });
-
-  it("should pass threadId to langtailPrompts.invoke call when provided", async () => {
-    const { lt, promptsMock } = createLt();
-    const assistant = "test-assistant";
-    const threadId = "test-thread-id";
-
-    await lt.invoke({ assistant, threadId });
-
-    expect(promptsMock.invoke).toHaveBeenCalledWith(
-      expect.objectContaining({
-        assistant: true,
-        prompt: assistant,
-        threadId: threadId,
-      })
-    );
-  });
-
 })
