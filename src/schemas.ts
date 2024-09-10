@@ -244,7 +244,8 @@ export const threadSchema = z.object({
 export type Thread = z.infer<typeof threadSchema>
 
 export const threadCreateSchema = z.object({
-  createLog: openAIBodySchema
+  createLog: openAIBodySchema.nullable().optional(),
+  metadata: bodyMetadataSchema.nullable().optional(),
 })
 
 export type ThreadCreate = z.infer<typeof threadCreateSchema>

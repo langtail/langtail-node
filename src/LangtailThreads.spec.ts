@@ -98,6 +98,124 @@ describe("LangtailThreads", () => {
     expect(mockFetch).toHaveBeenCalledWith(`/v2/threads/${mockThreadId}`);
   });
 
+
+  describe("update", () => {
+    it("should update a thread with correct URL and parameters", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({
+          id: "thread_123",
+          createdAt: "2023-05-01T12:00:00Z",
+          projectId: "project_456",
+          createLog: {},
+          metadata: {}
+        }),
+      });
+
+      const ltWithMock = new LangtailThreads({
+        fetch: mockFetch,
+      });
+
+      const result = await ltWithMock.update("thread_123", { customField: "testValue" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/v2/threads/thread_123",
+        {
+          method: 'POST',
+          body: JSON.stringify({ metadata: { customField: "testValue" } })
+        }
+      );
+    });
+  });
+
+  describe("create", () => {
+    it("should create a thread with correct URL and parameters", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({
+          id: "thread_123",
+          createdAt: "2023-05-01T12:00:00Z",
+          projectId: "project_456",
+          createLog: {},
+          metadata: {}
+        }),
+      });
+
+      const ltWithMock = new LangtailThreads({
+        fetch: mockFetch,
+      });
+
+      await ltWithMock.create()
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/v2/threads",
+        {
+          method: 'POST',
+          body: JSON.stringify({ createLog: {}, metadata: {} })
+        }
+      );
+    });
+
+
+    it("should create a thread with metadata", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({
+          id: "thread_789",
+          createdAt: "2023-05-02T14:30:00Z",
+          projectId: "project_101",
+          createLog: {},
+          metadata: { customField: "testValue" }
+        }),
+      });
+
+      const ltWithMock = new LangtailThreads({
+        fetch: mockFetch,
+      });
+
+      await ltWithMock.create({
+        metadata: { customField: "testValue" }
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/v2/threads",
+        {
+          method: 'POST',
+          body: JSON.stringify({ createLog: {}, metadata: { customField: "testValue" } })
+        }
+      );
+    });
+
+    it("should create a thread with createLog", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({
+          id: "thread_789",
+          createdAt: "2023-05-02T14:30:00Z",
+          projectId: "project_101",
+          createLog: { customField: "testValue" },
+          metadata: {}
+        }),
+      });
+
+      const ltWithMock = new LangtailThreads({
+        fetch: mockFetch,
+      });
+
+      await ltWithMock.create({
+        createLog: { user: "test-user-id" }
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/v2/threads",
+        {
+          method: 'POST',
+          body: JSON.stringify({ createLog: { user: "test-user-id" }, metadata: {} })
+        }
+      );
+    });
+  });
+
   describe("createFetcher", () => {
     it("should reject with ErrorResponse when createFetcher receives an error", async () => {
       const mockBaseUrl = "https://api.example.com";
