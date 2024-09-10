@@ -36,7 +36,8 @@ export class LangtailThreads {
   create(threadData?: ThreadCreate) {
     return this.fetcher.fetch(`${this.apiVersion}threads`, {
       method: 'POST', body: JSON.stringify({
-        craeteLog: threadData ?? {}
+        createLog: threadData?.createLog ?? {},
+        metadata: threadData?.metadata ?? {}
       })
     }).then(res => res.json()).then(threadSchema.parse)
   }
