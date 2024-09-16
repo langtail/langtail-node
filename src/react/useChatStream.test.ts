@@ -975,6 +975,57 @@ describe("useAIStream", () => {
           ])
         })
       })
+
+
+      it("should handle complete 'message' in choice instead of 'delta' without crashing", async () => {
+        function createMockReadadbleStream(dataEmitter: DataEventListener) {
+          return new ReadableStream({
+            start(controller) {
+              dataEmitter.addEventListener('data', (data: string) => {
+                controller.enqueue(data)
+              })
+              dataEmitter.addEventListener('close', (data: string) => {
+                controller.close();
+              })
+            },
+          });
+        }
+        const dataEmitter = new DataEventListener()
+        const stream = createMockReadadbleStream(dataEmitter)
+        const createReadableStream = vi.fn(() => Promise.resolve(stream))
+
+        const { result } = renderHook(() =>
+          useChatStream({
+            fetcher: createReadableStream,
+          }),
+        )
+
+        act(() => {
+          result.current.send([{ role: 'user', content: 'Test message' }])
+          dataEmitter.dispatchEvent('data', JSON.stringify({
+            id: "chatcmpl-123",
+            object: "chat.completion",
+            created: 1718443487,
+            model: "gpt-4-0613",
+            choices: [{
+              index: 0,
+              message: {
+                role: "assistant",
+                content: "This is a complete message."
+              },
+              finish_reason: "stop"
+            }]
+          }))
+          dataEmitter.dispatchEvent('close')
+        })
+
+        await vi.waitFor(() => {
+          expect(result.current.messages).toEqual([
+            { role: 'user', content: 'Test message' },
+            { role: 'assistant', content: 'This is a complete message.' }
+          ])
+        })
+      })
     })
 
 

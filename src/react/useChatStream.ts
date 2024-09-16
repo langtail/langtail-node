@@ -68,7 +68,8 @@ export function combineAIMessageChunkWithCompleteMessages(
   const messageId = chunk.id
 
   const contentMessage = chunk.choices.find((choice) => {
-    return "content" in choice.delta
+    const lookForContentIn = choice.delta || ("message" in choice && choice.message) || {}
+    return "content" in lookForContentIn
   })
 
   if (!contentMessage) {
@@ -79,7 +80,11 @@ export function combineAIMessageChunkWithCompleteMessages(
     return "id" in message && message.id === messageId
   })
 
-  if (!existingMessageToComplete) {
+  const choicesDeltas = chunk.choices.filter((choice) => {
+    return "delta" in choice
+  })
+
+  if (!existingMessageToComplete && choicesDeltas.length > 0) {
     return [
       ...messages,
       {
@@ -87,7 +92,7 @@ export function combineAIMessageChunkWithCompleteMessages(
         created: chunk.created,
         model: chunk.model,
         object: 'chat.completion',
-        choices: chunk.choices.map((choice) => {
+        choices: choicesDeltas.map((choice) => {
           const messageChoice: ChatCompletion.Choice = {
             finish_reason: 'length' as const,
             index: choice.index,
