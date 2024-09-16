@@ -81,7 +81,7 @@ export function combineAIMessageChunkWithCompleteMessages(
   })
 
   const choicesDeltas = chunk.choices.filter((choice) => {
-    return "delta" in choice
+    return "delta" in choice && choice.delta // NOTE: delte can be null
   })
 
   if (!existingMessageToComplete && choicesDeltas.length > 0) {
