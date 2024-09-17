@@ -1026,6 +1026,76 @@ describe("useAIStream", () => {
           ])
         })
       })
+
+      it("should keep the role 'tool' when the message is complete", async () => {
+        function createMockReadadbleStream(dataEmitter: DataEventListener) {
+          return new ReadableStream({
+            start(controller) {
+              dataEmitter.addEventListener('data', (data: string) => {
+                controller.enqueue(data)
+              })
+              dataEmitter.addEventListener('close', (data: string) => {
+                controller.close();
+              })
+            },
+          });
+        }
+        const dataEmitter = new DataEventListener()
+        const stream = createMockReadadbleStream(dataEmitter)
+        const createReadableStream = vi.fn(() => Promise.resolve(stream))
+
+        const { result } = renderHook(() =>
+          useChatStream({
+            fetcher: createReadableStream,
+          }),
+        )
+
+        await act(() => {
+          result.current.send([{ role: 'user', content: 'Test message' }])
+          dataEmitter.dispatchEvent('data', `${JSON.stringify({
+            "object": "langtail.tool.handled",
+            "id": "chatcmpl-A8SBTY8If8s8yBP7HRj5tfd4uLDZC-langtail-tool-handled-call_uTSra7MsEkzrL8VffnRtHsdW",
+            "model": "gpt-4o-2024-05-13",
+            "created": 1726578327,
+            "system_fingerprint": "fp_a5d11b2ef2",
+            "choices": [{ "logprobs": null, "index": 0, "finish_reason": "tool_calls_handled", "delta": { "role": "tool", "tool_call_id": "call_uTSra7MsEkzrL8VffnRtHsdW", "content": "\n    This is the joke: Why do Czechs always carry a pencil and paper?\n\nIn case they need to draw a red line somewhere!", "handled_tool_result": true } }],
+            "usage": { "prompt_tokens": 100, "completion_tokens": 17, "total_tokens": 117, "completion_tokens_details": { "reasoning_tokens": 0 } }
+          })}\n\n`)
+
+          return act(() => {
+            dataEmitter.dispatchEvent('data', `${JSON.stringify({
+              id: "chatcmpl-125",
+              object: "chat.completion.chunk",
+              created: 1718443487,
+              model: "gpt-4-0613",
+              choices: [{
+                index: 0,
+                message: {
+                  role: "assistant",
+                  content: "End of assistant message!"
+                },
+                finish_reason: "stop"
+              }]
+            })}\n\n`)
+
+            dataEmitter.dispatchEvent('close')
+          })
+        })
+
+
+        await vi.waitFor(() => {
+          expect(result.current.messages).toEqual([
+            { role: 'user', content: 'Test message' }, {
+              "content": `
+    This is the joke: Why do Czechs always carry a pencil and paper?
+
+In case they need to draw a red line somewhere!`,
+              "role": "tool",
+            },
+            { role: 'assistant', content: "End of assistant message!" }
+          ])
+        })
+      })
     })
 
 
@@ -1070,7 +1140,7 @@ describe("useAIStream", () => {
             ]
           })
           dataEmitter.dispatchEvent('data',
-            `{"id":"chatcmpl-9aJwNzlnvn1jG845CJe2QZH6AKcow","object":"chat.completion.chunk","created":1718443487,"model":"gpt-4o-2024-05-13","system_fingerprint":"fp_319be4768e","choices":[{"index":0,"delta":{"role":"assistant","content":"Ahoj."},"logprobs":null,"finish_reason":"stop"}],"usage":null}\n`)
+            `{ "id": "chatcmpl-9aJwNzlnvn1jG845CJe2QZH6AKcow", "object": "chat.completion.chunk", "created": 1718443487, "model": "gpt-4o-2024-05-13", "system_fingerprint": "fp_319be4768e", "choices": [{ "index": 0, "delta": { "role": "assistant", "content": "Ahoj." }, "logprobs": null, "finish_reason": "stop" }], "usage": null }\n`)
         })
 
         await vi.waitFor(() => {
@@ -1138,7 +1208,7 @@ describe("useAIStream", () => {
             ]
           })
           dataEmitter.dispatchEvent('data',
-            `{"id":"chatcmpl-9aJwNzlnvn1jG845CJe2QZH6AKcow","object":"chat.completion.chunk","created":1718443487,"model":"gpt-4o-2024-05-13","system_fingerprint":"fp_319be4768e","choices":[{"index":0,"delta":{"role":"assistant","content":"Ahoj."},"logprobs":null,"finish_reason":"stop"}],"usage":null}\n`)
+            `{ "id": "chatcmpl-9aJwNzlnvn1jG845CJe2QZH6AKcow", "object": "chat.completion.chunk", "created": 1718443487, "model": "gpt-4o-2024-05-13", "system_fingerprint": "fp_319be4768e", "choices": [{ "index": 0, "delta": { "role": "assistant", "content": "Ahoj." }, "logprobs": null, "finish_reason": "stop" }], "usage": null }\n`)
         })
 
         await vi.waitFor(() => {
