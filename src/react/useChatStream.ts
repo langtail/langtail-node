@@ -99,7 +99,8 @@ export function combineAIMessageChunkWithCompleteMessages(
             logprobs: null,
             message: {
               content: choice.delta.content ?? "",
-              role: "assistant" as const,
+              // @ts-expect-error - mantain the original role here
+              role: choice.delta.role ?? "assistant" as const,
             },
           }
 
