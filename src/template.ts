@@ -98,6 +98,10 @@ export const compileLTTemplate = (
     if (item.type === "text") {
       return { ...item, text: compileStringHandlebars(item.text, input).text }
     }
+
+    if (item.type === "gemini_media_url") {
+      return { ...item, gemini_media_url: { url: compileStringHandlebars(item.gemini_media_url.url, input).text } }
+    }
     return item
   })
 }
