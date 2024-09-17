@@ -79,7 +79,14 @@ export interface ContentItemImage {
   }
 }
 
-export type ContentArray = Array<ContentItemText | ContentItemImage>
+export interface ContentItemGeminiMediaUrl {
+  type: "gemini_media_url"
+  gemini_media_url: {
+    url: string
+  }
+}
+
+export type ContentArray = Array<ContentItemText | ContentItemImage | ContentItemGeminiMediaUrl>
 
 export interface ToolCall {
   id: string
@@ -135,8 +142,15 @@ export const ContentItemImageSchema = z.object({
   }),
 }) satisfies z.ZodType<ContentItemImage>
 
+export const ContentItemGeminiMediaUrlSchema = z.object({
+  type: z.literal("gemini_media_url"),
+  gemini_media_url: z.object({
+    url: z.string(),
+  }),
+}) satisfies z.ZodType<ContentItemGeminiMediaUrl>
+
 const ContentArraySchema = z.array(
-  z.union([ContentItemTextSchema, ContentItemImageSchema]),
+  z.union([ContentItemTextSchema, ContentItemImageSchema, ContentItemGeminiMediaUrlSchema]),
 ) satisfies z.ZodType<ContentArray>
 
 const FunctionCallSchema = z.object({
