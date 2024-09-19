@@ -97,7 +97,9 @@ export function combineAIMessageChunkWithCompleteMessages(
             finish_reason: 'length' as const,
             index: choice.index,
             logprobs: null,
+            delta: choice.delta,
             message: {
+              ...choice.delta,
               content: choice.delta.content ?? "",
               // @ts-expect-error - mantain the original role here
               role: choice.delta.role ?? "assistant" as const,

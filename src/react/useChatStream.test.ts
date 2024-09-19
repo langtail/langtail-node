@@ -1090,7 +1090,9 @@ describe("useAIStream", () => {
     This is the joke: Why do Czechs always carry a pencil and paper?
 
 In case they need to draw a red line somewhere!`,
+              "handled_tool_result": true,
               "role": "tool",
+              "tool_call_id": "call_uTSra7MsEkzrL8VffnRtHsdW",
             },
             { role: 'assistant', content: "End of assistant message!" }
           ])
