@@ -17,11 +17,13 @@ export type ChatMessage =
   | {
     role: "user" | "assistant" | "system"
     content: string | null
+    tool_calls?: ChatCompletionMessageToolCall[]
   }
   | {
     role: "tool"
     tool_call_id: string
     content: string | null
+    tool_calls?: ChatCompletionMessageToolCall[]
   } | {
     role: "assistant" | "user" | "system" | "tool"
     content: [
@@ -45,6 +47,7 @@ export type ChatMessage =
         text: string,
       },
     ]
+    tool_calls?: ChatCompletionMessageToolCall[]
   }
 
 export function mapAIMessagesToChatCompletions(
