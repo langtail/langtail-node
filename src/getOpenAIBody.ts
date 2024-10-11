@@ -33,19 +33,22 @@ export function getOpenAIBody(
   parsedBody: IncomingBodyType,
   threadParams?: {
     threadMessages?: PlaygroundMessage[]
-  }
+  },
+  options?: { appendTemplate?: boolean },
 ): ChatCompletionsCreateParams {
   const completionArgs = completionConfig.state.args
 
   const template = parsedBody.template ?? completionConfig.state.template
-  const inputMessages = [
-    ...compileMessages(template, Object.assign(
-      completionConfig.chatInput,
-      parsedBody.variables ?? {},
-    )),
+  const compiledTemplate = compileMessages(template, Object.assign(
+    completionConfig.chatInput,
+    parsedBody.variables ?? {},
+  ))
+  const bodyMessages = [
     ...[...(threadParams?.threadMessages ?? []) as ChatCompletionMessageParam[]],
     ...(parsedBody.messages ?? []) as ChatCompletionMessageParam[]
   ]
+
+  const inputMessages = options?.appendTemplate ? [...bodyMessages, ...compiledTemplate] : [...compiledTemplate, ...bodyMessages]
 
   const openAIbody: OpenAI.Chat.ChatCompletionCreateParams = {
     model: parsedBody.model ?? completionArgs.model,
