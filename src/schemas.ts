@@ -53,6 +53,9 @@ export interface Functions {
   description: string
   parameters: Record<string, unknown>
   id?: string
+  handler?: {
+    enabled: boolean
+  }
 }
 
 export interface Tools {
