@@ -28,7 +28,7 @@ type ChatModelInterface<P extends PromptSlug, E extends Environment<P>, V extend
 }
 
 type ToolOverrides<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>> = {
-  [K in keyof ToolsType[P][E][V]]?: ToolsType[P][E][V][K] extends { parameters: z.ZodTypeAny } ? Partial<VercelAITool<ToolsType[P][E][V][K]['parameters']>> : never
+  [K in keyof ToolsType[P][E][V]]?: ToolsType[P][E][V][K] extends { parameters: z.ZodTypeAny } ? (ToolsType[P][E][V][K] extends { hosted: true } ? never : Partial<VercelAITool<ToolsType[P][E][V][K]['parameters']>>) : never
 };
 
 function tools<P extends PromptSlug, E extends Environment<P>, V extends Version<P, E>, OVERRIDES extends ToolOverrides<P, E, V>>(
