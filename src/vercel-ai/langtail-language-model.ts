@@ -4,7 +4,6 @@ import {
   LanguageModelV1FinishReason,
   LanguageModelV1LogProbs,
   LanguageModelV1StreamPart,
-  UnsupportedFunctionalityError,
 } from '@ai-sdk/provider';
 import {
   ParseResult,
@@ -112,7 +111,7 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
       seed,
 
       // messages:
-      messages: convertToOpenAIChatMessages(prompt),
+      messages: convertToOpenAIChatMessages({ prompt }),
     };
 
     switch (type) {
@@ -154,12 +153,6 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
             },
           ],
         };
-      }
-
-      case 'object-grammar': {
-        throw new UnsupportedFunctionalityError({
-          functionality: 'object-grammar mode',
-        });
       }
 
       default: {

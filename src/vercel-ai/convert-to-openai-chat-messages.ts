@@ -1,10 +1,15 @@
-import { LanguageModelV1Prompt } from '@ai-sdk/provider';
+import {
+  LanguageModelV1Prompt,
+  UnsupportedFunctionalityError,
+} from '@ai-sdk/provider';
 import { convertUint8ArrayToBase64 } from '@ai-sdk/provider-utils';
 import { OpenAIChatPrompt } from './openai-chat-prompt';
 
-export function convertToOpenAIChatMessages(
-  prompt: LanguageModelV1Prompt,
-): OpenAIChatPrompt {
+export function convertToOpenAIChatMessages({
+  prompt
+}: {
+  prompt: LanguageModelV1Prompt;
+}): OpenAIChatPrompt {
   const messages: OpenAIChatPrompt = [];
 
   for (const { role, content } of prompt) {
@@ -15,6 +20,11 @@ export function convertToOpenAIChatMessages(
       }
 
       case 'user': {
+        if (content.length === 1 && content[0].type === 'text') {
+          messages.push({ role: 'user', content: content[0].text });
+          break;
+        }
+
         messages.push({
           role: 'user',
           content: content.map(part => {
@@ -31,12 +41,21 @@ export function convertToOpenAIChatMessages(
                         ? part.image.toString()
                         : `data:${part.mimeType ?? 'image/jpeg'
                         };base64,${convertUint8ArrayToBase64(part.image)}`,
+
+                    // OpenAI specific extension: image detail
+                    detail: part.providerMetadata?.openai?.imageDetail,
                   },
                 };
+              }
+              case 'file': {
+                throw new UnsupportedFunctionalityError({
+                  functionality: 'File content parts in user messages',
+                });
               }
             }
           }),
         });
+
         break;
       }
 
@@ -78,6 +97,7 @@ export function convertToOpenAIChatMessages(
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         });
 
+
         break;
       }
 
@@ -88,6 +108,7 @@ export function convertToOpenAIChatMessages(
             tool_call_id: toolResponse.toolCallId,
             content: JSON.stringify(toolResponse.result),
           });
+
         }
         break;
       }

@@ -33,7 +33,8 @@ const fetchTools = async <P extends PromptSlug, E extends Environment<P> = undef
     return Object.fromEntries(prompt.state.tools.map(tool => [
       tool.function.name, {
         description: tool.function.description,
-        parameters: jsonSchemaToZod(tool.function.parameters)
+        parameters: jsonSchemaToZod(tool.function.parameters),
+        ...(tool.function.handler?.enabled === true && { hosted: tool.function.handler.enabled })
       }
     ]));
   }
@@ -139,7 +140,7 @@ const generateTools = async ({ out }: GenerateToolsOptions) => {
     .replace('// @ts-ignore\n', '')
     .replace(
       REPLACE_LINE,
-      `const toolsObject = ${stringifyToolsObject(toolsObject)};`
+      `const toolsObject = ${stringifyToolsObject(toolsObject)} as const;`
     );
 
   fs.writeFileSync(outputFile, fileString, 'utf8');
