@@ -68,7 +68,7 @@ export function getOpenAIBody(
 
   if (parsedBody.max_tokens || completionArgs.max_tokens) {
     openAIbody.max_tokens = parsedBody.max_tokens ?? completionArgs.max_tokens
-    if (parsedBody.max_tokens === -1) {
+    if (openAIbody.max_tokens === -1) {
       delete openAIbody.max_tokens
     }
   }
