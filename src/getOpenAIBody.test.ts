@@ -117,6 +117,39 @@ describe("getOpenAIBody", () => {
     `)
   })
 
+
+  it("should add parallel_tool_calls param when it is set in parsedBody", () => {
+    const completionConfig = {
+      state: {
+        type: "chat" as const,
+        args: {
+          model: "gpt-3.5-turbo",
+          max_tokens: 100,
+          temperature: 0.8,
+          top_p: 1,
+          presence_penalty: 0,
+          frequency_penalty: 0,
+          jsonmode: false,
+          seed: 123,
+          stop: [],
+        },
+        template: [
+          {
+            role: "system" as const,
+            content: "tell me a story",
+          },
+        ],
+      },
+      chatInput: {},
+    }
+
+    const openAIbody = getOpenAIBody(completionConfig, {
+      parallelToolCalls: true,
+    })
+
+    expect(openAIbody).toHaveProperty('parallel_tool_calls', true)
+  })
+
   it("should override parameters from the playground with the ones in parsedBody", () => {
     const completionConfig = {
       state: {

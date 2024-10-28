@@ -245,6 +245,42 @@ describe.skipIf(!liveTesting)(
 
 describe("LangtailPrompts", () => {
   describe("invoke with optional callbacks", () => {
+
+    it("should pass parallel_tool_calls param to fetch", async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [
+            {
+              message: {
+                content: "Test response",
+              },
+            },
+          ],
+        }),
+        headers: new Headers({
+          'Content-Type': 'application/json',
+          'X-API-Key': 'test-api-key',
+          'x-langtail-thread-id': 'test-thread-id'
+        }),
+      });
+
+      const lt = new LangtailPrompts({
+        apiKey: "test-api-key",
+        fetch: mockFetch,
+      });
+
+      await lt.invoke({
+        prompt: "test-prompt",
+        environment: "production",
+        parallelToolCalls: true,
+      });
+
+      expect(mockFetch).toHaveBeenCalled();
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body).toHaveProperty('parallelToolCalls', true);
+    });
     it("should trigger onRawResponse callback when response is returned", async () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
