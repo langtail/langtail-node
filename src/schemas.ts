@@ -213,6 +213,7 @@ export const bodyMetadataSchema = z
 
 export const langtailBodySchema = z.object({
   doNotRecord: z.boolean().optional(),
+  parallelToolCalls: z.boolean().optional(),
   metadata: bodyMetadataSchema,
   _langtailTestRunId: z.string().optional(),
   _langtailTestInputId: z.string().optional(),
@@ -226,6 +227,7 @@ export const openAIBodySchemaObjectDefinition = {
   max_tokens: z.number().optional(),
   temperature: z.number().optional(),
   top_p: z.number().optional(),
+  parallel_tool_calls: z.boolean().optional(),
   presence_penalty: z.number().optional(),
   frequency_penalty: z.number().optional(),
   model: z.string().optional(),

@@ -52,6 +52,9 @@ export function getOpenAIBody(
     temperature: parsedBody.temperature ?? completionArgs.temperature,
     messages: inputMessages,
     top_p: parsedBody.top_p ?? completionArgs.top_p,
+    ...(parsedBody.parallelToolCalls !== undefined
+      ? { parallel_tool_calls: parsedBody.parallelToolCalls }
+      : {}),
     presence_penalty:
       parsedBody.presence_penalty ?? completionArgs.presence_penalty,
     frequency_penalty:

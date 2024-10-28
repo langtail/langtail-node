@@ -45,6 +45,7 @@ export type IRequestParams<P extends PromptSlug, E extends Environment<P> = unde
 
 export type IRequestParamsStream<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined, S extends boolean | undefined = false> = IRequestParams<P, E, V> & {
   stream?: S
+  parallelToolCalls?: boolean
 }
 
 export type IInvokeOptionalCallbacks = {
