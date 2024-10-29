@@ -203,6 +203,9 @@ const joke = await openai.chat.completions.create(openAiBody)
 
 This way you are still using langtail prompts without exposing potentially sensitive data in your variables.
 
+## Typed inputs
+
+You can override input types to improve IntelliSense for the `prompt`, `environment`, `version` and `variables` when calling a prompt. Use the command `npx langtail generate-types`.
 
 ## Vercel AI provider
 
@@ -249,7 +252,7 @@ const result = await generateText({
 
 ### Using tools from Langtail
 
-If your prompts in Langtail contain tools, you can generate a file containing tool parameters for every prompt deployment in your project. Run `npx langtail generate-tools --out [output_filepath]` to generate the file.
+If your prompts in Langtail contain tools, you can generate a file containing tool parameters for every prompt deployment in your project. Run `npx langtail generate-tools --out [output_filepath]` to generate the file. For typings of the `tools` helper to work correctly, you also need to [generate types](#typed-inputs).
 
 After the file is generated, you can provide the Langtail tools to AI SDK like this:
 ```typescript
@@ -283,10 +286,6 @@ tools(ltModel, {
   },
 })
 ```
-
-## Typed inputs
-
-You can override input types to improve IntelliSense for the `prompt`, `environment`, `version` and `variables` when calling a prompt. Use the command `npx langtail generate-types`.
 
 ## Stream helpers
 

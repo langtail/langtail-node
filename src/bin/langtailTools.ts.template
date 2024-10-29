@@ -1,10 +1,14 @@
 // @ts-ignore
-import { CoreTool } from 'ai'
 import { z } from 'zod'
 
 type Streamable = unknown;
 type Renderer<T extends Array<any>> = (...args: T) => Streamable | Generator<Streamable, Streamable, void> | AsyncGenerator<Streamable, Streamable, void>;
-interface VercelAITool<PARAMETERS extends z.ZodTypeAny = any, RESULT = any> extends CoreTool<PARAMETERS, RESULT> {
+interface VercelAITool<PARAMETERS extends z.ZodTypeAny = any, RESULT = any> {
+  parameters: PARAMETERS;
+  description?: string;
+  execute?: (args: z.infer<PARAMETERS>, options: {
+      abortSignal?: AbortSignal;
+  }) => PromiseLike<RESULT>;
   generate?: Renderer<[
     z.infer<PARAMETERS>,
     {

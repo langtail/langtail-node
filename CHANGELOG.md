@@ -1,5 +1,15 @@
 # Changelog
 
+# 0.13.5
+- Option to append template to the end in `getOpenAIBody`.
+- Fix IntelliSense for tools when using Vercel AI SDK.
+
+# 0.13.4
+- add parallelToolCalls option to pass it to the API
+
+# 0.13.3
+- Support for Langtail hosted tools
+
 # 0.5.4
 
 - Fix: don't send `stop` parameter if it's empty (this causes validation error in OpenAI in some cases)
