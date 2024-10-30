@@ -709,6 +709,78 @@ describe("useAIStream", () => {
         })
       })
 
+
+      it("should assemble streamed message ending with a tool call in the complete messages", async () => {
+        function createMockReadadbleStream(dataEmitter: DataEventListener) {
+          return new ReadableStream({
+            start(controller) {
+              dataEmitter.addEventListener('data', (data: string) => {
+                controller.enqueue(data)
+                controller.close();
+              })
+            },
+          });
+        }
+
+        const dataEmitter = new DataEventListener()
+
+        const stream = createMockReadadbleStream(dataEmitter)
+
+        let ran = false
+        const createReadableStream = vi.fn(() => {
+          // NOTE: run this only once
+          if (ran) {
+            return Promise.reject('Error in tools!')
+          }
+
+          ran = true
+          return Promise.resolve(stream)
+        })
+
+        const onToolCall = () => Promise.resolve('Result in test')
+
+        const { result } = renderHook(() =>
+          useChatStream({
+            fetcher: createReadableStream,
+            onToolCall
+          }),
+        )
+
+        act(() => {
+          result.current.send('user input')
+          dataEmitter.dispatchEvent('data',
+            `{"id":"chatcmpl-AO3VbbywyEeMZvsHfHvTpZZRqP14K","object":"chat.completion.chunk","created":1730296723,"model":"gpt-4o-2024-08-06","system_fingerprint":"fp_90354628f2","choices":[{"index":0,"delta":{"role":"assistant","content":"","refusal":null},"logprobs":null,"finish_reason":null}],"usage":null}\n
+            {"id":"chatcmpl-AO3VbbywyEeMZvsHfHvTpZZRqP14K","object":"chat.completion.chunk","created":1730296723,"model":"gpt-4o-2024-08-06","system_fingerprint":"fp_90354628f2","choices":[{"index":0,"delta":{"content":"Sure"},"logprobs":null,"finish_reason":null}],"usage":null}\n
+            {"id":"chatcmpl-AO3VbbywyEeMZvsHfHvTpZZRqP14K","object":"chat.completion.chunk","created":1730296723,"model":"gpt-4o-2024-08-06","system_fingerprint":"fp_90354628f2","choices":[{"index":0,"delta":{"content":"!"},"logprobs":null,"finish_reason":null}],"usage":null}\n
+            {"id":"chatcmpl-AO3VbbywyEeMZvsHfHvTpZZRqP14K","object":"chat.completion.chunk","created":1730296723,"model":"gpt-4o-2024-08-06","system_fingerprint":"fp_90354628f2","choices":[{"index":0,"delta":{"content":" I'll"},"logprobs":null,"finish_reason":null}],"usage":null}\n
+            {"id":"chatcmpl-AO3VbbywyEeMZvsHfHvTpZZRqP14K","object":"chat.completion.chunk","created":1730296723,"model":"gpt-4o-2024-08-06","system_fingerprint":"fp_90354628f2","choices":[{"index":0,"delta":{"content":" generate a joke for you"},"logprobs":null,"finish_reason":null}],"usage":null}\n
+            {"id":"chatcmpl-AO3VbbywyEeMZvsHfHvTpZZRqP14K","object":"chat.completion.chunk","created":1730296723,"model":"gpt-4o-2024-08-06","system_fingerprint":"fp_90354628f2","choices":[{"index":0,"delta":{"content":"."},"logprobs":null,"finish_reason":null}],"usage":null}\n
+            {"id":"chatcmpl-AO3VbbywyEeMZvsHfHvTpZZRqP14K","object":"chat.completion.chunk","model":"gpt-4o-2024-08-06","created":1730296723,"system_fingerprint":"fp_90354628f2","choices":[{"logprobs":null,"index":0,"finish_reason":"tool_calls","delta":{"content":null,"role":"assistant","tool_calls":[{"id":"call_SdFeFRJQTfJvZynvs6KgrN6t","type":"function","function":{"name":"generate_theme_joke","arguments":"{\\"theme\\":\\"Dad\\"}"}}]}}],"usage":{"prompt_tokens":125,"completion_tokens":43,"total_tokens":168,"prompt_tokens_details":{"cached_tokens":0},"completion_tokens_details":{"reasoning_tokens":0}}}\n\n`
+          )
+        })
+
+        await vi.waitFor(() => {
+          expect(result.current.messages).toEqual([
+            { role: 'user', content: 'user input' },
+            {
+              "content": "Sure! I'll generate a joke for you.",
+              "refusal": null,
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "id": "call_SdFeFRJQTfJvZynvs6KgrN6t",
+                  "type": "function",
+                  "function": {
+                    "name": "generate_theme_joke",
+                    "arguments": "{\"theme\":\"Dad\"}"
+                  }
+                }
+              ]
+            }
+          ])
+        })
+      })
+
       it("should request AI completion with tool call reults", async () => {
         function createMockReadadbleStream(dataEmitter: DataEventListener) {
           return new ReadableStream({
