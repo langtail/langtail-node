@@ -50,17 +50,26 @@ export type ChatMessage =
     tool_calls?: ChatCompletionMessageToolCall[]
   }
 
+function addDeltaToolCalls(message: ChatCompletionMessage | ChatCompletion.Choice | ChatMessage): ChatMessage {
+  const result = {
+    ...("message" in message ? message.message : message),
+    ...("delta" in message && message.delta && typeof message.delta === 'object' && "tool_calls" in message.delta ? { tool_calls: message.delta.tool_calls as ChatCompletionMessageToolCall[] } : {}),
+  }
+
+  return result
+}
+
 export function mapAIMessagesToChatCompletions(
   messages: (ChatCompletion | ChatMessage)[],
 ): ChatMessage[] {
   return messages.flatMap((message) => {
     if ("id" in message && "choices" in message) {
       return message.choices.map((choice) => {
-        return choice.message
+        return addDeltaToolCalls(choice)
       })
     }
 
-    return [message]
+    return [addDeltaToolCalls(message)]
   })
 }
 
