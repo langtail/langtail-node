@@ -50,17 +50,26 @@ export type ChatMessage =
     tool_calls?: ChatCompletionMessageToolCall[]
   }
 
+function addDeltaToolCalls(message: ChatCompletionMessage | ChatCompletion.Choice | ChatMessage): ChatMessage {
+  const result = {
+    ...("message" in message ? message.message : message),
+    ...("delta" in message && message.delta && typeof message.delta === 'object' && "tool_calls" in message.delta ? { tool_calls: message.delta.tool_calls as ChatCompletionMessageToolCall[] } : {}),
+  }
+
+  return result
+}
+
 export function mapAIMessagesToChatCompletions(
   messages: (ChatCompletion | ChatMessage)[],
 ): ChatMessage[] {
   return messages.flatMap((message) => {
     if ("id" in message && "choices" in message) {
       return message.choices.map((choice) => {
-        return choice.message
+        return addDeltaToolCalls(choice)
       })
     }
 
-    return [message]
+    return [addDeltaToolCalls(message)]
   })
 }
 
@@ -137,7 +146,7 @@ export function combineAIMessageChunkWithCompleteMessages(
             ...choice,
             ...{
               ...chunkChoice,
-              finish_reason: 'length' as const,
+              finish_reason: chunkChoice.finish_reason ?? 'length' as const,
             },
             message: {
               ...choice.message,
@@ -153,11 +162,15 @@ export function combineAIMessageChunkWithCompleteMessages(
   })
 }
 
-function normalizeMessage(message: ChatCompletionMessage) {
+function normalizeMessage(message: ChatCompletionMessage, currentMessage?: ChatCompletionChunk) {
+  const toolCalls = (message.tool_calls && message.tool_calls.length === 0 && currentMessage?.choices?.some(choice => (("delta" in choice) && "tool_calls" in choice.delta) && choice.delta?.tool_calls)
+    ? currentMessage?.choices?.flatMap(choice => (("delta" in choice) && "tool_calls" in choice.delta) && Array.isArray(choice.delta?.tool_calls) ? choice.delta?.tool_calls : [])
+    : message.tool_calls ?? []) as ChatCompletionMessageToolCall[]
   return {
     ...message,
     // NOTE: ensure that message isn't null or undefined
     content: message.content ?? "",
+    ...(toolCalls.length > 0 ? { tool_calls: toolCalls } : {}),
   }
 }
 
@@ -293,13 +306,19 @@ export function useChatStream<
           }
 
           const onFinalChatCompletion = (finalMessage: ChatCompletion) => {
+            // NOTE: for some reason, tool_calls are empty in finalMessage, that's why we keep them through storing the finalized message
+            const finalizedMessage = messagesRef.current.find((currentMessage) => {
+              return "id" in currentMessage && currentMessage.id === finalMessage.id
+            })
+
             messagesRef.current = messagesRef.current
               .filter(
                 (currentMessage) =>
                   !("id" in currentMessage) ||
                   currentMessage.id !== finalMessage.id,
               )
-              .concat(finalMessage.choices.flatMap((choice) => normalizeMessage(choice.message)))
+              .concat(finalMessage.choices.flatMap((choice) => normalizeMessage(choice.message, finalizedMessage as unknown as (ChatCompletionChunk | undefined))))
+
 
             const userChatMessages = mapAIMessagesToChatCompletions(
               messagesRef.current,

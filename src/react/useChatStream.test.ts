@@ -709,6 +709,175 @@ describe("useAIStream", () => {
         })
       })
 
+
+      it("should assemble streamed message ending with a tool call in the complete messages", async () => {
+        function createMockReadadbleStream(dataEmitter: DataEventListener) {
+          return new ReadableStream({
+            start(controller) {
+              dataEmitter.addEventListener('data', (data: string) => {
+                controller.enqueue(data)
+                controller.close();
+              })
+            },
+          });
+        }
+
+        const dataEmitter = new DataEventListener()
+
+        const stream = createMockReadadbleStream(dataEmitter)
+
+        let ran = false
+        const createReadableStream = vi.fn(() => {
+          // NOTE: run this only once
+          if (ran) {
+            return Promise.reject('Error in tools!')
+          }
+
+          ran = true
+          return Promise.resolve(stream)
+        })
+
+        const onToolCall = () => Promise.resolve('Result in test')
+
+        const { result } = renderHook(() =>
+          useChatStream({
+            fetcher: createReadableStream,
+            onToolCall
+          }),
+        )
+
+        act(() => {
+          result.current.send('user input')
+          dataEmitter.dispatchEvent('data',
+            `{"id":"chatcmpl-AO3VbbywyEeMZvsHfHvTpZZRqP14K","object":"chat.completion.chunk","created":1730296723,"model":"gpt-4o-2024-08-06","system_fingerprint":"fp_90354628f2","choices":[{"index":0,"delta":{"role":"assistant","content":"","refusal":null},"logprobs":null,"finish_reason":null}],"usage":null}\n
+            {"id":"chatcmpl-AO3VbbywyEeMZvsHfHvTpZZRqP14K","object":"chat.completion.chunk","created":1730296723,"model":"gpt-4o-2024-08-06","system_fingerprint":"fp_90354628f2","choices":[{"index":0,"delta":{"content":"Sure"},"logprobs":null,"finish_reason":null}],"usage":null}\n
+            {"id":"chatcmpl-AO3VbbywyEeMZvsHfHvTpZZRqP14K","object":"chat.completion.chunk","created":1730296723,"model":"gpt-4o-2024-08-06","system_fingerprint":"fp_90354628f2","choices":[{"index":0,"delta":{"content":"!"},"logprobs":null,"finish_reason":null}],"usage":null}\n
+            {"id":"chatcmpl-AO3VbbywyEeMZvsHfHvTpZZRqP14K","object":"chat.completion.chunk","created":1730296723,"model":"gpt-4o-2024-08-06","system_fingerprint":"fp_90354628f2","choices":[{"index":0,"delta":{"content":" I'll"},"logprobs":null,"finish_reason":null}],"usage":null}\n
+            {"id":"chatcmpl-AO3VbbywyEeMZvsHfHvTpZZRqP14K","object":"chat.completion.chunk","created":1730296723,"model":"gpt-4o-2024-08-06","system_fingerprint":"fp_90354628f2","choices":[{"index":0,"delta":{"content":" generate a joke for you"},"logprobs":null,"finish_reason":null}],"usage":null}\n
+            {"id":"chatcmpl-AO3VbbywyEeMZvsHfHvTpZZRqP14K","object":"chat.completion.chunk","created":1730296723,"model":"gpt-4o-2024-08-06","system_fingerprint":"fp_90354628f2","choices":[{"index":0,"delta":{"content":"."},"logprobs":null,"finish_reason":null}],"usage":null}\n
+            {"id":"chatcmpl-AO3VbbywyEeMZvsHfHvTpZZRqP14K","object":"chat.completion.chunk","model":"gpt-4o-2024-08-06","created":1730296723,"system_fingerprint":"fp_90354628f2","choices":[{"logprobs":null,"index":0,"finish_reason":"tool_calls","delta":{"content":null,"role":"assistant","tool_calls":[{"id":"call_SdFeFRJQTfJvZynvs6KgrN6t","type":"function","function":{"name":"generate_theme_joke","arguments":"{\\"theme\\":\\"Dad\\"}"}}]}}],"usage":{"prompt_tokens":125,"completion_tokens":43,"total_tokens":168,"prompt_tokens_details":{"cached_tokens":0},"completion_tokens_details":{"reasoning_tokens":0}}}\n\n`
+          )
+        })
+
+        await vi.waitFor(() => {
+          expect(result.current.messages).toEqual([
+            { role: 'user', content: 'user input' },
+            {
+              "content": "Sure! I'll generate a joke for you.",
+              "refusal": null,
+              "role": "assistant",
+              "tool_calls": [
+                {
+                  "id": "call_SdFeFRJQTfJvZynvs6KgrN6t",
+                  "type": "function",
+                  "function": {
+                    "name": "generate_theme_joke",
+                    "arguments": "{\"theme\":\"Dad\"}"
+                  }
+                }
+              ]
+            }
+          ])
+        })
+      })
+
+
+      it("should properly add tool calls to the streamed messages", async () => {
+        function createMockReadadbleStream(dataEmitter: DataEventListener) {
+          return new ReadableStream({
+            start(controller) {
+              dataEmitter.addEventListener('data', (data: string) => {
+                controller.enqueue(data)
+              })
+
+              dataEmitter.addEventListener('close', (data: string) => {
+                controller.close();
+              })
+            },
+          });
+        }
+
+        const dataEmitter = new DataEventListener()
+
+        const stream = createMockReadadbleStream(dataEmitter)
+
+        let ran = false
+        const createReadableStream = vi.fn(() => {
+          // NOTE: run this only once
+          if (ran) {
+            return Promise.reject('Error in tools!')
+          }
+
+          ran = true
+          return Promise.resolve(stream)
+        })
+
+        const onToolCall = () => Promise.resolve('Result in test')
+
+        const { result } = renderHook(() =>
+          useChatStream({
+            fetcher: createReadableStream,
+            onToolCall
+          }),
+        )
+
+        act(() => {
+          result.current.send('user input')
+          dataEmitter.dispatchEvent('data',
+            `${[`{"id":"msg_01PNZ2n8jrVj1iiELVjqcw3E","object":"chat.completion.chunk","created":1730296723,"model":"gpt-4o-2024-08-06","system_fingerprint":"fp_90354628f2","choices":[{"index":0,"delta":{"role":"assistant","content":"","refusal":null},"logprobs":null,"finish_reason":null}],"usage":null}`,
+              `{ "id": "msg_01PNZ2n8jrVj1iiELVjqcw3E", "object": "chat.completion.chunk", "created": 1730364993, "model": "claude-3-sonnet-20240229", "system_fingerprint": null, "choices": [{ "index": 0, "delta": { "content": "Sure" }, "logprobs": null, "finish_reason": null }] }`,
+              `{ "id": "msg_01PNZ2n8jrVj1iiELVjqcw3E", "object": "chat.completion.chunk", "created": 1730364993, "model": "claude-3-sonnet-20240229", "system_fingerprint": null, "choices": [{ "index": 0, "delta": { "content": ", let" }, "logprobs": null, "finish_reason": null }] }`,
+              `{ "id": "msg_01PNZ2n8jrVj1iiELVjqcw3E", "object": "chat.completion.chunk", "created": 1730364993, "model": "claude-3-sonnet-20240229", "system_fingerprint": null, "choices": [{ "index": 0, "delta": { "content": " me generate" }, "logprobs": null, "finish_reason": null }] }`,
+              `{ "id": "msg_01PNZ2n8jrVj1iiELVjqcw3E", "object": "chat.completion.chunk", "created": 1730364993, "model": "claude-3-sonnet-20240229", "system_fingerprint": null, "choices": [{ "index": 0, "delta": { "content": " a dad joke for" }, "logprobs": null, "finish_reason": null }] }`,
+              `{ "id": "msg_01PNZ2n8jrVj1iiELVjqcw3E", "object": "chat.completion.chunk", "created": 1730364993, "model": "claude-3-sonnet-20240229", "system_fingerprint": null, "choices": [{ "index": 0, "delta": { "content": " you:" }, "logprobs": null, "finish_reason": null }] }`,
+              `${JSON.stringify({ "object": "chat.completion.chunk", "id": "msg_01PNZ2n8jrVj1iiELVjqcw3E", "model": "claude-3-sonnet-20240229", "created": 1730364994, "system_fingerprint": null, "choices": [{ "logprobs": null, "index": 0, "finish_reason": "tool_use", "delta": { "content": null, "role": "assistant", "tool_calls": [{ "id": "toolu_01B1GTdvhAEB29KubfFpUbFm", "type": "function", "function": { "name": "generate_dad_jokes", "arguments": "{\"theme\": \"general\"}" } }] } }] })}`].join("\n")}\n`
+          )
+          dataEmitter.dispatchEvent('data',
+            [
+              `{"object":"langtail.tool.handled","id":"msg_01PNZ2n8jrVj1iiELVjqcw3E-langtail-tool-handled-toolu_01B1GTdvhAEB29KubfFpUbFm","model":"claude-3-sonnet-20240229","created":1730364994,"system_fingerprint":null,"choices":[{"logprobs":null,"index":0,"finish_reason":"tool_calls_handled","delta":{"role":"tool","tool_call_id":"toolu_01B1GTdvhAEB29KubfFpUbFm","content":"Someone messed up number of floors in the elevator. It was wrong on so many levels."}}]}`,
+              `{"id":"msg_01G6x1ceDQcQGgoASaH8VM7g","object":"chat.completion.chunk","created":1730364995,"model":"claude-3-sonnet-20240229","system_fingerprint":null,"choices":[{"index":0,"delta":{"role":"assistant","content":""},"logprobs":null,"finish_reason":null}]}`,
+              `{"id":"msg_01G6x1ceDQcQGgoASaH8VM7g","object":"chat.completion.chunk","created":1730364995,"model":"claude-3-sonnet-20240229","system_fingerprint":null,"choices":[{"index":0,"delta":{"content":"There"},"logprobs":null,"finish_reason":null}]}`,
+              `{"id":"msg_01G6x1ceDQcQGgoASaH8VM7g","object":"chat.completion.chunk","created":1730364995,"model":"claude-3-sonnet-20240229","system_fingerprint":null,"choices":[{"index":0,"delta":{"content":"'s"},"logprobs":null,"finish_reason":null}]}`,
+              `{"id":"msg_01G6x1ceDQcQGgoASaH8VM7g","object":"chat.completion.chunk","created":1730364995,"model":"claude-3-sonnet-20240229","system_fingerprint":null,"choices":[{"index":0,"delta":{"content":" a"},"logprobs":null,"finish_reason":null}]}`,
+              `{"id":"msg_01G6x1ceDQcQGgoASaH8VM7g","object":"chat.completion.chunk","created":1730364995,"model":"claude-3-sonnet-20240229","system_fingerprint":null,"choices":[{"index":0,"delta":{"content":" classic"},"logprobs":null,"finish_reason":null}]}`,
+              `{"id":"msg_01G6x1ceDQcQGgoASaH8VM7g","object":"chat.completion.chunk","created":1730364995,"model":"claude-3-sonnet-20240229","system_fingerprint":null,"choices":[{"index":0,"delta":{"content":" da"},"logprobs":null,"finish_reason":null}]}`,
+              `{"id":"msg_01G6x1ceDQcQGgoASaH8VM7g","object":"chat.completion.chunk","created":1730364995,"model":"claude-3-sonnet-20240229","system_fingerprint":null,"choices":[{"index":0,"delta":{"content":"d joke for"},"logprobs":null,"finish_reason":null}]}`,
+              `{"id":"msg_01G6x1ceDQcQGgoASaH8VM7g","object":"chat.completion.chunk","created":1730364995,"model":"claude-3-sonnet-20240229","system_fingerprint":null,"choices":[{"index":0,"delta":{"content":" you! Let"},"logprobs":null,"finish_reason":null}]}`,
+              `{"id":"msg_01G6x1ceDQcQGgoASaH8VM7g","object":"chat.completion.chunk","created":1730364995,"model":"claude-3-sonnet-20240229","system_fingerprint":null,"choices":[{"index":0,"delta":{"content":" me know if you"},"logprobs":null,"finish_reason":null}]}`,
+              `{ "id": "msg_01G6x1ceDQcQGgoASaH8VM7g", "object": "chat.completion.chunk", "created": 1730364995, "model": "claude-3-sonnet-20240229", "system_fingerprint": null, "choices": [{ "index": 0, "delta": { "content": "'" }, "logprobs": null, "finish_reason": null }] }`,
+              `{"id":"msg_01G6x1ceDQcQGgoASaH8VM7g","object":"chat.completion.chunk","created":1730364996,"model":"claude-3-sonnet-20240229","system_fingerprint":null,"choices":[{"index":0,"delta":{"content":"d like another"},"logprobs":null,"finish_reason":null}]}`,
+              `{"id":"msg_01G6x1ceDQcQGgoASaH8VM7g","object":"chat.completion.chunk","created":1730364996,"model":"claude-3-sonnet-20240229","system_fingerprint":null,"choices":[{"index":0,"delta":{"content":" one on"},"logprobs":null,"finish_reason":null}]}`,
+              `{"id":"msg_01G6x1ceDQcQGgoASaH8VM7g","object":"chat.completion.chunk","created":1730364996,"model":"claude-3-sonnet-20240229","system_fingerprint":null,"choices":[{"index":0,"delta":{"content":" a different theme"},"logprobs":null,"finish_reason":null}]}`,
+              `{"id":"msg_01G6x1ceDQcQGgoASaH8VM7g","object":"chat.completion.chunk","created":1730364996,"model":"claude-3-sonnet-20240229","system_fingerprint":null,"choices":[{"index":0,"delta":{"content":"."},"logprobs":null,"finish_reason":null}]}`,
+              `{"id":"msg_01G6x1ceDQcQGgoASaH8VM7g","object":"chat.completion.chunk","created":1730364996,"model":"claude-3-sonnet-20240229","system_fingerprint":null,"choices":[{"index":0,"delta":{"content":""},"logprobs":null,"finish_reason":"end_turn"}]}\n`].join("\n")
+
+
+          )
+          dataEmitter.dispatchEvent('close')
+        })
+
+        await vi.waitFor(() => {
+          expect(result.current.messages).toEqual([
+            { role: 'user', content: 'user input' },
+            {
+              "content": "Sure, let me generate a dad joke for you:",
+              "refusal": null,
+              "role": "assistant",
+              "tool_calls": [{ "id": "toolu_01B1GTdvhAEB29KubfFpUbFm", "type": "function", "function": { "name": "generate_dad_jokes", "arguments": "{\"theme\": \"general\"}" } }]
+            },
+            {
+              "content": "Someone messed up number of floors in the elevator. It was wrong on so many levels.",
+              "role": "tool",
+              "tool_call_id": "toolu_01B1GTdvhAEB29KubfFpUbFm",
+            },
+            {
+              "content": "There's a classic dad joke for you! Let me know if you'd like another one on a different theme.",
+              "role": "assistant",
+            }
+          ])
+        })
+      })
+
       it("should request AI completion with tool call reults", async () => {
         function createMockReadadbleStream(dataEmitter: DataEventListener) {
           return new ReadableStream({
