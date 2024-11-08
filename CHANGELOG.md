@@ -1,8 +1,12 @@
 # Changelog
 
-## 0.13.6
+## 0.13.7
 
 - Fix react peerDependency version syntax #73
+
+## 0.13.6
+
+- Keep the tool_calls in final message callback #72
 
 # 0.13.5
 
