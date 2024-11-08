@@ -100,7 +100,7 @@
     }
   },
   "peerDependencies": {
-    "react": "=>18.2.0"
+    "react": ">=18.2.0"
   },
   "dependencies": {
     "@ai-sdk/provider": "^0.0.24",
