@@ -20,7 +20,7 @@ basic completion without any prompt. This just wraps openAI api and adds a few e
 
 ```ts
 import OpenAI from "openai"
-import { Langtail } from "langtail"
+import { createOpenAIProxy } from "langtail/openai"
 
 const openai = new OpenAI({
   apiKey: "<LANGTAIL_API_KEY>",
