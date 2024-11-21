@@ -1,6 +1,6 @@
 import handlebarsEvalless from "@langtail/handlebars-evalless"
 
-import { handlebarsDateHelper, operatorHelpers } from "./handlebars-helpers"
+import { handlebarsDateHelper, operatorHelpers, variableHelpers } from "./handlebars-helpers"
 import { JSONValue } from "./jsonType"
 import { ContentArray } from "./schemas"
 
@@ -8,6 +8,14 @@ const handlebars = handlebarsEvalless.default ?? handlebarsEvalless
 
 handlebars.registerHelper("$date", handlebarsDateHelper)
 handlebars.registerHelper(operatorHelpers)
+handlebars.registerHelper(variableHelpers)
+
+export const LANGTAIL_HELPERS = [
+  "$date",
+  ...Object.keys(operatorHelpers),
+  ...Object.keys(variableHelpers),
+]
+
 const Visitor = handlebars.Visitor
 
 /*
