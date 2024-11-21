@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.8
+
+- New Handlebars helpers: last, toJSON, formatMessage (more variants)
+
 ## 0.13.7
 
 - Fix react peerDependency version syntax #73

@@ -1,5 +1,6 @@
 import type handlebars from "@langtail/handlebars-evalless"
 import { format, parseISO } from "date-fns"
+import { Message } from "./schemas"
 
 const isObject = function (val: any) {
   return typeof val === "object"
@@ -67,4 +68,44 @@ export const operatorHelpers: handlebars.HelperDeclareSpec = {
   or() {
     return Array.prototype.slice.call(arguments, 0, -1).some(Boolean)
   },
+}
+
+const formatMessage = (message: Message, includeToolCalls: boolean): string => {
+  if (!message) return '';
+
+  let result = `[${message.role}] `;
+
+  if (message.content) {
+    result += message.content;
+  }
+
+  if (includeToolCalls && message.tool_calls?.length) {
+    result += '\nTool Calls:';
+    for (const tool of message.tool_calls) {
+      result += `\n  - ${tool.function.name}(${tool.function.arguments})`;
+    }
+  }
+
+  return result;
+};
+
+const formatMessages = (messages: Message[], includeToolCalls: boolean): string => {
+  if (!Array.isArray(messages)) return '';
+  return messages.map((m) => formatMessage(m, includeToolCalls)).join('\n\n');
+};
+
+export const variableHelpers: handlebars.HelperDeclareSpec = {
+  toJSON: function (context) {
+    return JSON.stringify(context, null, 2);
+  },
+  last: function (array) {
+    if (Array.isArray(array) && array.length > 0) {
+      return array[array.length - 1];
+    }
+    return null;
+  },
+  formatMessage: (message: Message) => formatMessage(message, false),
+  formatMessages: (messages: Message[]) => formatMessages(messages, false),
+  formatMessageWithToolCalls: (message: Message) => formatMessage(message, true),
+  formatMessagesWithToolCalls: (messages: Message[]) => formatMessages(messages, true),
 }
