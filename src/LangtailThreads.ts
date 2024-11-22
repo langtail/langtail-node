@@ -1,7 +1,7 @@
 import { deleteEntitySchema, ThreadCreate, threadListResponseSchema, threadSchema } from "./schemas"
 import { ILangtailMessages, LangtailMessages } from "./LangtailMessages";
 import { IFetcher, LangtailThreadsOptions, PaginationOptions, PublicAPI } from "./types";
-import { paginationParamsToQuery } from "./bin/utils";
+import { paginationParamsToQuery } from "./utils";
 
 export type ILangtailThreads = PublicAPI<LangtailThreads>
 
