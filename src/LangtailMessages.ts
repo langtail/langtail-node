@@ -1,7 +1,7 @@
 
 import { assistantMessageListResponseSchema, assistantMessageSchema, deleteEntitySchema } from "./schemas"
 import { IFetcher, LangtailThreadsOptions, PaginationOptions, PublicAPI } from './types';
-import { paginationParamsToQuery } from "./bin/utils";
+import { paginationParamsToQuery } from "./utils";
 
 
 export type ILangtailMessages = PublicAPI<LangtailMessages>

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.9
+
+- Fix for browser runtime
+
 ## 0.13.8
 
 - New Handlebars helpers: last, toJSON, formatMessage (more variants)
