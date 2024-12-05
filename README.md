@@ -36,7 +36,7 @@ const rawCompletion = await lt.chat.completions.create({
   prompt: "<prompt-slug>",
   doNotRecord: false, // false will ensure logs do not contain any info about payloads. You can still see the request in the logs, but you cannot see the variables etc.
   metadata: {
-    "custom-field": 1,
+    "custom-field": "1",
   },
 })
 ```

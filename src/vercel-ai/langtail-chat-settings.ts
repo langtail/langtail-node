@@ -15,4 +15,5 @@ type LangtailChatSettingsBase<P extends PromptSlug, E extends Environment<P> = u
 
 export type LangtailChatSettings<P extends PromptSlug, E extends Environment<P> = undefined, V extends Version<P, E> = undefined> = LangtailChatSettingsBase<P, E, V> & ILangtailExtraProps & OpenAiBodyType & {
   variables?: Variables<P, E, V>
+  structuredOutputs?: boolean
 }
