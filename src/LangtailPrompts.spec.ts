@@ -130,7 +130,7 @@ describe.skipIf(!liveTesting)(
           project: "ci-tests-project",
           fetch: async (url, init) => {
             expect(init?.headers?.["x-langtail-do-not-record"]).toBe("true")
-            expect(init?.headers?.["x-langtail-metadata-custom-field"]).toBe(1)
+            expect(init?.headers?.["x-langtail-metadata-custom-field"]).toBe("1")
 
             return {
               ok: true,
@@ -157,7 +157,7 @@ describe.skipIf(!liveTesting)(
           },
           doNotRecord: true,
           metadata: {
-            "custom-field": 1,
+            "custom-field": "1",
           },
         })
 

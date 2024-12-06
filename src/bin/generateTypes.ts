@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { LangtailEnvironment, LangtailPrompts } from "../LangtailPrompts";
-import { dirExists, getApiKey, prepareOutputFilePath } from "./utils";
+import { dirExists, getApiKey, getBaseUrl, prepareOutputFilePath } from "./utils";
 import SDK_VERSION from '../version'
 import { Environment, PromptOptions, PromptSlug, Version } from '../types';
 
@@ -84,7 +84,8 @@ const generateTypes = async ({ out }: GenerateTypesOptions) => {
   }
 
   const langtailPrompts = new LangtailPrompts({
-    apiKey: getApiKey()
+    apiKey: getApiKey(),
+    baseURL: getBaseUrl()
   });
 
   const deployments = await langtailPrompts.listDeployments();

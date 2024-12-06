@@ -3,6 +3,15 @@ import path from 'path';
 import readline from 'readline';
 
 
+export const getBaseUrl = (): string => {
+  let baseUrl = process.env.LANGTAIL_BASE_URL;
+  if (!baseUrl) {
+    baseUrl = "https://api.langtail.com";
+  }
+  return baseUrl;
+}
+
+
 export const getApiKey = (): string => {
   const apiKey = process.env.LANGTAIL_API_KEY;
   if (!apiKey) {

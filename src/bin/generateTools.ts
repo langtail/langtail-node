@@ -3,7 +3,7 @@ import fs from 'fs';
 import { LangtailPrompts } from '../LangtailPrompts';
 import jsonSchemaToZod from 'json-schema-to-zod';
 import SDK_VERSION from '../version'
-import { askUserToConfirm, dirExists, getApiKey, prepareOutputFilePath } from './utils';
+import { askUserToConfirm, dirExists, getApiKey, getBaseUrl, prepareOutputFilePath } from './utils';
 import { Environment, PromptOptions, PromptSlug, Version } from '../types';
 
 
@@ -90,7 +90,8 @@ const generateTools = async ({ out }: GenerateToolsOptions) => {
   }
 
   const langtailPrompts = new LangtailPrompts({
-    apiKey: getApiKey()
+    apiKey: getApiKey(),
+    baseURL: getBaseUrl()
   });
 
   const deployments = await langtailPrompts.listDeployments();
