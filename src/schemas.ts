@@ -8,7 +8,7 @@ import type {
 export interface ILangtailExtraProps {
   doNotRecord?: boolean
   threadId?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, string>
 }
 
 export type ChatCompletionsCreateParams =

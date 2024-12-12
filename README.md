@@ -36,7 +36,7 @@ const rawCompletion = await lt.chat.completions.create({
   prompt: "<prompt-slug>",
   doNotRecord: false, // false will ensure logs do not contain any info about payloads. You can still see the request in the logs, but you cannot see the variables etc.
   metadata: {
-    "custom-field": 1,
+    "custom-field": "1",
   },
 })
 ```
@@ -318,76 +318,4 @@ runner.on("message", (messageDelta: string) => {
 runner.on("chunk", (chunk: ChatCompletionChunk) => {
   // NOTE: chunk here is always a proper JSON even with parts of the message
 })
-```
-
-## useChatStream React hook
-
-"You can leverage our React hook to handle AI streams more easily. We have developed a hook called `useChatStream`, which can be imported from `langtail/react/useChatStream`.
-
-Here's an example:
-
-```ts
-// NOTE: your FE code
-import { useChatStream } from "langtail/react/useChatStream";
-
-function YourComponent() {
-  const { isLoading, messages, send } = useChatStream({
-    fetcher: (message) =>
-      fetch(`/api/langtail`, {
-        method: "POST",
-        body: JSON.stringify({ messages: [message] }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }).then((res) => res.body),
-    onToolCall: async (toolCall: ChatCompletionMessageToolCall, fullMessage) => {
-      if (toolCall.function.name === "weather") {
-        return "Sunny 22 degrees"
-      }
-
-      return "Unknown data"
-    }
-  });
-
-  useEffect(() => {
-    // Call send wherever you like with any content
-    send({ role: 'user' , content: "Can you hear me?"})
-  }, [])
-
-  // NOTE: the `messages` array is updated within the react providing you with live stream of the messages
-  return (
-    <>
-      {messages.map((message) => (
-        <p>
-          {message.role}: {message.content}
-        </p>
-      ))}
-    </>
-  )
-}
-```
-
-```ts
-// NOTE: your next.js BE code, assuming that this is the route /api/langtail
-import { Langtail } from "langtail"
-import { NextRequest } from "next/server"
-
-export const runtime = "edge"
-
-export const lt = new Langtail({
-  apiKey: process.env.LANGTAIL_API_KEY ?? "",
-})
-
-// Create a new assistant
-export async function POST(request: NextRequest) {
-  const messages = (await request.json()).messages
-
-  const result = await lt.prompts.invoke({
-    prompt: "weather",
-    messages,
-    stream: true,
-  })
-
-  return new Response(result.toReadableStream())
-}
 ```
