@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.0
+
+- Update `openai` version
+- Fix tool calls issues for Vercel AI SDK integration
+- Remove `useChatStream` (moved to separate repo)
+
 ## 0.13.9
 
 - Fix for browser runtime
