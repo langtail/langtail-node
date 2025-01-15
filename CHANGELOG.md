@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.1
+
+- Fix `finishReason` for Anthropic and Google providers in Vercel AI SDK integration
+
 ## 0.14.0
 
 - Update `openai` version
