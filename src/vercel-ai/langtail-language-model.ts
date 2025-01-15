@@ -17,15 +17,12 @@ import {
 } from '@ai-sdk/provider-utils';
 import { z } from 'zod';
 import { convertToOpenAIChatMessages } from './convert-to-openai-chat-messages';
-import { mapOpenAIFinishReason } from './map-openai-finish-reason';
+import { mapLangtailFinishReason } from './map-langtail-finish-reason';
 import { LangtailChatSettings } from './langtail-chat-settings';
 import { openaiErrorDataSchema, openaiFailedResponseHandler } from './openai-error';
 import { mapOpenAIChatLogProbsOutput } from './map-openai-chat-logprobs';
 import { LangtailPrompts } from '../Langtail';
-import { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions';
-import { FunctionParameters } from 'openai/resources';
 import type { PromptSlug, Environment, Version, LangtailEnvironment } from '../types';
-import { ILangtailExtraProps } from '../schemas';
 import { getResponseMetadata } from './get-response-metadata';
 import { prepareTools } from './openai-prepare-tools';
 
@@ -305,7 +302,7 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
           toolName: toolCall.function.name,
           args: toolCall.function.arguments!,
         })),
-      finishReason: mapOpenAIFinishReason(choice.finish_reason),
+      finishReason: mapLangtailFinishReason(choice.finish_reason, Boolean(choice.message.tool_calls)),
       usage: {
         promptTokens: response.usage?.prompt_tokens ?? NaN,
         completionTokens: response.usage?.completion_tokens ?? NaN,
@@ -428,7 +425,7 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
             const choice = value.choices[0];
 
             if (choice?.finish_reason != null) {
-              finishReason = mapOpenAIFinishReason(choice.finish_reason);
+              finishReason = mapLangtailFinishReason(choice.finish_reason, Boolean(choice.delta?.tool_calls));
             }
 
             if (choice?.delta == null) {
