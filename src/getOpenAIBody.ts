@@ -53,6 +53,7 @@ export function getOpenAIBody(
   const openAIbody: OpenAI.Chat.ChatCompletionCreateParams = {
     model: parsedBody.model ?? completionArgs.model,
     temperature: parsedBody.temperature ?? completionArgs.temperature,
+    reasoning_effort: parsedBody.reasoning_effort ?? completionArgs.reasoning_effort,
     messages: inputMessages,
     top_p: parsedBody.top_p ?? completionArgs.top_p,
     ...(parsedBody.parallelToolCalls !== undefined
