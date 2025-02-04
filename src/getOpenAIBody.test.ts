@@ -87,6 +87,7 @@ describe("getOpenAIBody", () => {
         ],
         "model": "gpt-3.5-turbo",
         "presence_penalty": 0,
+        "reasoning_effort": undefined,
         "temperature": 0.8,
         "top_p": 1,
       }
@@ -111,6 +112,7 @@ describe("getOpenAIBody", () => {
         ],
         "model": "gpt-3.5-turbo",
         "presence_penalty": 0,
+        "reasoning_effort": undefined,
         "temperature": 0.8,
         "top_p": 1,
       }
@@ -223,6 +225,7 @@ describe("getOpenAIBody", () => {
         ],
         "model": "gpt-4-turbo",
         "presence_penalty": 0.5,
+        "reasoning_effort": undefined,
         "response_format": {
           "type": "json_object",
         },
@@ -273,6 +276,7 @@ describe("getOpenAIBody", () => {
         ],
         "model": "gpt-3.5-turbo",
         "presence_penalty": 0,
+        "reasoning_effort": undefined,
         "seed": 123,
         "temperature": 0.8,
         "top_p": 1,
@@ -337,6 +341,7 @@ describe("getOpenAIBody", () => {
           ],
           "model": "gpt-3.5-turbo",
           "presence_penalty": 0,
+          "reasoning_effort": undefined,
           "temperature": 0.8,
           "top_p": 1,
         }
@@ -398,6 +403,7 @@ describe("getOpenAIBody", () => {
           ],
           "model": "gpt-3.5-turbo",
           "presence_penalty": 0,
+          "reasoning_effort": undefined,
           "temperature": 0.8,
           "top_p": 1,
         }
@@ -450,6 +456,7 @@ describe("getOpenAIBody", () => {
           ],
           "model": "gpt-3.5-turbo",
           "presence_penalty": 0,
+          "reasoning_effort": undefined,
           "temperature": 0.8,
           "top_p": 1,
         }
