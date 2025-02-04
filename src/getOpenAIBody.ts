@@ -38,6 +38,7 @@ export function getOpenAIBody(
 ): ChatCompletionsCreateParams {
   const completionArgs = completionConfig.state.args
 
+  const reasoningEffort = parsedBody.reasoning_effort ?? completionArgs.reasoning_effort
   const template = parsedBody.template ?? completionConfig.state.template
   const compiledTemplate = compileMessages(template, Object.assign(
     completionConfig.chatInput,
@@ -53,7 +54,7 @@ export function getOpenAIBody(
   const openAIbody: OpenAI.Chat.ChatCompletionCreateParams = {
     model: parsedBody.model ?? completionArgs.model,
     temperature: parsedBody.temperature ?? completionArgs.temperature,
-    reasoning_effort: parsedBody.reasoning_effort ?? completionArgs.reasoning_effort,
+    ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
     messages: inputMessages,
     top_p: parsedBody.top_p ?? completionArgs.top_p,
     ...(parsedBody.parallelToolCalls !== undefined
