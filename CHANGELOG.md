@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.10
+
+- Add reasoning_effort support
+
 ## 0.13.9
 
 - Fix for browser runtime
