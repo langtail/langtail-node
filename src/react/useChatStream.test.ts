@@ -371,7 +371,7 @@ describe("useAIStream", () => {
           await vi.waitFor(() => {
             expect(result.current.messages).toEqual([
               { role: 'user', content: 'user input' },
-              { role: 'assistant', content: 'hello.' },
+              { role: 'assistant', content: 'hello.', parsed: null, refusal: null, tool_calls: [] },
             ])
           })
         })
@@ -423,7 +423,7 @@ describe("useAIStream", () => {
             expect(result.current.messages).toEqual([
               { role: 'user', content: 'user input' },
               { role: 'assistant', content: 'hello!' },
-              { role: 'assistant', content: ' And this is my end.' },
+              { role: 'assistant', content: ' And this is my end.', parsed: null, refusal: null, tool_calls: [] },
             ])
           })
         })
@@ -1191,7 +1191,7 @@ describe("useAIStream", () => {
         await vi.waitFor(() => {
           expect(result.current.messages).toEqual([
             { role: 'user', content: 'Test message' },
-            { role: 'assistant', content: 'This is a complete message.' }
+            { role: 'assistant', content: 'This is a complete message.', parsed: null, refusal: null, tool_calls: [] }
           ])
         })
       })
@@ -1330,6 +1330,7 @@ In case they need to draw a red line somewhere!`,
             {
               "content": "Ahoj.",
               "role": "assistant",
+              parsed: null, refusal: null, tool_calls: []
             },
           ])
         })
@@ -1402,6 +1403,7 @@ In case they need to draw a red line somewhere!`,
             {
               "content": "Ahoj.",
               "role": "assistant",
+              parsed: null, refusal: null, tool_calls: []
             },
           ])
         })

@@ -19,7 +19,7 @@ describe("Langtail Proxy", () => {
       model: "gpt-3.5-turbo",
       doNotRecord: false,
       metadata: {
-        "custom-field": 1,
+        "custom-field": "1",
       },
     })
     let partCount = 0
@@ -67,7 +67,7 @@ describe("Langtail Proxy", () => {
       model: "gpt-3.5-turbo",
       doNotRecord: true,
       metadata: {
-        "custom-field": 1,
+        "custom-field": "1",
       },
     })
 
