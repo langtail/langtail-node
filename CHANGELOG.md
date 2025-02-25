@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.11
+
+- Add `max_thinking_tokens` support (Anthropic enhanced thinking)
+
 ## 0.13.10
 
 - Add reasoning_effort support
