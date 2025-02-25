@@ -41,6 +41,7 @@ export type ModelParameter = {
   temperature: number
   reasoning_effort?: ReasoningEffortType
   max_tokens: number
+  max_thinking_tokens?: number
   top_p: number
   stop?: string[]
   presence_penalty: number
@@ -228,6 +229,7 @@ export const openAIBodySchemaObjectDefinition = {
 
   seed: z.number().optional(),
   max_tokens: z.number().optional(),
+  max_thinking_tokens: z.number().optional(),
   temperature: z.number().optional(),
   reasoning_effort: z.enum(["low", "medium", "high"]).optional(),
   top_p: z.number().optional(),

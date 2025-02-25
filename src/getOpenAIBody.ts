@@ -72,6 +72,9 @@ export function getOpenAIBody(
     ...(Array.isArray(completionArgs.stop) && completionArgs.stop.length > 0
       ? { stop: completionArgs.stop }
       : {}),
+    ...(parsedBody.max_thinking_tokens || completionArgs.max_thinking_tokens
+      ? { max_thinking_tokens: parsedBody.max_thinking_tokens ?? completionArgs.max_thinking_tokens }
+      : {}),
   }
 
   if (parsedBody.max_tokens || completionArgs.max_tokens) {
