@@ -10,6 +10,14 @@
 - Fix tool calls issues for Vercel AI SDK integration
 - Remove `useChatStream` (moved to separate repo)
 
+## 0.13.11
+
+- Add `max_thinking_tokens` support (Anthropic enhanced thinking)
+
+## 0.13.10
+
+- Add reasoning_effort support
+
 ## 0.13.9
 
 - Fix for browser runtime

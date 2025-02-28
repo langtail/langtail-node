@@ -6,10 +6,10 @@ settings:
 
 dependencies:
   '@ai-sdk/provider':
-    specifier: ^1.0.1
+    specifier: ^1.0.9
     version: 1.0.9
   '@ai-sdk/provider-utils':
-    specifier: ^2.0.3
+    specifier: ^2.1.10
     version: 2.1.10(zod@3.23.8)
   '@langtail/handlebars-evalless':
     specifier: ^0.1.2
@@ -59,7 +59,7 @@ devDependencies:
     specifier: ^8.0.2
     version: 8.0.2(typescript@5.8.2)
   typescript:
-    specifier: ^5.4.5
+    specifier: ^5.7.3
     version: 5.8.2
   vitest:
     specifier: ^1.6.0

@@ -295,6 +295,8 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
 
     return {
       text: choice.message.content ?? undefined,
+      // @ts-expect-error - reasoning is not defined in default openai response types
+      reasoning: choice.message.reasoning,
       toolCalls:
         choice.message.tool_calls?.map(toolCall => ({
           toolCallType: 'function',
@@ -439,6 +441,36 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
                 type: 'text-delta',
                 textDelta: delta.content,
               });
+            }
+
+            if (delta.reasoning != null) {
+              const reasoningDelta = delta.reasoning
+              if (typeof reasoningDelta === 'string') {
+                controller.enqueue({
+                  type: 'text-delta',
+                  textDelta: reasoningDelta,
+                });
+              } else {
+                if (reasoningDelta.type === "text") {
+                  if (reasoningDelta.signature != null) {
+                    controller.enqueue({
+                      type: 'reasoning-signature',
+                      signature: reasoningDelta.signature,
+                    });
+                  }
+                  if (reasoningDelta.text != null) {
+                    controller.enqueue({
+                      type: 'text-delta',
+                      textDelta: reasoningDelta.text,
+                    });
+                  }
+                } else if (reasoningDelta.type === "redacted") {
+                  controller.enqueue({
+                    type: 'redacted-reasoning',
+                    data: reasoningDelta.data,
+                  });
+                }
+              }
             }
 
             const mappedLogprobs = mapOpenAIChatLogProbsOutput(
@@ -668,6 +700,14 @@ const openaiChatChunkSchema = z.union([
           .object({
             role: z.enum(['assistant']).nullish(),
             content: z.string().nullish(),
+            reasoning: z.union([z.string(), z.object({
+              type: z.enum(['text']),
+              text: z.string(),
+              signature: z.string().optional(),
+            }), z.object({
+              type: z.enum(['redacted']),
+              data: z.string(),
+            })]).optional(),
             function_call: z
               .object({
                 name: z.string().optional(),
