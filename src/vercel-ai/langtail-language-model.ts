@@ -447,7 +447,7 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
               const reasoningDelta = delta.reasoning
               if (typeof reasoningDelta === 'string') {
                 controller.enqueue({
-                  type: 'text-delta',
+                  type: 'reasoning',
                   textDelta: reasoningDelta,
                 });
               } else {
@@ -460,7 +460,7 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
                   }
                   if (reasoningDelta.text != null) {
                     controller.enqueue({
-                      type: 'text-delta',
+                      type: 'reasoning',
                       textDelta: reasoningDelta.text,
                     });
                   }
