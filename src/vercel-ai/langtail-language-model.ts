@@ -336,7 +336,7 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
       body: body,
       failedResponseHandler: openaiFailedResponseHandler,
       successfulResponseHandler: createEventSourceResponseHandler(
-        openaiChatChunkSchema,
+        langtailChatChunksSchema,
       ),
       abortSignal: options.abortSignal,
     });
@@ -368,7 +368,7 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
     return {
       stream: response.pipeThrough(
         new TransformStream<
-          ParseResult<z.infer<typeof openaiChatChunkSchema>>,
+          ParseResult<z.infer<typeof langtailChatChunksSchema>>,
           LanguageModelV1StreamPart
         >({
           transform(chunk, controller) {
@@ -689,7 +689,7 @@ const openaiChatResponseSchema = z.object({
 
 // limited version of the schema, focussed on what is needed for the implementation
 // this approach limits breakages when the API changes and increases efficiency
-const openaiChatChunkSchema = z.union([
+const langtailChatChunksSchema = z.union([
   z.object({
     id: z.string().nullish(),
     created: z.number().nullish(),
@@ -702,7 +702,7 @@ const openaiChatChunkSchema = z.union([
             content: z.string().nullish(),
             reasoning: z.union([z.string(), z.object({
               type: z.enum(['text']),
-              text: z.string(),
+              text: z.string().optional(),
               signature: z.string().optional(),
             }), z.object({
               type: z.enum(['redacted']),
