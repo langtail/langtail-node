@@ -6,11 +6,11 @@ settings:
 
 dependencies:
   '@ai-sdk/provider':
-    specifier: ^0.0.24
-    version: 0.0.24
+    specifier: ^1.0.9
+    version: 1.0.9
   '@ai-sdk/provider-utils':
-    specifier: ^1.0.20
-    version: 1.0.20(zod@3.23.8)
+    specifier: ^2.1.10
+    version: 2.1.10(zod@3.23.8)
   '@langtail/handlebars-evalless':
     specifier: ^0.1.2
     version: 0.1.2
@@ -72,18 +72,18 @@ devDependencies:
     version: 18.3.1(react@18.2.0)
   tsup:
     specifier: ^8.0.2
-    version: 8.0.2(typescript@5.4.5)
+    version: 8.0.2(typescript@5.8.2)
   typescript:
-    specifier: ^5.4.5
-    version: 5.4.5
+    specifier: ^5.7.3
+    version: 5.8.2
   vitest:
     specifier: ^1.6.0
     version: 1.6.0(@types/node@20.12.11)(jsdom@24.1.0)
 
 packages:
 
-  /@ai-sdk/provider-utils@1.0.20(zod@3.23.8):
-    resolution: {integrity: sha512-ngg/RGpnA00eNOWEtXHenpX1MsM2QshQh4QJFjUfwcqHpM5kTfG7je7Rc3HcEDP+OkRVv2GF+X4fC1Vfcnl8Ow==}
+  /@ai-sdk/provider-utils@2.1.10(zod@3.23.8):
+    resolution: {integrity: sha512-4GZ8GHjOFxePFzkl3q42AU0DQOtTQ5w09vmaWUf/pKFXJPizlnzKSUkF0f+VkapIUfDugyMqPMT1ge8XQzVI7Q==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
@@ -91,15 +91,15 @@ packages:
       zod:
         optional: true
     dependencies:
-      '@ai-sdk/provider': 0.0.24
-      eventsource-parser: 1.1.2
-      nanoid: 3.3.6
+      '@ai-sdk/provider': 1.0.9
+      eventsource-parser: 3.0.0
+      nanoid: 3.3.8
       secure-json-parse: 2.7.0
       zod: 3.23.8
     dev: false
 
-  /@ai-sdk/provider@0.0.24:
-    resolution: {integrity: sha512-XMsNGJdGO+L0cxhhegtqZ8+T6nn4EoShS819OvCgI2kLbYTIvk0GWFGD0AXJmxkxs3DrpsJxKAFukFR7bvTkgQ==}
+  /@ai-sdk/provider@1.0.9:
+    resolution: {integrity: sha512-jie6ZJT2ZR0uVOVCDc9R2xCX5I/Dum/wEK28lx21PJx6ZnFAN9EzD2WsPhcDWfCgGx3OAZZ0GyM3CEobXpa9LA==}
     engines: {node: '>=18'}
     dependencies:
       json-schema: 0.4.0
@@ -397,7 +397,7 @@ packages:
       handlebars: 4.7.8
       prettier: 3.2.5
       tslib: 2.6.2
-      typescript: 5.4.5
+      typescript: 5.8.2
     dev: false
 
   /@nodelib/fs.scandir@2.1.5:
@@ -1073,9 +1073,9 @@ packages:
     engines: {node: '>=6'}
     dev: false
 
-  /eventsource-parser@1.1.2:
-    resolution: {integrity: sha512-v0eOBUbiaFojBu2s2NPBfYUoRR9GjcDNvCXVaqEf5vVfpIAh9f8RCo4vXTP8c63QRKCFwoLpMpTdPwwhEKVgzA==}
-    engines: {node: '>=14.18'}
+  /eventsource-parser@3.0.0:
+    resolution: {integrity: sha512-T1C0XCUimhxVQzW4zFipdx0SficT651NnkR0ZSH3yQwh+mFMdLfgjABVi4YtMTtaL4s168593DaoaRLMqryavA==}
+    engines: {node: '>=18.0.0'}
     dev: false
 
   /execa@5.1.1:
@@ -1621,17 +1621,17 @@ packages:
       thenify-all: 1.6.0
     dev: true
 
-  /nanoid@3.3.6:
-    resolution: {integrity: sha512-BGcqMMJuToF7i1rt+2PWSNVnWIkGCU78jBG3RxO/bZlnZPK2Cmi2QaffxGO/2RvWi9sL+FAiRiXMgsyxQ1DIDA==}
-    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-    dev: false
-
   /nanoid@3.3.7:
     resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
     dev: true
+
+  /nanoid@3.3.8:
+    resolution: {integrity: sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==}
+    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+    hasBin: true
+    dev: false
 
   /neo-async@2.6.2:
     resolution: {integrity: sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==}
@@ -2270,7 +2270,7 @@ packages:
     resolution: {integrity: sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==}
     dev: false
 
-  /tsup@8.0.2(typescript@5.4.5):
+  /tsup@8.0.2(typescript@5.8.2):
     resolution: {integrity: sha512-NY8xtQXdH7hDUAZwcQdY/Vzlw9johQsaqf7iwZ6g1DOUlFYQ5/AtVAjTvihhEyeRlGo4dLRVHtrRaL35M1daqQ==}
     engines: {node: '>=18'}
     hasBin: true
@@ -2303,7 +2303,7 @@ packages:
       source-map: 0.8.0-beta.0
       sucrase: 3.35.0
       tree-kill: 1.2.2
-      typescript: 5.4.5
+      typescript: 5.8.2
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -2314,8 +2314,8 @@ packages:
     engines: {node: '>=4'}
     dev: true
 
-  /typescript@5.4.5:
-    resolution: {integrity: sha512-vcI4UpRgg81oIRUFwR0WSIHKt11nJ7SAVlYNIu+QpqeyXP+gpQJy/Z4+F0aGxSE4MqwjyXvW/TzgkLAx2AGHwQ==}
+  /typescript@5.8.2:
+    resolution: {integrity: sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ==}
     engines: {node: '>=14.17'}
     hasBin: true
 

@@ -47,7 +47,7 @@
     "react": "18.2.0",
     "react-dom": "^18.0.0",
     "tsup": "^8.0.2",
-    "typescript": "^5.4.5",
+    "typescript": "^5.7.3",
     "vitest": "^1.6.0"
   },
   "module": "./Langtail.mjs",
@@ -103,8 +103,8 @@
     "react": ">=18.2.0"
   },
   "dependencies": {
-    "@ai-sdk/provider": "^0.0.24",
-    "@ai-sdk/provider-utils": "^1.0.20",
+    "@ai-sdk/provider": "^1.0.9",
+    "@ai-sdk/provider-utils": "^2.1.10",
     "@langtail/handlebars-evalless": "^0.1.2",
     "commander": "^12.1.0",
     "date-fns": "^3.6.0",
