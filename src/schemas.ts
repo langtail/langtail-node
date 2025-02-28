@@ -104,10 +104,23 @@ export interface ToolCall {
   }
 }
 
+export interface MessageReasoningText {
+  type: "text"
+  text: string
+  signature?: string
+}
+export interface MessageReasoningRedacted {
+  type: "redacted"
+  data: string
+}
+
+export type MessageReasoning = MessageReasoningText | MessageReasoningRedacted
+
 export interface Message {
   role: "assistant" | "user" | "system" | "function" | "tool"
   name?: string
   content: string | ContentArray | null
+  reasoning?: MessageReasoning[]
   function_call?: {
     name: string
     arguments: string
