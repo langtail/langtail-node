@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.12
+
+- Add support for sending and reading reasoning tokens in vercel AI SDK provider
+- Updated @ai-sdk/provider
+
 ## 0.13.11
 
 - Add `max_thinking_tokens` support (Anthropic enhanced thinking)

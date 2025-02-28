@@ -10,7 +10,7 @@ import {
   createEventSourceResponseHandler,
   createJsonResponseHandler,
   generateId,
-  isParseableJson,
+  isParsableJson,
   postJsonToApi,
 } from '@ai-sdk/provider-utils';
 import { z } from 'zod';
@@ -23,7 +23,7 @@ import { LangtailPrompts } from '../Langtail';
 import { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions';
 import { FunctionParameters } from 'openai/resources';
 import type { PromptSlug, Environment, Version, LangtailEnvironment } from '../types';
-import { ILangtailExtraProps } from '../schemas';
+import { ILangtailExtraProps, MessageReasoning } from '../schemas';
 
 type LangtailChatConfig = {
   provider: string;
@@ -120,12 +120,12 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
 
         return {
           ...baseArgs,
-          tools: tools?.map(tool => ({
+          tools: tools?.filter(tool => tool.type === 'function').map(tool => ({
             type: 'function',
             function: {
               name: tool.name,
               description: tool.description ?? "",
-              parameters: tool.parameters as FunctionParameters,
+              parameters: tool.parameters,
             },
           })),
         };
@@ -189,6 +189,8 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
 
     return {
       text: choice.message.content ?? undefined,
+      // @ts-expect-error - reasoning is not defined in default openai response types
+      reasoning: choice.message.reasoning,
       toolCalls: choice.message.tool_calls?.map(toolCall => ({
         toolCallType: 'function',
         toolCallId: toolCall.id ?? generateId(),
@@ -287,6 +289,36 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
               });
             }
 
+            if (delta.reasoning != null) {
+              const reasoningDelta = delta.reasoning
+              if (typeof reasoningDelta === 'string') {
+                controller.enqueue({
+                  type: 'text-delta',
+                  textDelta: reasoningDelta,
+                });
+              } else {
+                if (reasoningDelta.type === "text") {
+                  if (reasoningDelta.signature != null) {
+                    controller.enqueue({
+                      type: 'reasoning-signature',
+                      signature: reasoningDelta.signature,
+                    });
+                  }
+                  if (reasoningDelta.text != null) {
+                    controller.enqueue({
+                      type: 'text-delta',
+                      textDelta: reasoningDelta.text,
+                    });
+                  }
+                } else if (reasoningDelta.type === "redacted") {
+                  controller.enqueue({
+                    type: 'redacted-reasoning',
+                    data: reasoningDelta.data,
+                  });
+                }
+              }
+            }
+
             const mappedLogprobs = mapOpenAIChatLogProbsOutput(
               choice?.logprobs,
             );
@@ -355,7 +387,7 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
                 if (
                   toolCall.function?.name == null ||
                   toolCall.function?.arguments == null ||
-                  !isParseableJson(toolCall.function.arguments)
+                  !isParsableJson(toolCall.function.arguments)
                 ) {
                   continue;
                 }
@@ -451,6 +483,14 @@ const openaiChatChunkSchema = z.object({
       delta: z.object({
         role: z.enum(['assistant']).optional(),
         content: z.string().nullable().optional(),
+        reasoning: z.union([z.string(), z.object({
+          type: z.enum(['text']),
+          text: z.string(),
+          signature: z.string().optional(),
+        }), z.object({
+          type: z.enum(['redacted']),
+          data: z.string(),
+        })]).optional(),
         tool_calls: z
           .array(
             z.object({

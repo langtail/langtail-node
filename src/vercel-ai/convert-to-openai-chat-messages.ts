@@ -4,6 +4,7 @@ import {
 } from '@ai-sdk/provider';
 import { convertUint8ArrayToBase64 } from '@ai-sdk/provider-utils';
 import { OpenAIChatPrompt } from './openai-chat-prompt';
+import { MessageReasoning } from '../schemas';
 
 export function convertToOpenAIChatMessages({
   prompt
@@ -61,6 +62,7 @@ export function convertToOpenAIChatMessages({
 
       case 'assistant': {
         let text = '';
+        let reasoning: MessageReasoning[] = []
         const toolCalls: Array<{
           id: string;
           type: 'function';
@@ -84,8 +86,23 @@ export function convertToOpenAIChatMessages({
               });
               break;
             }
+            case 'reasoning': {
+              reasoning.push({
+                type: "text",
+                text: part.text,
+                signature: part.signature,
+              });
+              break;
+            }
+            case 'redacted-reasoning': {
+              reasoning.push({
+                type: "redacted",
+                data: part.data,
+              });
+              break;
+            }
             default: {
-              const _exhaustiveCheck: never = part;
+              const _exhaustiveCheck: any = part;
               throw new Error(`Unsupported part: ${_exhaustiveCheck}`);
             }
           }
@@ -94,6 +111,8 @@ export function convertToOpenAIChatMessages({
         messages.push({
           role: 'assistant',
           content: text,
+          // @ts-expect-error - reasoning is not defined in default openai request params
+          reasoning: reasoning.length > 0 ? reasoning : undefined,
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         });
 

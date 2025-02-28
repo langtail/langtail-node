@@ -219,6 +219,7 @@ export function extractVariablesForHandlebars(template: string): string[] {
   try {
     const ast = handlebars.parse(template)
     const scanner = new VariableScanner()
+    // @ts-expect-error - Handlebars Visitor type is not defined correctly
     scanner.accept(ast)
     return scanner.variables
   } catch (error) {
