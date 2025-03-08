@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.2
+
+- Added changes from 0.13.11 and 0.13.10
+- Reasoning data support
+
 ## 0.14.1
 
 - Fix `finishReason` for Anthropic and Google providers in Vercel AI SDK integration
