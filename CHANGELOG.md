@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.15.0
+
+- Fixed reasoning for Claude thinking
+
 ## 0.14.2
 
 - Added changes from 0.13.11 and 0.13.10
