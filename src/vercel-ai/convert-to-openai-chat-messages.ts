@@ -71,21 +71,6 @@ export function convertToOpenAIChatMessages({
 
         for (const part of content) {
           switch (part.type) {
-            case 'text': {
-              text += part.text;
-              break;
-            }
-            case 'tool-call': {
-              toolCalls.push({
-                id: part.toolCallId,
-                type: 'function',
-                function: {
-                  name: part.toolName,
-                  arguments: JSON.stringify(part.args),
-                },
-              });
-              break;
-            }
             case 'reasoning': {
               reasoning.push({
                 type: "text",
@@ -101,6 +86,23 @@ export function convertToOpenAIChatMessages({
               });
               break;
             }
+
+            case 'text': {
+              text += part.text;
+              break;
+            }
+            case 'tool-call': {
+              toolCalls.push({
+                id: part.toolCallId,
+                type: 'function',
+                function: {
+                  name: part.toolName,
+                  arguments: JSON.stringify(part.args),
+                },
+              });
+              break;
+            }
+
             default: {
               const _exhaustiveCheck: any = part;
               throw new Error(`Unsupported part: ${_exhaustiveCheck}`);
