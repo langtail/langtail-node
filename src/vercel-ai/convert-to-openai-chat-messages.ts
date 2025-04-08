@@ -13,20 +13,31 @@ export function convertToOpenAIChatMessages({
 }): OpenAIChatPrompt {
   const messages: OpenAIChatPrompt = [];
 
-  for (const { role, content } of prompt) {
+  // Helper function to add a message with cacheControl if needed
+  const addMessage = (message: any, cacheControl: boolean) => {
+    if (cacheControl) {
+      message.cache_enabled = true;
+    }
+
+    messages.push(message);
+  };
+
+  for (const { role, content, providerMetadata } of prompt) {
+    const anthropicCacheControl = Boolean(providerMetadata?.anthropic?.cacheControl);
+
     switch (role) {
       case 'system': {
-        messages.push({ role: 'system', content });
+        addMessage({ role: 'system', content }, anthropicCacheControl);
         break;
       }
 
       case 'user': {
         if (content.length === 1 && content[0].type === 'text') {
-          messages.push({ role: 'user', content: content[0].text });
+          addMessage({ role: 'user', content: content[0].text }, anthropicCacheControl);
           break;
         }
 
-        messages.push({
+        addMessage({
           role: 'user',
           content: content.map(part => {
             switch (part.type) {
@@ -55,8 +66,7 @@ export function convertToOpenAIChatMessages({
               }
             }
           }),
-        });
-
+        }, anthropicCacheControl);
         break;
       }
 
@@ -110,26 +120,22 @@ export function convertToOpenAIChatMessages({
           }
         }
 
-        messages.push({
+        addMessage({
           role: 'assistant',
           content: text,
-          // @ts-expect-error - reasoning is not defined in default openai request params
           reasoning: reasoning.length > 0 ? reasoning : undefined,
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
-        });
-
-
+        }, anthropicCacheControl);
         break;
       }
 
       case 'tool': {
         for (const toolResponse of content) {
-          messages.push({
+          addMessage({
             role: 'tool',
             tool_call_id: toolResponse.toolCallId,
             content: JSON.stringify(toolResponse.result),
-          });
-
+          }, anthropicCacheControl);
         }
         break;
       }

@@ -4,7 +4,7 @@ import { userAgent } from '../userAgent';
 import { LangtailChatSettings } from './langtail-chat-settings';
 import { Langtail } from '../Langtail';
 import { LangtailPrompts } from '../LangtailPrompts';
-import { Environment, IsProductionDefined, LangtailEnvironment, PromptSlug, Version } from '../types';
+import { Environment, IsProductionDefined, PromptSlug, Version } from '../types';
 
 export { LangtailChatLanguageModel };
 

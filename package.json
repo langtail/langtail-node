@@ -36,6 +36,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.12.11",
+    "ai": "^4.3.3",
     "copyfiles": "^2.4.1",
     "fs-extra": "^11.2.0",
     "jsdom": "^24.1.0",
@@ -90,8 +91,8 @@
     }
   },
   "dependencies": {
-    "@ai-sdk/provider": "^1.0.9",
-    "@ai-sdk/provider-utils": "^2.1.10",
+    "@ai-sdk/provider": "^1.1.1",
+    "@ai-sdk/provider-utils": "^2.2.5",
     "@langtail/handlebars-evalless": "^0.1.2",
     "commander": "^12.1.0",
     "date-fns": "^3.6.0",

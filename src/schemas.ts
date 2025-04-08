@@ -130,6 +130,7 @@ export interface Message {
   tool_call_id?: string
   // NOTE: dynamic property calculated by the client for the diff view
   hash?: string
+  cache_enabled?: boolean
 }
 
 export interface PlaygroundMessage extends Message {
@@ -210,6 +211,7 @@ export const MessageSchema = z.object({
   tool_calls: z.array(ToolCallSchema).optional(),
   tool_choice: ToolChoiceSchema.optional(),
   tool_call_id: z.string().optional(),
+  cache_enabled: z.boolean().optional(),
 }) satisfies z.ZodType<Message>
 
 const FunctionSchema = z.object({
