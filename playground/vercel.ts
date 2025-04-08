@@ -34,6 +34,14 @@ async function main() {
 
   const { text: text2, reasoning: reasoning2 } = await generateText({
     model: langtail('vtip'),
+    providerOptions: {
+      anthropic: {
+        thinking: {
+          budgetTokens: 1025,
+          type: "enabled",
+        }
+      }
+    },
     messages: [
       {
         role: 'user',

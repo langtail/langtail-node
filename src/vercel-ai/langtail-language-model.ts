@@ -134,6 +134,12 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
       });
     }
 
+    // anthropic thinking
+    const thinking = providerMetadata?.anthropic?.thinking as {
+      budgetTokens: number
+      type: "enabled"
+    } | undefined
+
     const baseArgs = {
       model: this.modelId,
 
@@ -166,6 +172,9 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
           : undefined,
       stop: stopSequences,
       seed,
+      ...(thinking ? {
+        max_thinking_tokens: thinking.budgetTokens,
+      } : {}),
 
       // messages:
       messages: convertToOpenAIChatMessages({ prompt }),
