@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.1
+
+- Added cache_enabled support to message schema
+- Added Anthropic cache control support to Vercel AI SDK integration
+- Updated dependencies: '@ai-sdk/provider' to 1.1.1 and '@ai-sdk/provider-utils' to 2.2.5
+- Added 'ai' package as dev dependency
+- Added playground examples for Vercel integration with cache control
+
 ## 0.15.0
 
 - Fixed reasoning for Claude thinking
