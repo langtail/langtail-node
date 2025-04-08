@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15.2
+
+- Fixed streaming support for Claude 3.7 Sonnet reasoning format
+- Enhanced Zod schema for reasoning field to handle a wider variety of response formats
+- Improved type handling for reasoning in Vercel AI SDK integration
+
 ## 0.15.1
 
 - Added cache_enabled support to message schema
