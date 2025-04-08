@@ -295,8 +295,10 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
 
     return {
       text: choice.message.content ?? undefined,
-      // @ts-expect-error - reasoning is not defined in default openai response types
-      reasoning: choice.message.reasoning,
+      reasoning: choice.message.reasoning as string |
+        { type: "text"; text: string; signature?: string }[] |
+        { type: "redacted"; data: string }[] |
+        undefined,
       toolCalls:
         choice.message.tool_calls?.map(toolCall => ({
           toolCallType: 'function',
@@ -450,7 +452,31 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
                   type: 'reasoning',
                   textDelta: reasoningDelta,
                 });
+              } else if (Array.isArray(reasoningDelta)) {
+                // Handle the reasoning array
+                for (const reasoningItem of reasoningDelta) {
+                  if (reasoningItem.type === "text") {
+                    if (reasoningItem.signature != null) {
+                      controller.enqueue({
+                        type: 'reasoning-signature',
+                        signature: reasoningItem.signature,
+                      });
+                    }
+                    if (reasoningItem.text != null) {
+                      controller.enqueue({
+                        type: 'reasoning',
+                        textDelta: reasoningItem.text,
+                      });
+                    }
+                  } else if (reasoningItem.type === "redacted") {
+                    controller.enqueue({
+                      type: 'redacted-reasoning',
+                      data: reasoningItem.data,
+                    });
+                  }
+                }
               } else {
+                // Handle as direct object
                 if (reasoningDelta.type === "text") {
                   if (reasoningDelta.signature != null) {
                     controller.enqueue({
@@ -643,6 +669,29 @@ const openaiChatResponseSchema = z.object({
       message: z.object({
         role: z.literal('assistant').nullish(),
         content: z.string().nullish(),
+        reasoning: z.union([
+          z.string(),
+          z.object({
+            type: z.literal('text'),
+            text: z.string().optional(),
+            signature: z.string().optional(),
+          }),
+          z.object({
+            type: z.literal('redacted'),
+            data: z.string(),
+          }),
+          z.array(z.union([
+            z.object({
+              type: z.literal('text'),
+              text: z.string(),
+              signature: z.string().optional(),
+            }),
+            z.object({
+              type: z.literal('redacted'),
+              data: z.string(),
+            })
+          ])),
+        ]).optional(),
         function_call: z
           .object({
             arguments: z.string(),
@@ -700,14 +749,29 @@ const langtailChatChunksSchema = z.union([
           .object({
             role: z.enum(['assistant']).nullish(),
             content: z.string().nullish(),
-            reasoning: z.union([z.string(), z.object({
-              type: z.enum(['text']),
-              text: z.string().optional(),
-              signature: z.string().optional(),
-            }), z.object({
-              type: z.enum(['redacted']),
-              data: z.string(),
-            })]).optional(),
+            reasoning: z.union([
+              z.string(),
+              z.object({
+                type: z.literal('text'),
+                text: z.string().optional(),
+                signature: z.string().optional(),
+              }),
+              z.object({
+                type: z.literal('redacted'),
+                data: z.string(),
+              }),
+              z.array(z.union([
+                z.object({
+                  type: z.literal('text'),
+                  text: z.string(),
+                  signature: z.string().optional(),
+                }),
+                z.object({
+                  type: z.literal('redacted'),
+                  data: z.string(),
+                })
+              ])),
+            ]).optional(),
             function_call: z
               .object({
                 name: z.string().optional(),
