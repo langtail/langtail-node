@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.15.3
+
+- support null in reasoning (returned by openrouter sometimes)
+
 ## 0.15.2
 
 - Fixed streaming support for Claude 3.7 Sonnet reasoning format
