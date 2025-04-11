@@ -120,7 +120,7 @@ export interface Message {
   role: "assistant" | "user" | "system" | "function" | "tool"
   name?: string
   content: string | ContentArray | null
-  reasoning?: MessageReasoning[]
+  reasoning?: MessageReasoning[] | null
   function_call?: {
     name: string
     arguments: string

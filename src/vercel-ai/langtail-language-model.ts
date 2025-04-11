@@ -700,7 +700,7 @@ const openaiChatResponseSchema = z.object({
               data: z.string(),
             })
           ])),
-        ]).optional(),
+        ]).nullish(),
         function_call: z
           .object({
             arguments: z.string(),
@@ -780,7 +780,7 @@ const langtailChatChunksSchema = z.union([
                   data: z.string(),
                 })
               ])),
-            ]).optional(),
+            ]).nullish(),
             function_call: z
               .object({
                 name: z.string().optional(),
