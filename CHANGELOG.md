@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.16.0
+
+- Add simpleHash function to generate unique IDs for tool calls in LangtailChatLanguageModel to prevent collisions, particularly with Google Gemini 2.5
+- Update tool call ID logic to incorporate hashed arguments
+
 ## 0.15.3
 
 - support null in reasoning (returned by openrouter sometimes)
