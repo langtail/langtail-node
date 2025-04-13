@@ -25,6 +25,7 @@ import { LangtailPrompts } from '../Langtail';
 import type { PromptSlug, Environment, Version, LangtailEnvironment } from '../types';
 import { getResponseMetadata } from './get-response-metadata';
 import { prepareTools } from './openai-prepare-tools';
+import { simpleHash } from './simple-hash';
 
 type LangtailChatConfig = {
   provider: string;
@@ -546,7 +547,9 @@ export class LangtailChatLanguageModel<P extends PromptSlug = PromptSlug, E exte
                   }
 
                   toolCalls[index] = {
-                    id: toolCallDelta.id,
+                    // add hash of arguments to the id to avoid collisions
+                    // this is happening with Google Gemini 2.5
+                    id: (toolCallDelta.id === toolCallDelta.function.name) ? `${toolCallDelta.id}-${simpleHash(toolCallDelta.function.arguments ?? '')}` : toolCallDelta.id,
                     type: 'function',
                     function: {
                       name: toolCallDelta.function.name,
