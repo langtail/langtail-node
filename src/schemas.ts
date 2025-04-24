@@ -197,6 +197,19 @@ export const ToolChoiceSchema = z.union([
   }),
 ])
 
+export const MessageReasoningTextSchema = z.object({
+  type: z.literal("text"),
+  text: z.string(),
+  signature: z.string().optional(),
+}) satisfies z.ZodType<MessageReasoningText>
+
+export const MessageReasoningRedactedSchema = z.object({
+  type: z.literal("redacted"),
+  data: z.string(),
+}) satisfies z.ZodType<MessageReasoningRedacted>
+
+export const MessageReasoningSchema = z.union([MessageReasoningTextSchema, MessageReasoningRedactedSchema]) satisfies z.ZodType<MessageReasoning>
+
 export const MessageSchema = z.object({
   role: z.union([
     z.literal("assistant"),
@@ -212,6 +225,7 @@ export const MessageSchema = z.object({
   tool_choice: ToolChoiceSchema.optional(),
   tool_call_id: z.string().optional(),
   cache_enabled: z.boolean().optional(),
+  reasoning: z.array(MessageReasoningSchema).optional(),
 }) satisfies z.ZodType<Message>
 
 const FunctionSchema = z.object({
