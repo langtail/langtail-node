@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.1
+
+- Add support for message.reasoning in schema
+
 ## 0.16.0
 
 - Add simpleHash function to generate unique IDs for tool calls in LangtailChatLanguageModel to prevent collisions, particularly with Google Gemini 2.5
