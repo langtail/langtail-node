@@ -231,7 +231,7 @@ export const MessageSchema = z.object({
 const FunctionSchema = z.object({
   name: z.string(),
   description: z.string(),
-  parameters: z.record(z.unknown()),
+  parameters: z.object({}).passthrough(),
   id: z.string().optional(),
 }) satisfies z.ZodType<Functions>
 

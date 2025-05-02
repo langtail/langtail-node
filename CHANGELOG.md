@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.2
+
+- Fix schema for function parameters to be more flexible
+
 ## 0.16.1
 
 - Add support for message.reasoning in schema
