@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.16.2
+## 0.16.5
 
 - Add support for tool results as message type arrays with images in Vercel AI SDK integration
 - Tool results can now return rich content arrays containing text and images instead of just strings
