@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.16.2-beta.1
+
+- Add support for tool results as message type arrays with images in Vercel AI SDK integration
+- Tool results can now return rich content arrays containing text and images instead of just strings
+- Maintains backward compatibility with existing string-based tool results
+- Updated `ChatCompletionToolMessageParam` to support both string and array content types
+
 ## 0.16.1
 
 - Add support for message.reasoning in schema
