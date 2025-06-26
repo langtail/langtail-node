@@ -3,7 +3,7 @@ import {
   UnsupportedFunctionalityError,
 } from '@ai-sdk/provider';
 import { convertUint8ArrayToBase64 } from '@ai-sdk/provider-utils';
-import { OpenAIChatPrompt } from './openai-chat-prompt';
+import { OpenAIChatPrompt, ChatCompletionContentPart } from './openai-chat-prompt';
 import { MessageReasoning } from '../schemas';
 
 export function convertToOpenAIChatMessages({
@@ -131,10 +131,45 @@ export function convertToOpenAIChatMessages({
 
       case 'tool': {
         for (const toolResponse of content) {
+          let toolContent: string | Array<ChatCompletionContentPart>;
+
+          // Check if result is already in message array format
+          if (Array.isArray(toolResponse.result) &&
+            toolResponse.result.length > 0 &&
+            toolResponse.result.every((item: any) =>
+              typeof item === 'object' &&
+              item !== null &&
+              'type' in item &&
+              ['text', 'image_url'].includes(item.type)
+            )) {
+            // Handle as content array (supports images and text)
+            toolContent = toolResponse.result.map((part: any) => {
+              switch (part.type) {
+                case 'text': {
+                  return { type: 'text', text: part.text };
+                }
+                case 'image_url': {
+                  return {
+                    type: 'image_url',
+                    image_url: {
+                      url: part.image_url.url,
+                    },
+                  };
+                }
+                default: {
+                  throw new Error(`Unsupported tool result content type: ${part.type}`);
+                }
+              }
+            });
+          } else {
+            // Fall back to JSON string for backward compatibility
+            toolContent = JSON.stringify(toolResponse.result);
+          }
+
           addMessage({
             role: 'tool',
             tool_call_id: toolResponse.toolCallId,
-            content: JSON.stringify(toolResponse.result),
+            content: toolContent,
           }, anthropicCacheControl);
         }
         break;
