@@ -1,57 +1,57 @@
-import { ReasoningDetail } from '../reasoning-details-schema';
+import { ReasoningDetail } from "../reasoning-details-schema"
 
-export type OpenAIChatPrompt = Array<ChatCompletionMessageParam>;
+export type OpenAIChatPrompt = Array<ChatCompletionMessageParam>
 
 export type ChatCompletionMessageParam =
   | ChatCompletionSystemMessageParam
   | ChatCompletionUserMessageParam
   | ChatCompletionAssistantMessageParam
-  | ChatCompletionToolMessageParam;
+  | ChatCompletionToolMessageParam
 
 export interface ChatCompletionSystemMessageParam {
-  role: 'system';
-  content: string;
+  role: "system"
+  content: string
 }
 
 export interface ChatCompletionUserMessageParam {
-  role: 'user';
-  content: string | Array<ChatCompletionContentPart>;
+  role: "user"
+  content: string | Array<ChatCompletionContentPart>
 }
 
 export type ChatCompletionContentPart =
   | ChatCompletionContentPartText
-  | ChatCompletionContentPartImage;
+  | ChatCompletionContentPartImage
 
 export interface ChatCompletionContentPartImage {
-  type: 'image_url';
+  type: "image_url"
   image_url: {
-    url: string;
-  };
+    url: string
+  }
 }
 
 export interface ChatCompletionContentPartText {
-  type: 'text';
-  text: string;
+  type: "text"
+  text: string
 }
 
 export interface ChatCompletionAssistantMessageParam {
-  role: 'assistant';
-  content?: string | null;
-  reasoning_details?: ReasoningDetail[] | null;
-  tool_calls?: Array<ChatCompletionMessageToolCall>;
+  role: "assistant"
+  content?: string | null
+  reasoning_details?: ReasoningDetail[] | null
+  tool_calls?: Array<ChatCompletionMessageToolCall>
 }
 
 export interface ChatCompletionMessageToolCall {
-  type: 'function';
-  id: string;
+  type: "function"
+  id: string
   function: {
-    arguments: string;
-    name: string;
-  };
+    arguments: string
+    name: string
+  }
 }
 
 export interface ChatCompletionToolMessageParam {
-  role: 'tool';
-  content: string | Array<ChatCompletionContentPart>;
-  tool_call_id: string;
+  role: "tool"
+  content: string | Array<ChatCompletionContentPart>
+  tool_call_id: string
 }
