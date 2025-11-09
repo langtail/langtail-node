@@ -1,3 +1,5 @@
+import { ReasoningDetail } from '../reasoning-details-schema';
+
 export type OpenAIChatPrompt = Array<ChatCompletionMessageParam>;
 
 export type ChatCompletionMessageParam =
@@ -35,6 +37,7 @@ export interface ChatCompletionContentPartText {
 export interface ChatCompletionAssistantMessageParam {
   role: 'assistant';
   content?: string | null;
+  reasoning_details?: ReasoningDetail[] | null;
   tool_calls?: Array<ChatCompletionMessageToolCall>;
 }
 

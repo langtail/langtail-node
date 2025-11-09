@@ -1,9 +1,11 @@
 import { z, ZodSchema } from "zod"
 import { Environment, LangtailEnvironment, PromptSlug, Version } from "./types"
 import type { ChatCompletionCreateParamsStreaming } from "openai/resources/index"
-import type {
-  ChatCompletionCreateParamsNonStreaming,
-} from "openai/resources/chat/completions"
+import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions"
+import {
+  ReasoningDetail,
+  ReasoningDetailUnionSchema,
+} from "./reasoning-details-schema"
 
 export interface ILangtailExtraProps {
   doNotRecord?: boolean
@@ -27,11 +29,11 @@ export type ReasoningEffortType = "low" | "medium" | "high"
 
 type ToolChoiceType =
   | {
-    type: "function"
-    function: {
-      name: string
+      type: "function"
+      function: {
+        name: string
+      }
     }
-  }
   | "auto"
   | "none"
   | "required"
@@ -93,7 +95,9 @@ export interface ContentItemGeminiMediaUrl {
   }
 }
 
-export type ContentArray = Array<ContentItemText | ContentItemImage | ContentItemGeminiMediaUrl>
+export type ContentArray = Array<
+  ContentItemText | ContentItemImage | ContentItemGeminiMediaUrl
+>
 
 export interface ToolCall {
   id: string
@@ -121,6 +125,7 @@ export interface Message {
   name?: string
   content: string | ContentArray | null
   reasoning?: MessageReasoning[] | null
+  reasoning_details?: ReasoningDetail[] | null
   function_call?: {
     name: string
     arguments: string
@@ -144,10 +149,10 @@ export interface PlaygroundState {
 }
 
 export interface Deployment<P extends PromptSlug> {
-  deployedAt: string;
-  promptSlug: P;
-  environment: Environment<P> & LangtailEnvironment;
-  version?: Version<P, Environment<P>> & string;
+  deployedAt: string
+  promptSlug: P
+  environment: Environment<P> & LangtailEnvironment
+  version?: Version<P, Environment<P>> & string
 }
 
 export const ContentItemTextSchema = z.object({
@@ -171,7 +176,11 @@ export const ContentItemGeminiMediaUrlSchema = z.object({
 }) satisfies z.ZodType<ContentItemGeminiMediaUrl>
 
 const ContentArraySchema = z.array(
-  z.union([ContentItemTextSchema, ContentItemImageSchema, ContentItemGeminiMediaUrlSchema]),
+  z.union([
+    ContentItemTextSchema,
+    ContentItemImageSchema,
+    ContentItemGeminiMediaUrlSchema,
+  ]),
 ) satisfies z.ZodType<ContentArray>
 
 const FunctionCallSchema = z.object({
@@ -208,7 +217,10 @@ export const MessageReasoningRedactedSchema = z.object({
   data: z.string(),
 }) satisfies z.ZodType<MessageReasoningRedacted>
 
-export const MessageReasoningSchema = z.union([MessageReasoningTextSchema, MessageReasoningRedactedSchema]) satisfies z.ZodType<MessageReasoning>
+export const MessageReasoningSchema = z.union([
+  MessageReasoningTextSchema,
+  MessageReasoningRedactedSchema,
+]) satisfies z.ZodType<MessageReasoning>
 
 export const MessageSchema = z.object({
   role: z.union([
@@ -226,6 +238,7 @@ export const MessageSchema = z.object({
   tool_call_id: z.string().optional(),
   cache_enabled: z.boolean().optional(),
   reasoning: z.array(MessageReasoningSchema).optional(),
+  reasoning_details: z.array(ReasoningDetailUnionSchema).nullish(),
 }) satisfies z.ZodType<Message>
 
 const FunctionSchema = z.object({
@@ -285,7 +298,6 @@ export const bothBodySchema = langtailBodySchema.merge(openAIBodySchema)
 export type IncomingBodyType = z.infer<typeof bothBodySchema>
 export type OpenAiBodyType = z.infer<typeof openAIBodySchema>
 
-
 export const threadSchema = z.object({
   id: z.string(),
   createdAt: z.string(),
@@ -321,16 +333,23 @@ export const assistantMessageSchema = z.object({
 
 export type AssistantMessage = z.infer<typeof assistantMessageSchema>
 
-export const createListResponseSchema = <Z extends ZodSchema>(listItemType: Z) => z.object({
-  object: z.enum(["list"]),
-  data: z.array(listItemType),
-  first_id: z.string().nullable(),
-  last_id: z.string().nullable(),
-  has_more: z.boolean(),
-})
+export const createListResponseSchema = <Z extends ZodSchema>(
+  listItemType: Z,
+) =>
+  z.object({
+    object: z.enum(["list"]),
+    data: z.array(listItemType),
+    first_id: z.string().nullable(),
+    last_id: z.string().nullable(),
+    has_more: z.boolean(),
+  })
 
 export const threadListResponseSchema = createListResponseSchema(threadSchema)
 export type ThreadListResponse = z.infer<typeof threadListResponseSchema>
 
-export const assistantMessageListResponseSchema = createListResponseSchema(assistantMessageSchema)
-export type AssistantMessageListResponse = z.infer<typeof assistantMessageListResponseSchema>
+export const assistantMessageListResponseSchema = createListResponseSchema(
+  assistantMessageSchema,
+)
+export type AssistantMessageListResponse = z.infer<
+  typeof assistantMessageListResponseSchema
+>

@@ -5,6 +5,7 @@ import {
 import { convertUint8ArrayToBase64 } from '@ai-sdk/provider-utils';
 import { OpenAIChatPrompt, ChatCompletionContentPart } from './openai-chat-prompt';
 import { MessageReasoning } from '../schemas';
+import { ReasoningDetail } from '../reasoning-details-schema';
 
 export function convertToOpenAIChatMessages({
   prompt
@@ -73,11 +74,18 @@ export function convertToOpenAIChatMessages({
       case 'assistant': {
         let text = '';
         let reasoning: MessageReasoning[] = []
+        let reasoningDetails: ReasoningDetail[] | undefined;
         const toolCalls: Array<{
           id: string;
           type: 'function';
           function: { name: string; arguments: string };
         }> = [];
+
+        // Check if providerMetadata contains preserved reasoning_details
+        const langtailMetadata = providerMetadata?.langtail as { reasoning_details?: ReasoningDetail[] } | undefined;
+        if (langtailMetadata?.reasoning_details) {
+          reasoningDetails = langtailMetadata.reasoning_details;
+        }
 
         for (const part of content) {
           switch (part.type) {
@@ -124,6 +132,7 @@ export function convertToOpenAIChatMessages({
           role: 'assistant',
           content: text,
           reasoning: reasoning.length > 0 ? reasoning : undefined,
+          reasoning_details: reasoningDetails,
           tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
         }, anthropicCacheControl);
         break;
