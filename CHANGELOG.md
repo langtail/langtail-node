@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.6
+
+- Add support for reasoning_details (openrouter specific) returned in providerMetadata in the vercel ai sdk provider
+
 ## 0.16.5
 
 - Add support for tool results as message type arrays with images in Vercel AI SDK integration
