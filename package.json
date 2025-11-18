@@ -1,6 +1,6 @@
 {
   "name": "langtail",
-  "version": "0.16.7-beta.0",
+  "version": "0.16.7",
   "description": "",
   "main": "./Langtail.js",
   "packageManager": "pnpm@8.15.6",
