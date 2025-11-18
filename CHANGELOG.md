@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.7
+
+- Improved shape of reasoning_details values - not using native enum
+
 ## 0.16.6
 
 - Add support for reasoning_details (openrouter specific) returned in providerMetadata in the vercel ai sdk provider
