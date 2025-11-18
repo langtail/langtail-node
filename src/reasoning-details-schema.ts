@@ -1,25 +1,38 @@
 import { z } from "zod"
 
-export enum ReasoningFormat {
-  Unknown = "unknown",
-  OpenAIResponsesV1 = "openai-responses-v1",
-  XAIResponsesV1 = "xai-responses-v1",
-  AnthropicClaudeV1 = "anthropic-claude-v1",
-}
+export const ReasoningFormat = {
+  Unknown: "unknown",
+  OpenAIResponsesV1: "openai-responses-v1",
+  XAIResponsesV1: "xai-responses-v1",
+  AnthropicClaudeV1: "anthropic-claude-v1",
+} as const
+
+export type ReasoningFormat =
+  (typeof ReasoningFormat)[keyof typeof ReasoningFormat]
 
 // Anthropic Claude was the first reasoning that we're
 // passing back and forth
 export const DEFAULT_REASONING_FORMAT = ReasoningFormat.AnthropicClaudeV1
 
-export enum ReasoningDetailType {
-  Summary = "reasoning.summary",
-  Encrypted = "reasoning.encrypted",
-  Text = "reasoning.text",
-}
+export const ReasoningDetailType = {
+  Summary: "reasoning.summary",
+  Encrypted: "reasoning.encrypted",
+  Text: "reasoning.text",
+} as const
+
+export type ReasoningDetailType =
+  (typeof ReasoningDetailType)[keyof typeof ReasoningDetailType]
 
 export const CommonReasoningDetailSchema = z.object({
   id: z.string().nullish(),
-  format: z.nativeEnum(ReasoningFormat).nullish(),
+  format: z
+    .enum([
+      ReasoningFormat.Unknown,
+      ReasoningFormat.OpenAIResponsesV1,
+      ReasoningFormat.XAIResponsesV1,
+      ReasoningFormat.AnthropicClaudeV1,
+    ])
+    .nullish(),
   index: z.number().optional(),
 })
 
