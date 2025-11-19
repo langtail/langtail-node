@@ -237,6 +237,7 @@ describe("ReasoningFormat enum", () => {
     expect(ReasoningFormat.OpenAIResponsesV1).toBe("openai-responses-v1")
     expect(ReasoningFormat.XAIResponsesV1).toBe("xai-responses-v1")
     expect(ReasoningFormat.AnthropicClaudeV1).toBe("anthropic-claude-v1")
+    expect(ReasoningFormat.GoogleGeminiV1).toBe("google-gemini-v1")
   })
 })
 
@@ -255,6 +256,7 @@ describe("Reasoning details with all format types", () => {
       ReasoningFormat.OpenAIResponsesV1,
       ReasoningFormat.XAIResponsesV1,
       ReasoningFormat.AnthropicClaudeV1,
+      ReasoningFormat.GoogleGeminiV1,
     ]
 
     formats.forEach((format) => {
