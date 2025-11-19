@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.8
+
+- Add GoogleGeminiV1 to ReasoningFormat and update related tests
+
 ## 0.16.7
 
 - Improved shape of reasoning_details values - not using native enum
