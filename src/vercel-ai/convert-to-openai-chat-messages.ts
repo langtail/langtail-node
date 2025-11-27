@@ -1,5 +1,5 @@
 import {
-  LanguageModelV1Prompt,
+  LanguageModelV2Prompt,
   UnsupportedFunctionalityError,
 } from "@ai-sdk/provider"
 import { convertUint8ArrayToBase64 } from "@ai-sdk/provider-utils"
@@ -13,7 +13,7 @@ import { ReasoningDetail } from "../reasoning-details-schema"
 export function convertToOpenAIChatMessages({
   prompt,
 }: {
-  prompt: LanguageModelV1Prompt
+  prompt: LanguageModelV2Prompt
 }): OpenAIChatPrompt {
   const messages: OpenAIChatPrompt = []
 
@@ -26,9 +26,9 @@ export function convertToOpenAIChatMessages({
     messages.push(message)
   }
 
-  for (const { role, content, providerMetadata } of prompt) {
+  for (const { role, content, providerOptions } of prompt) {
     const anthropicCacheControl = Boolean(
-      providerMetadata?.anthropic?.cacheControl,
+      providerOptions?.anthropic?.cacheControl,
     )
 
     switch (role) {
@@ -54,25 +54,21 @@ export function convertToOpenAIChatMessages({
                 case "text": {
                   return { type: "text", text: part.text }
                 }
-                case "image": {
-                  return {
-                    type: "image_url",
-                    image_url: {
-                      url:
-                        part.image instanceof URL
-                          ? part.image.toString()
-                          : `data:${
-                              part.mimeType ?? "image/jpeg"
-                            };base64,${convertUint8ArrayToBase64(part.image)}`,
-
-                      // OpenAI specific extension: image detail
-                      detail: part.providerMetadata?.openai?.imageDetail,
-                    },
-                  }
-                }
                 case "file": {
+                  // Handle file parts - in V2, images are now file parts with mediaType
+                  if (part.mediaType?.startsWith("image/")) {
+                    const url = getFileUrl(part)
+                    return {
+                      type: "image_url",
+                      image_url: {
+                        url,
+                        // OpenAI specific extension: image detail
+                        detail: part.providerOptions?.openai?.imageDetail,
+                      },
+                    }
+                  }
                   throw new UnsupportedFunctionalityError({
-                    functionality: "File content parts in user messages",
+                    functionality: `File content parts with mediaType ${part.mediaType} in user messages`,
                   })
                 }
               }
@@ -93,29 +89,40 @@ export function convertToOpenAIChatMessages({
           function: { name: string; arguments: string }
         }> = []
 
-        // Check if providerMetadata contains preserved reasoning_details
-        const langtailMetadata = providerMetadata?.langtail as
-          | { reasoning_details?: ReasoningDetail[] }
+        // Check if providerOptions contains preserved reasoning data
+        const langtailMetadata = providerOptions?.langtail as
+          | {
+              reasoning_details?: ReasoningDetail[]
+              reasoning?: Array<{
+                type: string
+                text?: string
+                signature?: string
+              }>
+            }
           | undefined
+
         if (langtailMetadata?.reasoning_details) {
           reasoningDetails = langtailMetadata.reasoning_details
+        }
+
+        // If we have preserved reasoning with signature (from Anthropic), use it directly
+        if (
+          langtailMetadata?.reasoning &&
+          langtailMetadata.reasoning.length > 0
+        ) {
+          reasoning = langtailMetadata.reasoning as MessageReasoning[]
         }
 
         for (const part of content) {
           switch (part.type) {
             case "reasoning": {
-              reasoning.push({
-                type: "text",
-                text: part.text,
-                signature: part.signature,
-              })
-              break
-            }
-            case "redacted-reasoning": {
-              reasoning.push({
-                type: "redacted",
-                data: part.data,
-              })
+              // Only add reasoning from parts if we don't have preserved reasoning with signature
+              if (!langtailMetadata?.reasoning) {
+                reasoning.push({
+                  type: "text",
+                  text: part.text,
+                })
+              }
               break
             }
 
@@ -124,14 +131,53 @@ export function convertToOpenAIChatMessages({
               break
             }
             case "tool-call": {
+              // Check for reasoning data in tool call providerOptions
+              const partLangtail = part.providerOptions?.langtail as
+                | {
+                    reasoning_details?: ReasoningDetail[]
+                    reasoning?: Array<{
+                      type: string
+                      text?: string
+                      signature?: string
+                    }>
+                  }
+                | undefined
+
+              if (partLangtail?.reasoning_details) {
+                if (!reasoningDetails) {
+                  reasoningDetails = []
+                }
+                reasoningDetails.push(...partLangtail.reasoning_details)
+              }
+
+              // Use preserved reasoning with signature if available
+              if (
+                partLangtail?.reasoning &&
+                partLangtail.reasoning.length > 0
+              ) {
+                reasoning = partLangtail.reasoning as MessageReasoning[]
+              }
+
               toolCalls.push({
                 id: part.toolCallId,
                 type: "function",
                 function: {
                   name: part.toolName,
-                  arguments: JSON.stringify(part.args),
+                  // V2 uses `input` (unknown) instead of `args` (string)
+                  arguments:
+                    typeof part.input === "string"
+                      ? part.input
+                      : JSON.stringify(part.input),
                 },
               })
+              break
+            }
+            case "file": {
+              // Skip file parts in assistant messages for now
+              break
+            }
+            case "tool-result": {
+              // Tool results in assistant content are handled separately
               break
             }
 
@@ -157,45 +203,7 @@ export function convertToOpenAIChatMessages({
 
       case "tool": {
         for (const toolResponse of content) {
-          let toolContent: string | Array<ChatCompletionContentPart>
-
-          // Check if result is already in message array format
-          if (
-            Array.isArray(toolResponse.result) &&
-            toolResponse.result.length > 0 &&
-            toolResponse.result.every(
-              (item: any) =>
-                typeof item === "object" &&
-                item !== null &&
-                "type" in item &&
-                ["text", "image_url"].includes(item.type),
-            )
-          ) {
-            // Handle as content array (supports images and text)
-            toolContent = toolResponse.result.map((part: any) => {
-              switch (part.type) {
-                case "text": {
-                  return { type: "text", text: part.text }
-                }
-                case "image_url": {
-                  return {
-                    type: "image_url",
-                    image_url: {
-                      url: part.image_url.url,
-                    },
-                  }
-                }
-                default: {
-                  throw new Error(
-                    `Unsupported tool result content type: ${part.type}`,
-                  )
-                }
-              }
-            })
-          } else {
-            // Fall back to JSON string for backward compatibility
-            toolContent = JSON.stringify(toolResponse.result)
-          }
+          const toolContent = getToolResultContent(toolResponse.output)
 
           addMessage(
             {
@@ -217,4 +225,71 @@ export function convertToOpenAIChatMessages({
   }
 
   return messages
+}
+
+// Helper to convert V2 file part to URL
+function getFileUrl(part: {
+  data: Uint8Array | string | URL
+  mediaType: string
+}): string {
+  if (part.data instanceof URL) {
+    return part.data.toString()
+  }
+  if (typeof part.data === "string") {
+    // Check if it's already a data URL or regular URL
+    if (
+      part.data.startsWith("data:") ||
+      part.data.startsWith("http://") ||
+      part.data.startsWith("https://")
+    ) {
+      return part.data
+    }
+    // Assume base64 string
+    return `data:${part.mediaType};base64,${part.data}`
+  }
+  // Uint8Array
+  return `data:${part.mediaType};base64,${convertUint8ArrayToBase64(part.data)}`
+}
+
+// Helper to convert V2 tool result output to content
+function getToolResultContent(
+  output:
+    | { type: "text"; value: string }
+    | { type: "json"; value: unknown }
+    | { type: "error-text"; value: string }
+    | { type: "error-json"; value: unknown }
+    | {
+        type: "content"
+        value: Array<
+          | { type: "text"; text: string }
+          | { type: "media"; data: string; mediaType: string }
+        >
+      },
+): string | Array<ChatCompletionContentPart> {
+  switch (output.type) {
+    case "text":
+    case "error-text":
+      return output.value
+    case "json":
+    case "error-json":
+      return JSON.stringify(output.value)
+    case "content":
+      return output.value.map((item) => {
+        if (item.type === "text") {
+          return { type: "text" as const, text: item.text }
+        }
+        // media type - support both URLs and base64 data
+        const data = item.data
+        const isUrl =
+          data.startsWith("http://") ||
+          data.startsWith("https://") ||
+          data.startsWith("data:")
+        return {
+          type: "image_url" as const,
+          image_url: {
+            url: isUrl ? data : `data:${item.mediaType};base64,${data}`,
+          },
+        }
+      })
+  }
 }

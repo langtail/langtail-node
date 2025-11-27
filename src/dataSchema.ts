@@ -1,4 +1,4 @@
-import z from "zod"
+import { z } from "zod/v4"
 
 // Define the schema for the data
 const choiceStreamedSchema = z.object({
@@ -10,7 +10,7 @@ const choiceStreamedSchema = z.object({
         token: z.string(),
         bytes: z.array(z.number()),
         logprob: z.number(),
-        top_logprobs: z.record(z.number()),
+        top_logprobs: z.record(z.string(), z.number()),
       }),
     )
     .nullish(),
