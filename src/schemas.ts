@@ -1,4 +1,4 @@
-import { z, ZodSchema } from "zod"
+import { z, ZodSchema } from "zod/v4"
 import { Environment, LangtailEnvironment, PromptSlug, Version } from "./types"
 import type { ChatCompletionCreateParamsStreaming } from "openai/resources/index"
 import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions"
@@ -244,7 +244,7 @@ export const MessageSchema = z.object({
 const FunctionSchema = z.object({
   name: z.string(),
   description: z.string(),
-  parameters: z.record(z.unknown()),
+  parameters: z.record(z.string(), z.unknown()),
   id: z.string().optional(),
 }) satisfies z.ZodType<Functions>
 

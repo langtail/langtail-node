@@ -1,161 +1,106 @@
 import {
   JSONSchema7,
-  LanguageModelV1,
-  LanguageModelV1CallWarning,
+  LanguageModelV2CallWarning,
+  LanguageModelV2FunctionTool,
+  LanguageModelV2ProviderDefinedTool,
+  LanguageModelV2ToolChoice,
   UnsupportedFunctionalityError,
-} from '@ai-sdk/provider';
+} from "@ai-sdk/provider"
 
 export function prepareTools({
-  mode,
-  useLegacyFunctionCalling = false,
+  tools,
+  toolChoice,
   structuredOutputs,
 }: {
-  mode: Parameters<LanguageModelV1['doGenerate']>[0]['mode'] & {
-    type: 'regular';
-  };
-  useLegacyFunctionCalling: boolean | undefined;
-  structuredOutputs: boolean;
+  tools?: Array<
+    LanguageModelV2FunctionTool | LanguageModelV2ProviderDefinedTool
+  >
+  toolChoice?: LanguageModelV2ToolChoice
+  structuredOutputs: boolean
 }): {
-  tools?: {
-    type: 'function';
+  mappedTools?: {
+    type: "function"
     function: {
-      name: string;
-      description: string | undefined;
-      parameters: JSONSchema7;
-      strict?: boolean;
-    };
-  }[];
-  tool_choice?:
-  | 'auto'
-  | 'none'
-  | 'required'
-  | { type: 'function'; function: { name: string } };
-
-  // legacy support
-  functions?: {
-    name: string;
-    description: string | undefined;
-    parameters: JSONSchema7;
-  }[];
-  function_call?: { name: string };
-
-  toolWarnings: LanguageModelV1CallWarning[];
+      name: string
+      description: string | undefined
+      parameters: JSONSchema7
+      strict?: boolean
+    }
+  }[]
+  mappedToolChoice?:
+    | "auto"
+    | "none"
+    | "required"
+    | { type: "function"; function: { name: string } }
+  toolWarnings: LanguageModelV2CallWarning[]
 } {
   // when the tools array is empty, change it to undefined to prevent errors:
-  const tools = mode.tools?.length ? mode.tools : undefined;
+  const toolsArray = tools?.length ? tools : undefined
 
-  const toolWarnings: LanguageModelV1CallWarning[] = [];
+  const toolWarnings: LanguageModelV2CallWarning[] = []
 
-  if (tools == null) {
-    return { tools: undefined, tool_choice: undefined, toolWarnings };
-  }
-
-  const toolChoice = mode.toolChoice;
-
-  if (useLegacyFunctionCalling) {
-    const openaiFunctions: Array<{
-      name: string;
-      description: string | undefined;
-      parameters: JSONSchema7;
-    }> = [];
-
-    for (const tool of tools) {
-      if (tool.type === 'provider-defined') {
-        toolWarnings.push({ type: 'unsupported-tool', tool });
-      } else {
-        openaiFunctions.push({
-          name: tool.name,
-          description: tool.description,
-          parameters: tool.parameters,
-        });
-      }
-    }
-
-    if (toolChoice == null) {
-      return {
-        functions: openaiFunctions,
-        function_call: undefined,
-        toolWarnings,
-      };
-    }
-
-    const type = toolChoice.type;
-
-    switch (type) {
-      case 'auto':
-      case 'none':
-      case undefined:
-        return {
-          functions: openaiFunctions,
-          function_call: undefined,
-          toolWarnings,
-        };
-      case 'required':
-        throw new UnsupportedFunctionalityError({
-          functionality: 'useLegacyFunctionCalling and toolChoice: required',
-        });
-      default:
-        return {
-          functions: openaiFunctions,
-          function_call: { name: toolChoice.toolName },
-          toolWarnings,
-        };
-    }
+  if (toolsArray == null) {
+    return { mappedTools: undefined, mappedToolChoice: undefined, toolWarnings }
   }
 
   const openaiTools: Array<{
-    type: 'function';
+    type: "function"
     function: {
-      name: string;
-      description: string | undefined;
-      parameters: JSONSchema7;
-      strict: boolean | undefined;
-    };
-  }> = [];
+      name: string
+      description: string | undefined
+      parameters: JSONSchema7
+      strict: boolean | undefined
+    }
+  }> = []
 
-  for (const tool of tools) {
-    if (tool.type === 'provider-defined') {
-      toolWarnings.push({ type: 'unsupported-tool', tool });
+  for (const tool of toolsArray) {
+    if (tool.type === "provider-defined") {
+      toolWarnings.push({ type: "unsupported-tool", tool })
     } else {
+      // V2 uses inputSchema instead of parameters
       openaiTools.push({
-        type: 'function',
+        type: "function",
         function: {
           name: tool.name,
           description: tool.description,
-          parameters: tool.parameters,
+          parameters: tool.inputSchema as JSONSchema7,
           strict: structuredOutputs ? true : undefined,
         },
-      });
+      })
     }
   }
 
   if (toolChoice == null) {
-    return { tools: openaiTools, tool_choice: undefined, toolWarnings };
+    return {
+      mappedTools: openaiTools,
+      mappedToolChoice: undefined,
+      toolWarnings,
+    }
   }
 
-  const type = toolChoice.type;
+  const type = toolChoice.type
 
   switch (type) {
-    case 'auto':
-    case 'none':
-    case 'required':
-      return { tools: openaiTools, tool_choice: type, toolWarnings };
-    case 'tool':
+    case "auto":
+    case "none":
+    case "required":
+      return { mappedTools: openaiTools, mappedToolChoice: type, toolWarnings }
+    case "tool":
       return {
-        tools: openaiTools,
-        tool_choice: {
-          type: 'function',
+        mappedTools: openaiTools,
+        mappedToolChoice: {
+          type: "function",
           function: {
             name: toolChoice.toolName,
           },
         },
         toolWarnings,
-      };
+      }
     default: {
-      const _exhaustiveCheck: never = type;
+      const _exhaustiveCheck: never = type
       throw new UnsupportedFunctionalityError({
         functionality: `Unsupported tool choice type: ${_exhaustiveCheck}`,
-      });
+      })
     }
   }
 }

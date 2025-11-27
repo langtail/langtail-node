@@ -1,11 +1,12 @@
 import "dotenv-flow/config"
 import { stepCountIs, streamText, tool } from "ai"
-import { langtail } from "../src/vercel-ai"
 import { z } from "zod/v4"
+
+import { openrouter } from "@openrouter/ai-sdk-provider"
 
 async function main() {
   const result = streamText({
-    model: langtail("vtip"),
+    model: openrouter("google/gemini-3-pro-preview"),
     messages: [
       {
         role: "user",
@@ -22,27 +23,10 @@ async function main() {
         inputSchema: z.object({
           location: z.string().describe("The location to get the weather for"),
         }),
-        async execute({ location }) {
+        execute: async ({ location }) => {
           return {
-            type: "image",
-            data: "https://stickerapp.co.uk/cdn-assets/images/stickers/608t.png",
-          }
-        },
-
-        // map to tool result content for LLM consumption:
-        toModelOutput(result) {
-          return {
-            type: "content",
-            value:
-              typeof result === "string"
-                ? [{ type: "text", text: result }]
-                : [
-                    {
-                      type: "media",
-                      data: result.data,
-                      mediaType: "image/png",
-                    },
-                  ],
+            location,
+            temperature: 12,
           }
         },
       }),

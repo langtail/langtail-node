@@ -1,11 +1,13 @@
 import {
   InvalidResponseDataError,
-  LanguageModelV1,
-  LanguageModelV1CallWarning,
-  LanguageModelV1FinishReason,
-  LanguageModelV1LogProbs,
-  LanguageModelV1ProviderMetadata,
-  LanguageModelV1StreamPart,
+  JSONValue,
+  LanguageModelV2,
+  LanguageModelV2CallOptions,
+  LanguageModelV2CallWarning,
+  LanguageModelV2Content,
+  LanguageModelV2FinishReason,
+  LanguageModelV2StreamPart,
+  SharedV2ProviderMetadata,
 } from "@ai-sdk/provider"
 import {
   ParseResult,
@@ -15,7 +17,7 @@ import {
   isParsableJson,
   postJsonToApi,
 } from "@ai-sdk/provider-utils"
-import { z } from "zod"
+import { z } from "zod/v4"
 import { convertToOpenAIChatMessages } from "./convert-to-openai-chat-messages"
 import { mapLangtailFinishReason } from "./map-langtail-finish-reason"
 import { LangtailChatSettings } from "./langtail-chat-settings"
@@ -23,7 +25,6 @@ import {
   openaiErrorDataSchema,
   openaiFailedResponseHandler,
 } from "./openai-error"
-import { mapOpenAIChatLogProbsOutput } from "./map-openai-chat-logprobs"
 import { LangtailPrompts } from "../Langtail"
 import type {
   PromptSlug,
@@ -54,17 +55,21 @@ export class LangtailChatLanguageModel<
   P extends PromptSlug = PromptSlug,
   E extends Environment<P> = undefined,
   V extends Version<P, E> = undefined,
-> implements LanguageModelV1
+> implements LanguageModelV2
 {
-  readonly specificationVersion: "v1" = "v1"
-  readonly supportsImageUrls = true
+  readonly specificationVersion = "v2" as const
 
   readonly modelId: string
   readonly promptId: P
+  readonly provider: string
 
   readonly settings: LangtailChatSettings<P, E, V>
 
   private readonly config: LangtailChatConfig
+
+  readonly supportedUrls: Record<string, RegExp[]> = {
+    "image/*": [/^data:image\/[a-zA-Z0-9.+-]+;base64,/, /^https?:\/\/.+/i],
+  }
 
   constructor(
     promptId: P,
@@ -75,6 +80,7 @@ export class LangtailChatLanguageModel<
     this.modelId = settings.model ?? MODEL_IN_LANGTAIL
     this.settings = settings
     this.config = config
+    this.provider = config.provider
   }
 
   get environment(): E extends LangtailEnvironment ? E : "production" {
@@ -90,19 +96,6 @@ export class LangtailChatLanguageModel<
     return this.settings.structuredOutputs ?? false
   }
 
-  get defaultObjectGenerationMode() {
-    // audio models don't support structured outputs:
-    if (isAudioModel(this.modelId)) {
-      return "tool"
-    }
-
-    return this.supportsStructuredOutputs ? "json" : "tool"
-  }
-
-  get provider(): string {
-    return this.config.provider
-  }
-
   get headers(): Record<string, string | undefined> {
     return this.config.headers
   }
@@ -116,9 +109,8 @@ export class LangtailChatLanguageModel<
   }
 
   private getArgs({
-    mode,
     prompt,
-    maxTokens,
+    maxOutputTokens,
     temperature,
     topP,
     topK,
@@ -127,11 +119,11 @@ export class LangtailChatLanguageModel<
     stopSequences,
     responseFormat,
     seed,
-    providerMetadata,
-  }: Parameters<LanguageModelV1["doGenerate"]>[0]) {
-    const type = mode.type
-
-    const warnings: LanguageModelV1CallWarning[] = []
+    tools,
+    toolChoice,
+    providerOptions,
+  }: LanguageModelV2CallOptions) {
+    const warnings: LanguageModelV2CallWarning[] = []
 
     if (topK != null) {
       warnings.push({
@@ -154,7 +146,7 @@ export class LangtailChatLanguageModel<
     }
 
     // anthropic thinking
-    const thinking = providerMetadata?.anthropic?.thinking as
+    const thinking = providerOptions?.anthropic?.thinking as
       | {
           budgetTokens: number
           type: "enabled"
@@ -172,7 +164,7 @@ export class LangtailChatLanguageModel<
       parallel_tool_calls: true,
 
       // standardized settings:
-      max_tokens: maxTokens,
+      max_tokens: maxOutputTokens,
       temperature,
       top_p: topP,
       frequency_penalty: frequencyPenalty,
@@ -211,82 +203,26 @@ export class LangtailChatLanguageModel<
       baseArgs.presence_penalty = undefined
     }
 
-    switch (type) {
-      case "regular": {
-        const { tools, tool_choice, functions, function_call, toolWarnings } =
-          prepareTools({
-            mode,
-            structuredOutputs: this.supportsStructuredOutputs,
-            useLegacyFunctionCalling: false,
-          })
+    // Handle tools if provided
+    const { mappedTools, mappedToolChoice, toolWarnings } = prepareTools({
+      tools,
+      toolChoice,
+      structuredOutputs: this.supportsStructuredOutputs,
+    })
 
-        return {
-          args: {
-            ...baseArgs,
-            tools,
-            tool_choice,
-            functions,
-            function_call,
-          },
-          warnings: [...warnings, ...toolWarnings],
-        }
-      }
-
-      case "object-json": {
-        return {
-          args: {
-            ...baseArgs,
-            response_format:
-              this.supportsStructuredOutputs && mode.schema != null
-                ? {
-                    type: "json_schema",
-                    json_schema: {
-                      schema: mode.schema,
-                      strict: true,
-                      name: mode.name ?? "response",
-                      description: mode.description,
-                    },
-                  }
-                : { type: "json_object" },
-          },
-          warnings,
-        }
-      }
-
-      case "object-tool": {
-        return {
-          args: {
-            ...baseArgs,
-            tool_choice: {
-              type: "function",
-              function: { name: mode.tool.name },
-            },
-            tools: [
-              {
-                type: "function",
-                function: {
-                  name: mode.tool.name,
-                  description: mode.tool.description,
-                  parameters: mode.tool.parameters,
-                  strict: this.supportsStructuredOutputs ? true : undefined,
-                },
-              },
-            ],
-          },
-          warnings,
-        }
-      }
-
-      default: {
-        const _exhaustiveCheck: never = type
-        throw new Error(`Unsupported type: ${_exhaustiveCheck}`)
-      }
+    return {
+      args: {
+        ...baseArgs,
+        tools: mappedTools,
+        tool_choice: mappedToolChoice,
+      },
+      warnings: [...warnings, ...toolWarnings],
     }
   }
 
   async doGenerate(
-    options: Parameters<LanguageModelV1["doGenerate"]>[0],
-  ): Promise<Awaited<ReturnType<LanguageModelV1["doGenerate"]>>> {
+    options: LanguageModelV2CallOptions,
+  ): Promise<Awaited<ReturnType<LanguageModelV2["doGenerate"]>>> {
     const { args, warnings } = this.getArgs(options)
 
     const body = {
@@ -306,10 +242,9 @@ export class LangtailChatLanguageModel<
       abortSignal: options.abortSignal,
     })
 
-    const { messages: rawPrompt, ...rawSettings } = args
     const choice = response.choices[0]
 
-    let providerMetadata: LanguageModelV1ProviderMetadata | undefined
+    let providerMetadata: SharedV2ProviderMetadata | undefined
     if (
       response.usage?.completion_tokens_details?.reasoning_tokens != null ||
       response.usage?.prompt_tokens_details?.cached_tokens != null
@@ -322,75 +257,6 @@ export class LangtailChatLanguageModel<
       if (response.usage?.prompt_tokens_details?.cached_tokens != null) {
         providerMetadata.openai.cachedPromptTokens =
           response.usage?.prompt_tokens_details?.cached_tokens
-      }
-    }
-
-    // Process reasoning_details if present
-    let reasoningContent:
-      | string
-      | { type: "text"; text: string; signature?: string }[]
-      | { type: "redacted"; data: string }[]
-      | undefined = choice.message.reasoning as
-      | string
-      | { type: "text"; text: string; signature?: string }[]
-      | { type: "redacted"; data: string }[]
-      | undefined
-
-    // Convert reasoning_details to reasoning format if available
-    if (
-      choice.message.reasoning_details &&
-      choice.message.reasoning_details.length > 0
-    ) {
-      const convertedReasoning: Array<{
-        type: "text"
-        text: string
-        signature?: string
-      }> = []
-      const convertedRedacted: Array<{ type: "redacted"; data: string }> = []
-
-      for (const detail of choice.message.reasoning_details) {
-        const typedDetail = detail as ReasoningDetailUnion
-        switch (typedDetail.type) {
-          case ReasoningDetailType.Text: {
-            if (typedDetail.text) {
-              convertedReasoning.push({
-                type: "text",
-                text: typedDetail.text,
-                signature: typedDetail.signature ?? undefined,
-              })
-            }
-            break
-          }
-          case ReasoningDetailType.Summary: {
-            if (typedDetail.summary) {
-              convertedReasoning.push({
-                type: "text",
-                text: typedDetail.summary,
-              })
-            }
-            break
-          }
-          case ReasoningDetailType.Encrypted: {
-            if (typedDetail.data) {
-              convertedRedacted.push({
-                type: "redacted",
-                data: typedDetail.data,
-              })
-            }
-            break
-          }
-          default: {
-            typedDetail satisfies never
-          }
-        }
-      }
-
-      // Combine both text and redacted reasoning into a single array
-      // This ensures we don't lose encrypted entries when both types exist
-      if (convertedReasoning.length > 0 || convertedRedacted.length > 0) {
-        reasoningContent = [...convertedReasoning, ...convertedRedacted] as
-          | { type: "text"; text: string; signature?: string }[]
-          | { type: "redacted"; data: string }[]
       }
     }
 
@@ -408,36 +274,132 @@ export class LangtailChatLanguageModel<
       }
     }
 
+    // Build content array (V2 format)
+    const content: LanguageModelV2Content[] = []
+
+    // Process reasoning content
+    if (
+      choice.message.reasoning_details &&
+      choice.message.reasoning_details.length > 0
+    ) {
+      for (const detail of choice.message.reasoning_details) {
+        const typedDetail = detail as ReasoningDetailUnion
+        switch (typedDetail.type) {
+          case ReasoningDetailType.Text: {
+            if (typedDetail.text) {
+              content.push({
+                type: "reasoning",
+                text: typedDetail.text,
+                providerMetadata: {
+                  langtail: { reasoning_details: [typedDetail] },
+                },
+              })
+            }
+            break
+          }
+          case ReasoningDetailType.Summary: {
+            if (typedDetail.summary) {
+              content.push({
+                type: "reasoning",
+                text: typedDetail.summary,
+                providerMetadata: {
+                  langtail: { reasoning_details: [typedDetail] },
+                },
+              })
+            }
+            break
+          }
+          case ReasoningDetailType.Encrypted: {
+            if (typedDetail.data) {
+              content.push({
+                type: "reasoning",
+                text: "[REDACTED]",
+                providerMetadata: {
+                  langtail: { reasoning_details: [typedDetail] },
+                },
+              })
+            }
+            break
+          }
+          default: {
+            typedDetail satisfies never
+          }
+        }
+      }
+    } else if (choice.message.reasoning) {
+      // Fallback to legacy reasoning field
+      const reasoning = choice.message.reasoning
+      if (typeof reasoning === "string") {
+        content.push({
+          type: "reasoning",
+          text: reasoning,
+        })
+      }
+    }
+
+    // Add text content
+    if (choice.message.content) {
+      content.push({
+        type: "text",
+        text: choice.message.content,
+      })
+    }
+
+    // Add tool calls
+    if (choice.message.tool_calls) {
+      // Collect reasoning_details for tool calls (needed for OpenRouter/Gemini)
+      const reasoningDetails = choice.message.reasoning_details as
+        | ReasoningDetailUnion[]
+        | undefined
+
+      for (const toolCall of choice.message.tool_calls) {
+        content.push({
+          type: "tool-call",
+          toolCallId: toolCall.id ?? generateId(),
+          toolName: toolCall.function.name,
+          input: toolCall.function.arguments!,
+          // Attach reasoning_details for OpenRouter/Gemini compatibility
+          providerMetadata:
+            reasoningDetails && reasoningDetails.length > 0
+              ? { langtail: { reasoning_details: reasoningDetails } }
+              : undefined,
+        })
+      }
+    }
+
     return {
-      text: choice.message.content ?? undefined,
-      reasoning: reasoningContent,
-      toolCalls: choice.message.tool_calls?.map((toolCall) => ({
-        toolCallType: "function",
-        toolCallId: toolCall.id ?? generateId(),
-        toolName: toolCall.function.name,
-        args: toolCall.function.arguments!,
-      })),
+      content,
       finishReason: mapLangtailFinishReason(
         choice.finish_reason,
         Boolean(choice.message.tool_calls),
       ),
       usage: {
-        promptTokens: response.usage?.prompt_tokens ?? NaN,
-        completionTokens: response.usage?.completion_tokens ?? NaN,
+        inputTokens: response.usage?.prompt_tokens ?? undefined,
+        outputTokens: response.usage?.completion_tokens ?? undefined,
+        totalTokens:
+          response.usage?.prompt_tokens != null &&
+          response.usage?.completion_tokens != null
+            ? response.usage.prompt_tokens + response.usage.completion_tokens
+            : undefined,
+        reasoningTokens:
+          response.usage?.completion_tokens_details?.reasoning_tokens ??
+          undefined,
+        cachedInputTokens:
+          response.usage?.prompt_tokens_details?.cached_tokens ?? undefined,
       },
-      rawCall: { rawPrompt, rawSettings },
-      rawResponse: { headers: responseHeaders },
-      request: { body: JSON.stringify(body) },
-      response: getResponseMetadata(response),
+      request: { body },
+      response: {
+        ...getResponseMetadata(response),
+        headers: responseHeaders,
+      },
       warnings,
-      logprobs: mapOpenAIChatLogProbsOutput(choice.logprobs),
       providerMetadata,
     }
   }
 
   async doStream(
-    options: Parameters<LanguageModelV1["doStream"]>[0],
-  ): Promise<Awaited<ReturnType<LanguageModelV1["doStream"]>>> {
+    options: LanguageModelV2CallOptions,
+  ): Promise<Awaited<ReturnType<LanguageModelV2["doStream"]>>> {
     const { args, warnings } = this.getArgs(options)
 
     const body = {
@@ -457,8 +419,6 @@ export class LangtailChatLanguageModel<
       abortSignal: options.abortSignal,
     })
 
-    const { messages: rawPrompt, ...rawSettings } = args
-
     const toolCalls: Array<{
       id: string
       type: "function"
@@ -466,29 +426,104 @@ export class LangtailChatLanguageModel<
         name: string
         arguments: string
       }
+      inputStarted: boolean
       hasFinished: boolean
     }> = []
 
-    let finishReason: LanguageModelV1FinishReason = "unknown"
+    let finishReason: LanguageModelV2FinishReason = "unknown"
     let usage: {
-      promptTokens: number | undefined
-      completionTokens: number | undefined
+      inputTokens: number | undefined
+      outputTokens: number | undefined
+      totalTokens: number | undefined
+      reasoningTokens: number | undefined
+      cachedInputTokens: number | undefined
     } = {
-      promptTokens: undefined,
-      completionTokens: undefined,
+      inputTokens: undefined,
+      outputTokens: undefined,
+      totalTokens: undefined,
+      reasoningTokens: undefined,
+      cachedInputTokens: undefined,
     }
-    let logprobs: LanguageModelV1LogProbs
     let isFirstChunk = true
 
     // Track reasoning details to preserve for multi-turn conversations
     const accumulatedReasoningDetails: ReasoningDetailUnion[] = []
 
-    let providerMetadata: LanguageModelV1ProviderMetadata | undefined
+    // Track reasoning items (from delta.reasoning) to preserve signatures for Anthropic
+    const accumulatedReasoningItems: Array<{
+      type: string
+      text?: string
+      signature?: string
+    }> = []
+
+    // V2 stream state tracking
+    let textStarted = false
+    let reasoningStarted = false
+    let textId: string | undefined
+    let reasoningId: string | undefined
+    let responseId: string | undefined
+
+    let providerMetadata: SharedV2ProviderMetadata | undefined
+
+    // Helper to build reasoning providerMetadata for tool calls and finish events
+    const getReasoningProviderMetadata = ():
+      | SharedV2ProviderMetadata
+      | undefined => {
+      const hasReasoningDetails = accumulatedReasoningDetails.length > 0
+      const hasReasoningItems = accumulatedReasoningItems.length > 0
+
+      if (!hasReasoningDetails && !hasReasoningItems) {
+        return undefined
+      }
+
+      const langtailMeta: Record<string, JSONValue> = {}
+
+      if (hasReasoningDetails) {
+        langtailMeta.reasoning_details = accumulatedReasoningDetails
+      }
+
+      if (hasReasoningItems) {
+        // Consolidate reasoning items into a single reasoning block with signature
+        // Anthropic expects this format: [{ type: "text", text: "...", signature: "..." }]
+        langtailMeta.reasoning = consolidateReasoningItems(
+          accumulatedReasoningItems,
+        )
+      }
+
+      return { langtail: langtailMeta }
+    }
+
+    // Helper to consolidate streaming reasoning items into final format for Anthropic
+    const consolidateReasoningItems = (
+      items: Array<{ type: string; text?: string; signature?: string }>,
+    ): Array<{ type: string; text?: string; signature?: string }> => {
+      // Collect all text chunks and the final signature
+      let fullText = ""
+      let signature: string | undefined
+
+      for (const item of items) {
+        if (item.text) {
+          fullText += item.text
+        }
+        if (item.signature) {
+          signature = item.signature
+        }
+      }
+
+      // Return a single consolidated reasoning block
+      if (signature) {
+        return [{ type: "text", text: fullText, signature }]
+      } else if (fullText) {
+        return [{ type: "text", text: fullText }]
+      }
+      return []
+    }
+
     return {
       stream: response.pipeThrough(
         new TransformStream<
           ParseResult<z.infer<typeof langtailChatChunksSchema>>,
-          LanguageModelV1StreamPart
+          LanguageModelV2StreamPart
         >({
           transform(chunk, controller) {
             // handle failed chunk parsing / validation:
@@ -509,6 +544,12 @@ export class LangtailChatLanguageModel<
 
             if (isFirstChunk) {
               isFirstChunk = false
+              responseId = value.id ?? generateId()
+
+              controller.enqueue({
+                type: "stream-start",
+                warnings,
+              })
 
               controller.enqueue({
                 type: "response-metadata",
@@ -518,8 +559,18 @@ export class LangtailChatLanguageModel<
 
             if (value.usage != null) {
               usage = {
-                promptTokens: value.usage.prompt_tokens ?? undefined,
-                completionTokens: value.usage.completion_tokens ?? undefined,
+                inputTokens: value.usage.prompt_tokens ?? undefined,
+                outputTokens: value.usage.completion_tokens ?? undefined,
+                totalTokens:
+                  value.usage.prompt_tokens != null &&
+                  value.usage.completion_tokens != null
+                    ? value.usage.prompt_tokens + value.usage.completion_tokens
+                    : undefined,
+                reasoningTokens:
+                  value.usage.completion_tokens_details?.reasoning_tokens ??
+                  undefined,
+                cachedInputTokens:
+                  value.usage.prompt_tokens_details?.cached_tokens ?? undefined,
               }
 
               const {
@@ -546,9 +597,11 @@ export class LangtailChatLanguageModel<
             const choice = value.choices[0]
 
             if (choice?.finish_reason != null) {
+              // Use toolCalls.length instead of delta.tool_calls
+              // because tool_calls may have been in previous chunks
               finishReason = mapLangtailFinishReason(
                 choice.finish_reason,
-                Boolean(choice.delta?.tool_calls),
+                toolCalls.length > 0,
               )
             }
 
@@ -558,10 +611,20 @@ export class LangtailChatLanguageModel<
 
             const delta = choice.delta
 
-            if (delta.content != null) {
+            // Helper to emit reasoning chunks
+            const emitReasoningChunk = (chunkText: string) => {
+              if (!reasoningStarted) {
+                reasoningId = responseId ?? generateId()
+                controller.enqueue({
+                  type: "reasoning-start",
+                  id: reasoningId,
+                })
+                reasoningStarted = true
+              }
               controller.enqueue({
-                type: "text-delta",
-                textDelta: delta.content,
+                type: "reasoning-delta",
+                delta: chunkText,
+                id: reasoningId!,
               })
             }
 
@@ -576,35 +639,20 @@ export class LangtailChatLanguageModel<
                 const typedDetail = detail as ReasoningDetailUnion
                 switch (typedDetail.type) {
                   case ReasoningDetailType.Text: {
-                    if (typedDetail.signature != null) {
-                      controller.enqueue({
-                        type: "reasoning-signature",
-                        signature: typedDetail.signature,
-                      })
-                    }
                     if (typedDetail.text != null) {
-                      controller.enqueue({
-                        type: "reasoning",
-                        textDelta: typedDetail.text,
-                      })
+                      emitReasoningChunk(typedDetail.text)
                     }
                     break
                   }
                   case ReasoningDetailType.Summary: {
                     if (typedDetail.summary != null) {
-                      controller.enqueue({
-                        type: "reasoning",
-                        textDelta: typedDetail.summary,
-                      })
+                      emitReasoningChunk(typedDetail.summary)
                     }
                     break
                   }
                   case ReasoningDetailType.Encrypted: {
                     if (typedDetail.data != null) {
-                      controller.enqueue({
-                        type: "redacted-reasoning",
-                        data: typedDetail.data,
-                      })
+                      emitReasoningChunk("[REDACTED]")
                     }
                     break
                   }
@@ -617,62 +665,55 @@ export class LangtailChatLanguageModel<
             } else if (delta.reasoning != null) {
               // Fallback to legacy reasoning field if reasoning_details not present
               const reasoningDelta = delta.reasoning
+
               if (typeof reasoningDelta === "string") {
-                controller.enqueue({
-                  type: "reasoning",
-                  textDelta: reasoningDelta,
-                })
+                emitReasoningChunk(reasoningDelta)
               } else if (Array.isArray(reasoningDelta)) {
-                // Handle the reasoning array
                 for (const reasoningItem of reasoningDelta) {
-                  if (reasoningItem.type === "text") {
-                    if (reasoningItem.signature != null) {
-                      controller.enqueue({
-                        type: "reasoning-signature",
-                        signature: reasoningItem.signature,
-                      })
-                    }
-                    if (reasoningItem.text != null) {
-                      controller.enqueue({
-                        type: "reasoning",
-                        textDelta: reasoningItem.text,
-                      })
-                    }
+                  // Accumulate reasoning items (including signatures for Anthropic)
+                  accumulatedReasoningItems.push(reasoningItem)
+                  if (reasoningItem.type === "text" && reasoningItem.text) {
+                    emitReasoningChunk(reasoningItem.text)
                   } else if (reasoningItem.type === "redacted") {
-                    controller.enqueue({
-                      type: "redacted-reasoning",
-                      data: reasoningItem.data,
-                    })
+                    emitReasoningChunk("[REDACTED]")
                   }
                 }
               } else {
-                // Handle as direct object
-                if (reasoningDelta.type === "text") {
-                  if (reasoningDelta.signature != null) {
-                    controller.enqueue({
-                      type: "reasoning-signature",
-                      signature: reasoningDelta.signature,
-                    })
-                  }
-                  if (reasoningDelta.text != null) {
-                    controller.enqueue({
-                      type: "reasoning",
-                      textDelta: reasoningDelta.text,
-                    })
-                  }
+                // Accumulate single reasoning item (including signatures for Anthropic)
+                accumulatedReasoningItems.push(reasoningDelta)
+                if (reasoningDelta.type === "text" && reasoningDelta.text) {
+                  emitReasoningChunk(reasoningDelta.text)
                 } else if (reasoningDelta.type === "redacted") {
-                  controller.enqueue({
-                    type: "redacted-reasoning",
-                    data: reasoningDelta.data,
-                  })
+                  emitReasoningChunk("[REDACTED]")
                 }
               }
             }
 
-            const mappedLogprobs = mapOpenAIChatLogProbsOutput(choice?.logprobs)
-            if (mappedLogprobs?.length) {
-              if (logprobs === undefined) logprobs = []
-              logprobs.push(...mappedLogprobs)
+            // Handle text content - only if there's actual content
+            if (delta.content != null && delta.content.length > 0) {
+              // End reasoning if it was started before text
+              if (reasoningStarted && !textStarted) {
+                controller.enqueue({
+                  type: "reasoning-end",
+                  id: reasoningId!,
+                })
+                reasoningStarted = false
+              }
+
+              if (!textStarted) {
+                textId = responseId ?? generateId()
+                controller.enqueue({
+                  type: "text-start",
+                  id: textId,
+                })
+                textStarted = true
+              }
+
+              controller.enqueue({
+                type: "text-delta",
+                delta: delta.content,
+                id: textId!,
+              })
             }
 
             const mappedToolCalls: typeof delta.tool_calls = delta.tool_calls
@@ -716,6 +757,7 @@ export class LangtailChatLanguageModel<
                       name: toolCallDelta.function.name,
                       arguments: toolCallDelta.function.arguments ?? "",
                     },
+                    inputStarted: false,
                     hasFinished: false,
                   }
 
@@ -727,24 +769,37 @@ export class LangtailChatLanguageModel<
                   ) {
                     // send delta if the argument text has already started:
                     if (toolCall.function.arguments.length > 0) {
+                      if (!toolCall.inputStarted) {
+                        toolCall.inputStarted = true
+                        controller.enqueue({
+                          type: "tool-input-start",
+                          id: toolCall.id,
+                          toolName: toolCall.function.name,
+                        })
+                      }
                       controller.enqueue({
-                        type: "tool-call-delta",
-                        toolCallType: "function",
-                        toolCallId: toolCall.id,
-                        toolName: toolCall.function.name,
-                        argsTextDelta: toolCall.function.arguments,
+                        type: "tool-input-delta",
+                        id: toolCall.id,
+                        delta: toolCall.function.arguments,
                       })
                     }
 
                     // check if tool call is complete
                     // (some providers send the full tool call in one chunk):
                     if (isParsableJson(toolCall.function.arguments)) {
+                      if (toolCall.inputStarted) {
+                        controller.enqueue({
+                          type: "tool-input-end",
+                          id: toolCall.id,
+                        })
+                      }
                       controller.enqueue({
                         type: "tool-call",
-                        toolCallType: "function",
                         toolCallId: toolCall.id ?? generateId(),
                         toolName: toolCall.function.name,
-                        args: toolCall.function.arguments,
+                        input: toolCall.function.arguments,
+                        // Attach reasoning for multi-turn conversations
+                        providerMetadata: getReasoningProviderMetadata(),
                       })
                       toolCall.hasFinished = true
                     }
@@ -759,6 +814,15 @@ export class LangtailChatLanguageModel<
                   continue
                 }
 
+                if (!toolCall.inputStarted) {
+                  toolCall.inputStarted = true
+                  controller.enqueue({
+                    type: "tool-input-start",
+                    id: toolCall.id,
+                    toolName: toolCall.function.name,
+                  })
+                }
+
                 if (toolCallDelta.function?.arguments != null) {
                   toolCall.function!.arguments +=
                     toolCallDelta.function?.arguments ?? ""
@@ -766,11 +830,9 @@ export class LangtailChatLanguageModel<
 
                 // send delta
                 controller.enqueue({
-                  type: "tool-call-delta",
-                  toolCallType: "function",
-                  toolCallId: toolCall.id,
-                  toolName: toolCall.function.name,
-                  argsTextDelta: toolCallDelta.function.arguments ?? "",
+                  type: "tool-input-delta",
+                  id: toolCall.id,
+                  delta: toolCallDelta.function.arguments ?? "",
                 })
 
                 // check if tool call is complete
@@ -780,11 +842,16 @@ export class LangtailChatLanguageModel<
                   isParsableJson(toolCall.function.arguments)
                 ) {
                   controller.enqueue({
+                    type: "tool-input-end",
+                    id: toolCall.id,
+                  })
+                  controller.enqueue({
                     type: "tool-call",
-                    toolCallType: "function",
                     toolCallId: toolCall.id ?? generateId(),
                     toolName: toolCall.function.name,
-                    args: toolCall.function.arguments,
+                    input: toolCall.function.arguments,
+                    // Attach reasoning for multi-turn conversations
+                    providerMetadata: getReasoningProviderMetadata(),
                   })
                   toolCall.hasFinished = true
                 }
@@ -793,35 +860,76 @@ export class LangtailChatLanguageModel<
           },
 
           flush(controller) {
-            // Include accumulated reasoning_details in providerMetadata if any were received
-            if (accumulatedReasoningDetails.length > 0) {
+            // Handle any unfinished tool calls
+            if (finishReason === "tool-calls") {
+              for (const toolCall of toolCalls) {
+                if (toolCall && !toolCall.hasFinished) {
+                  if (toolCall.inputStarted) {
+                    controller.enqueue({
+                      type: "tool-input-end",
+                      id: toolCall.id,
+                    })
+                  }
+                  controller.enqueue({
+                    type: "tool-call",
+                    toolCallId: toolCall.id ?? generateId(),
+                    toolName: toolCall.function.name,
+                    input: isParsableJson(toolCall.function.arguments)
+                      ? toolCall.function.arguments
+                      : "{}",
+                    // Attach reasoning for multi-turn conversations
+                    providerMetadata: getReasoningProviderMetadata(),
+                  })
+                  toolCall.hasFinished = true
+                }
+              }
+            }
+
+            // End reasoning if still active
+            if (reasoningStarted) {
+              controller.enqueue({
+                type: "reasoning-end",
+                id: reasoningId!,
+              })
+            }
+
+            // End text if still active
+            if (textStarted) {
+              controller.enqueue({
+                type: "text-end",
+                id: textId!,
+              })
+            }
+
+            // Include accumulated reasoning in providerMetadata if any were received
+            const reasoningMeta = getReasoningProviderMetadata()
+            if (reasoningMeta) {
               if (!providerMetadata) {
                 providerMetadata = {}
               }
-              if (!providerMetadata.langtail) {
-                providerMetadata.langtail = {}
+              providerMetadata.langtail = {
+                ...providerMetadata.langtail,
+                ...reasoningMeta.langtail,
               }
-              providerMetadata.langtail.reasoning_details =
-                accumulatedReasoningDetails
             }
 
             controller.enqueue({
               type: "finish",
               finishReason,
-              logprobs,
               usage: {
-                promptTokens: usage.promptTokens ?? NaN,
-                completionTokens: usage.completionTokens ?? NaN,
+                inputTokens: usage.inputTokens,
+                outputTokens: usage.outputTokens,
+                totalTokens: usage.totalTokens,
+                reasoningTokens: usage.reasoningTokens,
+                cachedInputTokens: usage.cachedInputTokens,
               },
-              ...(providerMetadata != null ? { providerMetadata } : {}),
+              providerMetadata,
             })
           },
         }),
       ),
-      rawCall: { rawPrompt, rawSettings },
-      rawResponse: { headers: responseHeaders },
-      request: { body: JSON.stringify(body) },
-      warnings,
+      request: { body },
+      response: { headers: responseHeaders },
     }
   }
 }
