@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.0.0
+
+### Breaking Changes
+
+- **Vercel AI SDK v5 support** - This version requires `@ai-sdk/provider` v2.0.0 and `@ai-sdk/provider-utils` v3.0.1
+- Previous versions of Vercel AI SDK (v4) are no longer supported
+- Updated `ai` dev dependency to v5.0.0
+
+### Changes
+
+- Refactored `langtail-language-model.ts` for AI SDK v5 compatibility
+- Updated `convert-to-openai-chat-messages.ts` for new message format
+- Updated `map-langtail-finish-reason.ts` for v5 finish reasons
+- Updated `openai-prepare-tools.ts` for v5 tool format
+- Removed deprecated `map-openai-chat-logprobs.ts`
+- Added comprehensive test coverage for language model and message conversion
+
 ## 0.16.8
 
 - Add GoogleGeminiV1 to ReasoningFormat and update related tests
