@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.16.9
+
+- Added TTL support for Anthropic cache control (`cache_ttl` field)
+- Cache control now accepts object format with `ttl` option: `{ type: "ephemeral", ttl: "1h" }`
+
 ## 0.16.8
 
 - Add GoogleGeminiV1 to ReasoningFormat and update related tests

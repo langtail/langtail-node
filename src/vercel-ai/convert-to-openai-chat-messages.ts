@@ -18,22 +18,33 @@ export function convertToOpenAIChatMessages({
   const messages: OpenAIChatPrompt = []
 
   // Helper function to add a message with cacheControl if needed
-  const addMessage = (message: any, cacheControl: boolean) => {
-    if (cacheControl) {
+  const addMessage = (
+    message: any,
+    cacheEnabled: boolean,
+    cacheTtl?: string,
+  ) => {
+    if (cacheEnabled) {
       message.cache_enabled = true
+    }
+    if (cacheTtl) {
+      message.cache_ttl = cacheTtl
     }
 
     messages.push(message)
   }
 
   for (const { role, content, providerMetadata } of prompt) {
-    const anthropicCacheControl = Boolean(
-      providerMetadata?.anthropic?.cacheControl,
-    )
+    const anthropicCacheControl = providerMetadata?.anthropic?.cacheControl
+    const cacheEnabled = Boolean(anthropicCacheControl)
+    const cacheTtl =
+      typeof anthropicCacheControl === "object" &&
+      anthropicCacheControl !== null
+        ? (anthropicCacheControl as { ttl?: string }).ttl
+        : undefined
 
     switch (role) {
       case "system": {
-        addMessage({ role: "system", content }, anthropicCacheControl)
+        addMessage({ role: "system", content }, cacheEnabled, cacheTtl)
         break
       }
 
@@ -41,7 +52,8 @@ export function convertToOpenAIChatMessages({
         if (content.length === 1 && content[0].type === "text") {
           addMessage(
             { role: "user", content: content[0].text },
-            anthropicCacheControl,
+            cacheEnabled,
+            cacheTtl,
           )
           break
         }
@@ -78,7 +90,8 @@ export function convertToOpenAIChatMessages({
               }
             }),
           },
-          anthropicCacheControl,
+          cacheEnabled,
+          cacheTtl,
         )
         break
       }
@@ -150,7 +163,8 @@ export function convertToOpenAIChatMessages({
             reasoning_details: reasoningDetails,
             tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
           },
-          anthropicCacheControl,
+          cacheEnabled,
+          cacheTtl,
         )
         break
       }
@@ -203,7 +217,8 @@ export function convertToOpenAIChatMessages({
               tool_call_id: toolResponse.toolCallId,
               content: toolContent,
             },
-            anthropicCacheControl,
+            cacheEnabled,
+            cacheTtl,
           )
         }
         break

@@ -136,6 +136,7 @@ export interface Message {
   // NOTE: dynamic property calculated by the client for the diff view
   hash?: string
   cache_enabled?: boolean
+  cache_ttl?: string
 }
 
 export interface PlaygroundMessage extends Message {
@@ -237,6 +238,7 @@ export const MessageSchema = z.object({
   tool_choice: ToolChoiceSchema.optional(),
   tool_call_id: z.string().optional(),
   cache_enabled: z.boolean().optional(),
+  cache_ttl: z.string().optional(),
   reasoning: z.array(MessageReasoningSchema).optional(),
   reasoning_details: z.array(ReasoningDetailUnionSchema).nullish(),
 }) satisfies z.ZodType<Message>
