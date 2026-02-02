@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.2
+
+- Added TTL support for Anthropic cache control (`cache_ttl` field)
+- Cache control now accepts object format with `ttl` option: `{ type: "ephemeral", ttl: "1h" }`
+
 ## 1.0.1
 
 ### Breaking Changes

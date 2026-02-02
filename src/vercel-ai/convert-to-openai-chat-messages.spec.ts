@@ -29,6 +29,28 @@ describe("convertToOpenAIChatMessages", () => {
 
       expect(result[0]).toHaveProperty("cache_enabled", true)
     })
+
+    it("should add cache_enabled and cache_ttl for anthropic cache control with ttl", () => {
+      const prompt: LanguageModelV2Prompt = [
+        {
+          role: "system",
+          content: "You are a helpful assistant.",
+          providerOptions: {
+            anthropic: {
+              cacheControl: {
+                type: "ephemeral" as const,
+                ttl: "1h",
+              },
+            },
+          },
+        },
+      ]
+
+      const result = convertToOpenAIChatMessages({ prompt })
+
+      expect(result[0]).toHaveProperty("cache_enabled", true)
+      expect(result[0]).toHaveProperty("cache_ttl", "1h")
+    })
   })
 
   describe("user messages", () => {
