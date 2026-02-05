@@ -1,5 +1,6 @@
 import {
   InvalidResponseDataError,
+  JSONValue,
   LanguageModelV1,
   LanguageModelV1CallWarning,
   LanguageModelV1FinishReason,
@@ -325,6 +326,27 @@ export class LangtailChatLanguageModel<
       }
     }
 
+    // Expose rich usage data via providerMetadata.langtail
+    if (response.usage != null) {
+      if (!providerMetadata) {
+        providerMetadata = {}
+      }
+      providerMetadata.langtail = {
+        ...((providerMetadata.langtail as Record<string, JSONValue>) ?? {}),
+        usage: {
+          promptTokens: response.usage.prompt_tokens ?? 0,
+          completionTokens: response.usage.completion_tokens ?? 0,
+          cachedInputTokens:
+            response.usage.prompt_tokens_details?.cached_tokens ?? 0,
+          reasoningTokens:
+            response.usage.completion_tokens_details?.reasoning_tokens ?? 0,
+          ...(response.usage.raw_usage
+            ? { rawUsage: response.usage.raw_usage as JSONValue }
+            : {}),
+        } as JSONValue,
+      }
+    }
+
     // Process reasoning_details if present
     let reasoningContent:
       | string
@@ -531,7 +553,11 @@ export class LangtailChatLanguageModel<
                 completionTokenDetails?.reasoning_tokens != null ||
                 promptTokenDetails?.cached_tokens != null
               ) {
-                providerMetadata = { openai: {} }
+                if (!providerMetadata) providerMetadata = {}
+                providerMetadata.openai = {
+                  ...((providerMetadata.openai as Record<string, JSONValue>) ??
+                    {}),
+                }
                 if (completionTokenDetails?.reasoning_tokens != null) {
                   providerMetadata.openai.reasoningTokens =
                     completionTokenDetails?.reasoning_tokens
@@ -540,6 +566,23 @@ export class LangtailChatLanguageModel<
                   providerMetadata.openai.cachedPromptTokens =
                     promptTokenDetails?.cached_tokens
                 }
+              }
+
+              // Expose rich usage data via providerMetadata.langtail
+              if (!providerMetadata) providerMetadata = {}
+              providerMetadata.langtail = {
+                ...((providerMetadata.langtail as Record<string, JSONValue>) ??
+                  {}),
+                usage: {
+                  promptTokens: value.usage.prompt_tokens ?? 0,
+                  completionTokens: value.usage.completion_tokens ?? 0,
+                  cachedInputTokens: promptTokenDetails?.cached_tokens ?? 0,
+                  reasoningTokens:
+                    completionTokenDetails?.reasoning_tokens ?? 0,
+                  ...(value.usage.raw_usage
+                    ? { rawUsage: value.usage.raw_usage as JSONValue }
+                    : {}),
+                } as JSONValue,
               }
             }
 
@@ -838,8 +881,11 @@ const openaiTokenUsageSchema = z
     completion_tokens_details: z
       .object({
         reasoning_tokens: z.number().nullish(),
+        accepted_prediction_tokens: z.number().nullish(),
+        rejected_prediction_tokens: z.number().nullish(),
       })
       .nullish(),
+    raw_usage: z.record(z.unknown()).nullish(),
   })
   .nullish()
 

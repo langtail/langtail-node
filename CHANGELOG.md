@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.16.10
+
+- Add rich usage reporting for Vercel AI SDK via `providerMetadata.langtail.usage`
+- Exposes `promptTokens`, `completionTokens`, `cachedInputTokens`, `reasoningTokens`, and `rawUsage` (full provider-specific usage data)
+- Works with both `generateText` and `streamText`
+- Expanded usage schema to support `accepted_prediction_tokens`, `rejected_prediction_tokens`, and `raw_usage` fields
+- Backward compatible: existing `providerMetadata.openai` fields are preserved
+
 ## 0.16.9
 
 - Added TTL support for Anthropic cache control (`cache_ttl` field)
