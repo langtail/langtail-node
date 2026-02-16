@@ -25,7 +25,7 @@ export interface ChatState {
   args: ModelParameter
 }
 
-export type ReasoningEffortType = "low" | "medium" | "high"
+export type ReasoningEffortType = "minimal" | "low" | "medium" | "high" | "max"
 
 type ToolChoiceType =
   | {
@@ -275,7 +275,7 @@ export const openAIBodySchemaObjectDefinition = {
   max_tokens: z.number().optional(),
   max_thinking_tokens: z.number().optional(),
   temperature: z.number().optional(),
-  reasoning_effort: z.enum(["low", "medium", "high"]).optional(),
+  reasoning_effort: z.enum(["minimal", "low", "medium", "high", "max"]).optional(),
   top_p: z.number().optional(),
   parallel_tool_calls: z.boolean().optional(),
   presence_penalty: z.number().optional(),

@@ -51,7 +51,7 @@ export function getOpenAIBody(
 
   const inputMessages = options?.appendTemplate ? [...bodyMessages, ...compiledTemplate] : [...compiledTemplate, ...bodyMessages]
 
-  const openAIbody: OpenAI.Chat.ChatCompletionCreateParams = {
+  const openAIbody: Omit<OpenAI.Chat.ChatCompletionCreateParams, 'stream' | 'reasoning_effort'> & { reasoning_effort?: string } = {
     model: parsedBody.model ?? completionArgs.model,
     temperature: parsedBody.temperature ?? completionArgs.temperature,
     ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),

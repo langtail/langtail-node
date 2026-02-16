@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.11
+
+- Extend `reasoning_effort` to support `"minimal"` and `"max"` values in addition to `"low"`, `"medium"`, and `"high"`
+
 ## 0.16.10
 
 - Add rich usage reporting for Vercel AI SDK via `providerMetadata.langtail.usage`
