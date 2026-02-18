@@ -160,6 +160,7 @@ export class LangtailChatLanguageModel<
           budgetTokens: number
           type: "enabled"
         }
+      | { type: "adaptive" }
       | undefined
 
     const baseArgs = {
@@ -194,11 +195,10 @@ export class LangtailChatLanguageModel<
           : undefined,
       stop: stopSequences,
       seed,
-      ...(thinking
-        ? {
-            max_thinking_tokens: thinking.budgetTokens,
-          }
+      ...(thinking?.type === "enabled"
+        ? { max_thinking_tokens: thinking.budgetTokens }
         : {}),
+      reasoning_effort: this.settings.reasoning_effort,
 
       // messages:
       messages: convertToOpenAIChatMessages({ prompt }),

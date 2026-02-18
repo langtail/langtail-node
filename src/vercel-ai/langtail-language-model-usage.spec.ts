@@ -28,6 +28,114 @@ const defaultCallOptions = {
   prompt: [{ role: "user" as const, content: [{ type: "text" as const, text: "Hello" }] }],
 }
 
+describe("Adaptive thinking and reasoning_effort", () => {
+  beforeAll(() => {
+    nock.disableNetConnect()
+  })
+
+  afterAll(() => {
+    nock.enableNetConnect()
+    nock.cleanAll()
+  })
+
+  it("should forward reasoning_effort from settings into the request body", async () => {
+    const langtailPrompts = new LangtailPrompts({
+      apiKey: "test-api-key",
+      baseURL: BASE_URL,
+    })
+
+    const model = new LangtailChatLanguageModel(
+      "test-prompt",
+      { reasoning_effort: "high" },
+      {
+        provider: "langtail.chat",
+        langtailPrompts,
+        headers: {
+          "X-API-Key": "test-api-key",
+          "content-type": "application/json",
+        },
+      },
+    )
+
+    const scope = nock(BASE_URL)
+      .post(/\/project-prompt\/test-prompt\/production/, (body) => {
+        expect(body.reasoning_effort).toBe("high")
+        expect(body.max_thinking_tokens).toBeUndefined()
+        return true
+      })
+      .reply(200, {
+        id: "chatcmpl-123",
+        choices: [{
+          message: { role: "assistant", content: "Hello!" },
+          finish_reason: "stop",
+          index: 0,
+        }],
+        usage: { prompt_tokens: 10, completion_tokens: 5 },
+      })
+
+    await model.doGenerate(defaultCallOptions)
+    scope.done()
+  })
+
+  it("should not send max_thinking_tokens when thinking type is adaptive", async () => {
+    const model = createModel()
+
+    const scope = nock(BASE_URL)
+      .post(/\/project-prompt\/test-prompt\/production/, (body) => {
+        expect(body.max_thinking_tokens).toBeUndefined()
+        return true
+      })
+      .reply(200, {
+        id: "chatcmpl-123",
+        choices: [{
+          message: { role: "assistant", content: "Hello!" },
+          finish_reason: "stop",
+          index: 0,
+        }],
+        usage: { prompt_tokens: 10, completion_tokens: 5 },
+      })
+
+    await model.doGenerate({
+      ...defaultCallOptions,
+      providerMetadata: {
+        anthropic: {
+          thinking: { type: "adaptive" },
+        },
+      },
+    })
+    scope.done()
+  })
+
+  it("should send max_thinking_tokens when thinking type is enabled", async () => {
+    const model = createModel()
+
+    const scope = nock(BASE_URL)
+      .post(/\/project-prompt\/test-prompt\/production/, (body) => {
+        expect(body.max_thinking_tokens).toBe(1025)
+        return true
+      })
+      .reply(200, {
+        id: "chatcmpl-123",
+        choices: [{
+          message: { role: "assistant", content: "Hello!" },
+          finish_reason: "stop",
+          index: 0,
+        }],
+        usage: { prompt_tokens: 10, completion_tokens: 5 },
+      })
+
+    await model.doGenerate({
+      ...defaultCallOptions,
+      providerMetadata: {
+        anthropic: {
+          thinking: { type: "enabled", budgetTokens: 1025 },
+        },
+      },
+    })
+    scope.done()
+  })
+})
+
 describe("Usage reporting", () => {
   beforeAll(() => {
     nock.disableNetConnect()

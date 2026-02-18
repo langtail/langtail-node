@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.16.12
+
+- Support adaptive thinking (`thinking: { type: "adaptive" }`) in Vercel AI bridge — no longer sends `max_thinking_tokens` for adaptive models
+- Forward `reasoning_effort` from settings to the request body for Claude Opus 4.6 and Sonnet 4.6
+
 ## 0.16.11
 
 - Extend `reasoning_effort` to support `"minimal"` and `"max"` values in addition to `"low"`, `"medium"`, and `"high"`
