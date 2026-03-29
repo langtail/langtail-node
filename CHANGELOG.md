@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.13
+
+- Add support for `reasoning_content` field in streaming and non-streaming responses (used by Fireworks/Kimi K2.5 and similar providers)
+
 ## 0.16.12
 
 - Support adaptive thinking (`thinking: { type: "adaptive" }`) in Vercel AI bridge — no longer sends `max_thinking_tokens` for adaptive models

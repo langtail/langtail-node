@@ -352,7 +352,7 @@ export class LangtailChatLanguageModel<
       | string
       | { type: "text"; text: string; signature?: string }[]
       | { type: "redacted"; data: string }[]
-      | undefined = choice.message.reasoning as
+      | undefined = (choice.message.reasoning ?? choice.message.reasoning_content) as
       | string
       | { type: "text"; text: string; signature?: string }[]
       | { type: "redacted"; data: string }[]
@@ -605,6 +605,14 @@ export class LangtailChatLanguageModel<
               controller.enqueue({
                 type: "text-delta",
                 textDelta: delta.content,
+              })
+            }
+
+            // Handle reasoning_content (used by Fireworks/Kimi K2.5 and similar providers)
+            if (delta.reasoning_content != null) {
+              controller.enqueue({
+                type: "reasoning",
+                textDelta: delta.reasoning_content,
               })
             }
 
@@ -927,6 +935,7 @@ const openaiChatResponseSchema = z.object({
             ),
           ])
           .nullish(),
+        reasoning_content: z.string().nullish(),
         reasoning_details: ReasoningDetailArraySchema.nullish(),
         function_call: z
           .object({
@@ -1012,6 +1021,7 @@ const langtailChatChunksSchema = z.union([
                 ),
               ])
               .nullish(),
+            reasoning_content: z.string().nullish(),
             reasoning_details: ReasoningDetailArraySchema.nullish(),
             function_call: z
               .object({
