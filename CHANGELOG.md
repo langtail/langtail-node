@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.16.14
+
+- Recover tool-calls in the Vercel AI bridge when a model emits the closing `}` of tool arguments bundled with trailing junk in the same SSE delta (e.g. `moonshotai/kimi-k2.6`). The flush handler now parses the longest valid JSON prefix of buffered args and emits a synthetic `tool-call` chunk before `finish`.
+- Gate tool-call recovery on `finish_reason === "tool_calls"` so streams that end with `stop`, `length`, `error`, etc. no longer synthesize a tool invocation the model never committed to.
+- Iterate only populated tool-call entries during flush recovery — adversarial or buggy upstreams sending a large `delta.index` no longer add per-request latency walking sparse array slots.
+
 ## 0.16.13
 
 - Add support for `reasoning_content` field in streaming and non-streaming responses (used by Fireworks/Kimi K2.5 and similar providers)
