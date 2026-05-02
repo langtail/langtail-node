@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.15
+
+- Fall back to raw buffered args in Vercel AI flush recovery when no parseable JSON prefix exists. Previously the 0.16.14 recovery silently dropped tool calls whose buffered args had no valid JSON prefix (e.g. an unescaped `"` mid-string from `moonshotai/kimi-k2.6`). The recovered chunk now passes through the raw args so downstream repair (e.g. AI SDK `experimental_repairToolCall`) gets a chance to fix or re-prompt — a tool call the model committed to with `finish_reason: "tool_calls"` is never silently dropped.
+
 ## 0.16.14
 
 - Recover tool-calls in the Vercel AI bridge when a model emits the closing `}` of tool arguments bundled with trailing junk in the same SSE delta (e.g. `moonshotai/kimi-k2.6`). The flush handler now parses the longest valid JSON prefix of buffered args and emits a synthetic `tool-call` chunk before `finish`.
