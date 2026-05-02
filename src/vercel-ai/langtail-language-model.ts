@@ -889,7 +889,10 @@ export class LangtailChatLanguageModel<
             // any non-tool-call reason, partial buffered args do not
             // represent an intent to call the tool.
             if (finishReason === "tool-calls") {
-              for (const toolCall of toolCalls) {
+              // Object.values skips sparse holes — toolCalls is indexed by the
+              // provider-supplied delta.index, so a stream with index: 1e9
+              // would otherwise make this loop walk a billion holes.
+              for (const toolCall of Object.values(toolCalls)) {
                 if (toolCall == null || toolCall.hasFinished) continue
                 if (toolCall.function?.name == null) continue
                 const recovered = findLongestParsableJsonPrefix(

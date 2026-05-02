@@ -245,6 +245,50 @@ describe("Streaming tool-call recovery", () => {
     scope.done()
   })
 
+  it("handles a sparse tool_calls index without iterating empty slots", async () => {
+    // The provider indexes toolCalls by delta.index. A pathological stream
+    // can set a very large index — flush() must not walk every empty slot
+    // up to that index. Using a moderate index (50) keeps the test fast
+    // while exercising the sparse-array code path; for...of would visit
+    // 51 slots, Object.values visits 1.
+    const scope = nock(BASE_URL)
+      .post(/\/project-prompt\/test-prompt\/production/)
+      .reply(
+        200,
+        createSSEResponse([
+          toolCallChunk({
+            index: 50,
+            id: "call_sparse",
+            name: "Read",
+          }),
+          toolCallChunk({
+            index: 50,
+            arguments: '{"file_path": "x.ts"}, junk',
+          }),
+          finishChunk("tool_calls"),
+        ]),
+        { "content-type": "text/event-stream" },
+      )
+
+    const model = createModel()
+    const start = Date.now()
+    const { stream } = await model.doStream(defaultCallOptions)
+    const parts = await collectStreamParts(stream)
+    const elapsed = Date.now() - start
+
+    const toolCalls = parts.filter((p) => p.type === "tool-call")
+    expect(toolCalls).toHaveLength(1)
+    if (toolCalls[0].type === "tool-call") {
+      expect(toolCalls[0].toolCallId).toBe("call_sparse")
+      expect(JSON.parse(toolCalls[0].args as string)).toEqual({
+        file_path: "x.ts",
+      })
+    }
+    // Generous bound — purely a guard against accidental O(maxIndex) regressions.
+    expect(elapsed).toBeLessThan(500)
+    scope.done()
+  })
+
   it("does not recover when stream ends with finish_reason=stop", async () => {
     // Same shape as the recovery case, but the model bailed with "stop"
     // instead of "tool_calls" — buffered args do not represent intent.
