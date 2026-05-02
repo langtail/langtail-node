@@ -876,12 +876,12 @@ export class LangtailChatLanguageModel<
 
           flush(controller) {
             // Recover any tool calls whose accumulated arguments never became
-            // parseable JSON during streaming. Some models emit the closing
-            // `}` together with trailing characters in the same delta (e.g.
-            // `"}, "extra": false} `), so the per-delta isParsableJson check
-            // above never sees a moment where the buffer is exactly valid
-            // JSON. Without this, the tool call is silently dropped while
-            // finishReason is still `tool-calls`.
+            // parseable JSON during streaming. Some models emit malformed
+            // JSON (closing `}` bundled with trailing junk like `"}, junk`,
+            // or unescaped `"` inside string values) so the per-delta
+            // isParsableJson check never sees a moment where the buffer is
+            // valid JSON. Without recovery the tool call is silently dropped
+            // while finishReason is still `tool-calls`.
             //
             // Gate on finishReason === "tool-calls" so we never synthesize a
             // tool invocation the model didn't actually commit to: if the
@@ -895,16 +895,22 @@ export class LangtailChatLanguageModel<
               for (const toolCall of Object.values(toolCalls)) {
                 if (toolCall == null || toolCall.hasFinished) continue
                 if (toolCall.function?.name == null) continue
-                const recovered = findLongestParsableJsonPrefix(
-                  toolCall.function.arguments,
-                )
-                if (recovered == null) continue
+                const raw = toolCall.function.arguments
+                if (typeof raw !== "string" || raw.length === 0) continue
+                // Prefer the longest valid JSON prefix when one exists
+                // (handles models that emit `{...}, junk` cleanly without
+                // losing semantically valid content). Otherwise pass through
+                // the raw buffered args so downstream tool-call repair (e.g.
+                // AI SDK `experimental_repairToolCall`) can attempt to fix
+                // or re-prompt the model — never silently drop a tool call
+                // the model committed to with finish_reason: "tool_calls".
+                const args = findLongestParsableJsonPrefix(raw) ?? raw
                 controller.enqueue({
                   type: "tool-call",
                   toolCallType: "function",
                   toolCallId: toolCall.id,
                   toolName: toolCall.function.name,
-                  args: recovered,
+                  args,
                 })
                 toolCall.hasFinished = true
               }
