@@ -51,6 +51,37 @@ type LangtailChatConfig = {
 // to choose the default model from Langtail playground
 const MODEL_IN_LANGTAIL = "langtail"
 
+/**
+ * Returns the longest prefix of `s` that JSON.parse accepts, or null if no
+ * non-empty prefix is parseable. Used to recover tool-call arguments when a
+ * model emits invalid trailing characters after a complete JSON object
+ * (e.g. `{...}, "extra": false}`).
+ *
+ * Implementation relies on V8's JSON.parse error message including
+ * `position N`, which marks the first character that broke parsing — slicing
+ * to that position yields a prefix that is either valid JSON or whitespace.
+ */
+function findLongestParsableJsonPrefix(s: string): string | null {
+  if (typeof s !== "string" || s.length === 0) return null
+  try {
+    JSON.parse(s)
+    return s
+  } catch (e) {
+    if (!(e instanceof SyntaxError)) return null
+    const m = /position (\d+)/.exec(e.message)
+    if (!m) return null
+    const pos = Number(m[1])
+    if (!Number.isFinite(pos) || pos <= 0) return null
+    const slice = s.slice(0, pos)
+    try {
+      JSON.parse(slice)
+      return slice
+    } catch {
+      return null
+    }
+  }
+}
+
 export class LangtailChatLanguageModel<
   P extends PromptSlug = PromptSlug,
   E extends Environment<P> = undefined,
@@ -844,6 +875,41 @@ export class LangtailChatLanguageModel<
           },
 
           flush(controller) {
+            // Recover any tool calls whose accumulated arguments never became
+            // parseable JSON during streaming. Some models emit the closing
+            // `}` together with trailing characters in the same delta (e.g.
+            // `"}, "extra": false} `), so the per-delta isParsableJson check
+            // above never sees a moment where the buffer is exactly valid
+            // JSON. Without this, the tool call is silently dropped while
+            // finishReason is still `tool-calls`.
+            //
+            // Gate on finishReason === "tool-calls" so we never synthesize a
+            // tool invocation the model didn't actually commit to: if the
+            // stream ended with `stop`, `length` (token limit), `error`, or
+            // any non-tool-call reason, partial buffered args do not
+            // represent an intent to call the tool.
+            if (finishReason === "tool-calls") {
+              // Object.values skips sparse holes — toolCalls is indexed by the
+              // provider-supplied delta.index, so a stream with index: 1e9
+              // would otherwise make this loop walk a billion holes.
+              for (const toolCall of Object.values(toolCalls)) {
+                if (toolCall == null || toolCall.hasFinished) continue
+                if (toolCall.function?.name == null) continue
+                const recovered = findLongestParsableJsonPrefix(
+                  toolCall.function.arguments,
+                )
+                if (recovered == null) continue
+                controller.enqueue({
+                  type: "tool-call",
+                  toolCallType: "function",
+                  toolCallId: toolCall.id,
+                  toolName: toolCall.function.name,
+                  args: recovered,
+                })
+                toolCall.hasFinished = true
+              }
+            }
+
             // Include accumulated reasoning_details in providerMetadata if any were received
             if (accumulatedReasoningDetails.length > 0) {
               if (!providerMetadata) {
