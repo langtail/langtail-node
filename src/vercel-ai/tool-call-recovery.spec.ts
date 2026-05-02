@@ -179,7 +179,14 @@ describe("Streaming tool-call recovery", () => {
     scope.done()
   })
 
-  it("does not synthesize a tool-call when args are entirely unparseable", async () => {
+  it("falls back to raw args when no valid JSON prefix exists, so downstream repair can run", async () => {
+    // When args are malformed in a way no parseable prefix can fix
+    // (e.g. unescaped `"` inside a string value, breaking the outer JSON
+    // structure), silently dropping the tool call would surface as
+    // `no_tool_calls` to consumers. Instead, pass the raw buffered args
+    // through so AI SDK's experimental_repairToolCall (or equivalent)
+    // gets a chance to fix or re-prompt the model.
+    const garbage = "garbage no json here"
     const scope = nock(BASE_URL)
       .post(/\/project-prompt\/test-prompt\/production/)
       .reply(
@@ -190,8 +197,7 @@ describe("Streaming tool-call recovery", () => {
             id: "call_2",
             name: "Read",
           }),
-          // never-valid args
-          toolCallChunk({ index: 0, arguments: "garbage no json here" }),
+          toolCallChunk({ index: 0, arguments: garbage }),
           finishChunk("tool_calls"),
         ]),
         { "content-type": "text/event-stream" },
@@ -202,7 +208,60 @@ describe("Streaming tool-call recovery", () => {
     const parts = await collectStreamParts(stream)
 
     const toolCalls = parts.filter((p) => p.type === "tool-call")
-    expect(toolCalls).toHaveLength(0)
+    expect(toolCalls).toHaveLength(1)
+    if (toolCalls[0].type === "tool-call") {
+      expect(toolCalls[0].toolName).toBe("Read")
+      expect(toolCalls[0].args).toBe(garbage)
+    }
+    scope.done()
+  })
+
+  it("falls back to raw args when an unescaped quote breaks JSON inside a string value", async () => {
+    // Real-world Kimi-K2.6 case: model emitted a JSX whitespace
+    // expression `{" "}` inside a TypeScript string value, escaping the
+    // second quote but not the first. The result is JSON like
+    // `{"content": "...{" "}..."}` where the unescaped `"` after `{`
+    // prematurely closes the outer string value, producing a
+    // "Expected ',' or '}' after property value" error mid-buffer. No
+    // prefix is parseable, so findLongestParsableJsonPrefix returns null
+    // and the recovery must fall back to emitting the raw args.
+    const broken =
+      '{"file_path": "page.tsx", "content": "before {" \\"}\\nafter"}'
+    const scope = nock(BASE_URL)
+      .post(/\/project-prompt\/test-prompt\/production/)
+      .reply(
+        200,
+        createSSEResponse([
+          toolCallChunk({
+            index: 0,
+            id: "call_orphan_quote",
+            name: "Write",
+          }),
+          toolCallChunk({ index: 0, arguments: broken }),
+          finishChunk("tool_calls"),
+        ]),
+        { "content-type": "text/event-stream" },
+      )
+
+    const model = createModel()
+    const { stream } = await model.doStream(defaultCallOptions)
+    const parts = await collectStreamParts(stream)
+
+    const toolCalls = parts.filter((p) => p.type === "tool-call")
+    expect(toolCalls).toHaveLength(1)
+    if (toolCalls[0].type === "tool-call") {
+      expect(toolCalls[0].toolName).toBe("Write")
+      expect(toolCalls[0].args).toBe(broken)
+      // Sanity: this shape really is unrecoverable to a clean JSON
+      // prefix — proves the fallback path is what saved us.
+      expect(() => JSON.parse(broken)).toThrow()
+    }
+    // tool-call must precede the finish event so consumers see it as
+    // part of the same step.
+    const toolCallIdx = parts.findIndex((p) => p.type === "tool-call")
+    const finishIdx = parts.findIndex((p) => p.type === "finish")
+    expect(toolCallIdx).toBeGreaterThan(-1)
+    expect(finishIdx).toBeGreaterThan(toolCallIdx)
     scope.done()
   })
 
