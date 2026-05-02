@@ -205,4 +205,74 @@ describe("Streaming tool-call recovery", () => {
     expect(toolCalls).toHaveLength(0)
     scope.done()
   })
+
+  it("does not recover when stream ends with finish_reason=length", async () => {
+    // Truncation by token limit mid-tool-call: even though the buffered args
+    // contain a valid JSON prefix, the model didn't commit to the call.
+    // Recovery would otherwise execute a half-baked tool invocation.
+    const scope = nock(BASE_URL)
+      .post(/\/project-prompt\/test-prompt\/production/)
+      .reply(
+        200,
+        createSSEResponse([
+          toolCallChunk({
+            index: 0,
+            id: "call_3",
+            name: "SearchReplace",
+          }),
+          // Args close cleanly but the model was about to send more before
+          // hitting the token limit (no `tool_calls` finish reason follows).
+          toolCallChunk({
+            index: 0,
+            arguments: '{"file_path": "x", "old_string": "a", "new_string": "b"}, "extra"',
+          }),
+          finishChunk("length"),
+        ]),
+        { "content-type": "text/event-stream" },
+      )
+
+    const model = createModel()
+    const { stream } = await model.doStream(defaultCallOptions)
+    const parts = await collectStreamParts(stream)
+
+    const toolCalls = parts.filter((p) => p.type === "tool-call")
+    expect(toolCalls).toHaveLength(0)
+    const finishPart = parts.find((p) => p.type === "finish")
+    expect(finishPart).toBeDefined()
+    if (finishPart?.type === "finish") {
+      expect(finishPart.finishReason).toBe("length")
+    }
+    scope.done()
+  })
+
+  it("does not recover when stream ends with finish_reason=stop", async () => {
+    // Same shape as the recovery case, but the model bailed with "stop"
+    // instead of "tool_calls" — buffered args do not represent intent.
+    const scope = nock(BASE_URL)
+      .post(/\/project-prompt\/test-prompt\/production/)
+      .reply(
+        200,
+        createSSEResponse([
+          toolCallChunk({
+            index: 0,
+            id: "call_4",
+            name: "Read",
+          }),
+          toolCallChunk({
+            index: 0,
+            arguments: '{"file_path": "x"}, junk',
+          }),
+          finishChunk("stop"),
+        ]),
+        { "content-type": "text/event-stream" },
+      )
+
+    const model = createModel()
+    const { stream } = await model.doStream(defaultCallOptions)
+    const parts = await collectStreamParts(stream)
+
+    const toolCalls = parts.filter((p) => p.type === "tool-call")
+    expect(toolCalls).toHaveLength(0)
+    scope.done()
+  })
 })

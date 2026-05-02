@@ -882,21 +882,29 @@ export class LangtailChatLanguageModel<
             // above never sees a moment where the buffer is exactly valid
             // JSON. Without this, the tool call is silently dropped while
             // finishReason is still `tool-calls`.
-            for (const toolCall of toolCalls) {
-              if (toolCall == null || toolCall.hasFinished) continue
-              if (toolCall.function?.name == null) continue
-              const recovered = findLongestParsableJsonPrefix(
-                toolCall.function.arguments,
-              )
-              if (recovered == null) continue
-              controller.enqueue({
-                type: "tool-call",
-                toolCallType: "function",
-                toolCallId: toolCall.id,
-                toolName: toolCall.function.name,
-                args: recovered,
-              })
-              toolCall.hasFinished = true
+            //
+            // Gate on finishReason === "tool-calls" so we never synthesize a
+            // tool invocation the model didn't actually commit to: if the
+            // stream ended with `stop`, `length` (token limit), `error`, or
+            // any non-tool-call reason, partial buffered args do not
+            // represent an intent to call the tool.
+            if (finishReason === "tool-calls") {
+              for (const toolCall of toolCalls) {
+                if (toolCall == null || toolCall.hasFinished) continue
+                if (toolCall.function?.name == null) continue
+                const recovered = findLongestParsableJsonPrefix(
+                  toolCall.function.arguments,
+                )
+                if (recovered == null) continue
+                controller.enqueue({
+                  type: "tool-call",
+                  toolCallType: "function",
+                  toolCallId: toolCall.id,
+                  toolName: toolCall.function.name,
+                  args: recovered,
+                })
+                toolCall.hasFinished = true
+              }
             }
 
             // Include accumulated reasoning_details in providerMetadata if any were received
