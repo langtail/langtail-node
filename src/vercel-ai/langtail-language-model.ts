@@ -523,6 +523,7 @@ export class LangtailChatLanguageModel<
     }> = []
 
     let finishReason: LanguageModelV1FinishReason = "unknown"
+    let rawFinishReason: string | null = null
     let usage: {
       promptTokens: number | undefined
       completionTokens: number | undefined
@@ -535,6 +536,14 @@ export class LangtailChatLanguageModel<
 
     // Track reasoning details to preserve for multi-turn conversations
     const accumulatedReasoningDetails: ReasoningDetailUnion[] = []
+    const toolCallDiagnostics = {
+      toolCallDeltaCount: 0,
+      toolCallStartCount: 0,
+      toolCallArgumentDeltaCount: 0,
+      emittedToolCallCount: 0,
+      recoveredToolCallCount: 0,
+      recoveryModes: [] as Array<"json_prefix" | "raw_args">,
+    }
 
     let providerMetadata: LanguageModelV1ProviderMetadata | undefined
     return {
@@ -620,6 +629,7 @@ export class LangtailChatLanguageModel<
             const choice = value.choices[0]
 
             if (choice?.finish_reason != null) {
+              rawFinishReason = choice.finish_reason
               finishReason = mapLangtailFinishReason(
                 choice.finish_reason,
                 Boolean(choice.delta?.tool_calls),
@@ -761,10 +771,12 @@ export class LangtailChatLanguageModel<
 
             if (mappedToolCalls != null) {
               for (const toolCallDelta of mappedToolCalls) {
+                toolCallDiagnostics.toolCallDeltaCount += 1
                 const index = toolCallDelta.index
 
                 // Tool call start. OpenAI returns all information except the arguments in the first chunk.
                 if (toolCalls[index] == null) {
+                  toolCallDiagnostics.toolCallStartCount += 1
                   if (toolCallDelta.type !== "function") {
                     throw new InvalidResponseDataError({
                       data: toolCallDelta,
@@ -809,6 +821,7 @@ export class LangtailChatLanguageModel<
                   ) {
                     // send delta if the argument text has already started:
                     if (toolCall.function.arguments.length > 0) {
+                      toolCallDiagnostics.toolCallArgumentDeltaCount += 1
                       controller.enqueue({
                         type: "tool-call-delta",
                         toolCallType: "function",
@@ -828,6 +841,7 @@ export class LangtailChatLanguageModel<
                         toolName: toolCall.function.name,
                         args: toolCall.function.arguments,
                       })
+                      toolCallDiagnostics.emittedToolCallCount += 1
                       toolCall.hasFinished = true
                     }
                   }
@@ -842,6 +856,7 @@ export class LangtailChatLanguageModel<
                 }
 
                 if (toolCallDelta.function?.arguments != null) {
+                  toolCallDiagnostics.toolCallArgumentDeltaCount += 1
                   toolCall.function!.arguments +=
                     toolCallDelta.function?.arguments ?? ""
                 }
@@ -868,6 +883,7 @@ export class LangtailChatLanguageModel<
                     toolName: toolCall.function.name,
                     args: toolCall.function.arguments,
                   })
+                  toolCallDiagnostics.emittedToolCallCount += 1
                   toolCall.hasFinished = true
                 }
               }
@@ -904,7 +920,8 @@ export class LangtailChatLanguageModel<
                 // AI SDK `experimental_repairToolCall`) can attempt to fix
                 // or re-prompt the model — never silently drop a tool call
                 // the model committed to with finish_reason: "tool_calls".
-                const args = findLongestParsableJsonPrefix(raw) ?? raw
+                const recoveredPrefix = findLongestParsableJsonPrefix(raw)
+                const args = recoveredPrefix ?? raw
                 controller.enqueue({
                   type: "tool-call",
                   toolCallType: "function",
@@ -912,8 +929,43 @@ export class LangtailChatLanguageModel<
                   toolName: toolCall.function.name,
                   args,
                 })
+                toolCallDiagnostics.emittedToolCallCount += 1
+                toolCallDiagnostics.recoveredToolCallCount += 1
+                toolCallDiagnostics.recoveryModes.push(
+                  recoveredPrefix == null ? "raw_args" : "json_prefix",
+                )
                 toolCall.hasFinished = true
               }
+            }
+
+            if (
+              finishReason === "tool-calls" ||
+              toolCallDiagnostics.toolCallDeltaCount > 0
+            ) {
+              if (!providerMetadata) {
+                providerMetadata = {}
+              }
+              if (!providerMetadata.langtail) {
+                providerMetadata.langtail = {}
+              }
+              const bufferedToolCallCount =
+                Object.values(toolCalls).filter(Boolean).length
+              providerMetadata.langtail.toolCallDiagnostics = {
+                rawFinishReason,
+                mappedFinishReason: finishReason,
+                toolCallDeltaCount: toolCallDiagnostics.toolCallDeltaCount,
+                toolCallStartCount: toolCallDiagnostics.toolCallStartCount,
+                toolCallArgumentDeltaCount:
+                  toolCallDiagnostics.toolCallArgumentDeltaCount,
+                bufferedToolCallCount,
+                emittedToolCallCount: toolCallDiagnostics.emittedToolCallCount,
+                recoveredToolCallCount:
+                  toolCallDiagnostics.recoveredToolCallCount,
+                recoveryModes: toolCallDiagnostics.recoveryModes,
+                finishToolCallsWithoutToolCallDeltas:
+                  finishReason === "tool-calls" &&
+                  toolCallDiagnostics.toolCallDeltaCount === 0,
+              } satisfies JSONValue
             }
 
             // Include accumulated reasoning_details in providerMetadata if any were received

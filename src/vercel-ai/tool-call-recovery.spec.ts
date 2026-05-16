@@ -12,20 +12,29 @@ function createModel() {
     baseURL: BASE_URL,
   })
 
-  return new LangtailChatLanguageModel("test-prompt", {}, {
-    provider: "langtail.chat",
-    langtailPrompts,
-    headers: {
-      "X-API-Key": "test-api-key",
-      "content-type": "application/json",
+  return new LangtailChatLanguageModel(
+    "test-prompt",
+    {},
+    {
+      provider: "langtail.chat",
+      langtailPrompts,
+      headers: {
+        "X-API-Key": "test-api-key",
+        "content-type": "application/json",
+      },
     },
-  })
+  )
 }
 
 const defaultCallOptions = {
   inputFormat: "prompt" as const,
   mode: { type: "regular" as const },
-  prompt: [{ role: "user" as const, content: [{ type: "text" as const, text: "Hello" }] }],
+  prompt: [
+    {
+      role: "user" as const,
+      content: [{ type: "text" as const, text: "Hello" }],
+    },
+  ],
 }
 
 function createSSEResponse(chunks: object[]) {
@@ -76,6 +85,22 @@ function finishChunk(finish_reason: string) {
   }
 }
 
+function reasoningChunk(text: string) {
+  return {
+    id: "chatcmpl-test",
+    choices: [{ index: 0, delta: { reasoning_content: text } }],
+  }
+}
+
+function getFinishPart(parts: LanguageModelV1StreamPart[]) {
+  const finishPart = parts.find((p) => p.type === "finish")
+  expect(finishPart).toBeDefined()
+  if (finishPart?.type !== "finish") {
+    throw new Error("Expected finish part")
+  }
+  return finishPart
+}
+
 describe("Streaming tool-call recovery", () => {
   beforeAll(() => {
     nock.disableNetConnect()
@@ -117,6 +142,55 @@ describe("Streaming tool-call recovery", () => {
         file_path: "app/page.tsx",
       })
     }
+    const finishPart = getFinishPart(parts)
+    expect(finishPart.providerMetadata?.langtail?.toolCallDiagnostics).toEqual({
+      rawFinishReason: "tool_calls",
+      mappedFinishReason: "tool-calls",
+      toolCallDeltaCount: 3,
+      toolCallStartCount: 1,
+      toolCallArgumentDeltaCount: 2,
+      bufferedToolCallCount: 1,
+      emittedToolCallCount: 1,
+      recoveredToolCallCount: 0,
+      recoveryModes: [],
+      finishToolCallsWithoutToolCallDeltas: false,
+    })
+    scope.done()
+  })
+
+  it("records when finish_reason=tool_calls arrives without any tool-call deltas", async () => {
+    const scope = nock(BASE_URL)
+      .post(/\/project-prompt\/test-prompt\/production/)
+      .reply(
+        200,
+        createSSEResponse([
+          reasoningChunk(
+            "Now I need to replace headers.map with displayHeaders.map.",
+          ),
+          finishChunk("tool_calls"),
+        ]),
+        { "content-type": "text/event-stream" },
+      )
+
+    const model = createModel()
+    const { stream } = await model.doStream(defaultCallOptions)
+    const parts = await collectStreamParts(stream)
+
+    expect(parts.filter((p) => p.type === "tool-call")).toHaveLength(0)
+    const finishPart = getFinishPart(parts)
+    expect(finishPart.finishReason).toBe("tool-calls")
+    expect(finishPart.providerMetadata?.langtail?.toolCallDiagnostics).toEqual({
+      rawFinishReason: "tool_calls",
+      mappedFinishReason: "tool-calls",
+      toolCallDeltaCount: 0,
+      toolCallStartCount: 0,
+      toolCallArgumentDeltaCount: 0,
+      bufferedToolCallCount: 0,
+      emittedToolCallCount: 0,
+      recoveredToolCallCount: 0,
+      recoveryModes: [],
+      finishToolCallsWithoutToolCallDeltas: true,
+    })
     scope.done()
   })
 
@@ -136,7 +210,10 @@ describe("Streaming tool-call recovery", () => {
             id: "functions.SearchReplace:84",
             name: "SearchReplace",
           }),
-          toolCallChunk({ index: 0, arguments: ' {"file_path": "app/page.tsx"' }),
+          toolCallChunk({
+            index: 0,
+            arguments: ' {"file_path": "app/page.tsx"',
+          }),
           toolCallChunk({ index: 0, arguments: ', "old_string": "before"' }),
           // new_string value left unterminated here on purpose — the closing
           // `"` arrives bundled with `}` and `,` in the next delta.
@@ -176,6 +253,19 @@ describe("Streaming tool-call recovery", () => {
     const finishIdx = parts.findIndex((p) => p.type === "finish")
     expect(toolCallIdx).toBeGreaterThan(-1)
     expect(finishIdx).toBeGreaterThan(toolCallIdx)
+    const finishPart = getFinishPart(parts)
+    expect(
+      finishPart.providerMetadata?.langtail?.toolCallDiagnostics,
+    ).toMatchObject({
+      rawFinishReason: "tool_calls",
+      mappedFinishReason: "tool-calls",
+      toolCallDeltaCount: 7,
+      bufferedToolCallCount: 1,
+      emittedToolCallCount: 1,
+      recoveredToolCallCount: 1,
+      recoveryModes: ["json_prefix"],
+      finishToolCallsWithoutToolCallDeltas: false,
+    })
     scope.done()
   })
 
@@ -213,6 +303,15 @@ describe("Streaming tool-call recovery", () => {
       expect(toolCalls[0].toolName).toBe("Read")
       expect(toolCalls[0].args).toBe(garbage)
     }
+    const finishPart = getFinishPart(parts)
+    expect(
+      finishPart.providerMetadata?.langtail?.toolCallDiagnostics,
+    ).toMatchObject({
+      emittedToolCallCount: 1,
+      recoveredToolCallCount: 1,
+      recoveryModes: ["raw_args"],
+      finishToolCallsWithoutToolCallDeltas: false,
+    })
     scope.done()
   })
 
@@ -283,7 +382,8 @@ describe("Streaming tool-call recovery", () => {
           // hitting the token limit (no `tool_calls` finish reason follows).
           toolCallChunk({
             index: 0,
-            arguments: '{"file_path": "x", "old_string": "a", "new_string": "b"}, "extra"',
+            arguments:
+              '{"file_path": "x", "old_string": "a", "new_string": "b"}, "extra"',
           }),
           finishChunk("length"),
         ]),
