@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.17
+
+- Emit streamed reasoning `textDelta` before its `reasoning-signature` and only emit a signature once reasoning text has actually been streamed, so providers can no longer produce a `reasoning-signature` with no preceding reasoning content.
+
 ## 0.16.16
 
 - Add `providerMetadata.langtail.toolCallDiagnostics` to streamed Vercel AI responses so tool-call delta counts, recovery mode, emitted/recovered call counts, and `finish_reason: "tool_calls"` streams without tool-call deltas can be diagnosed from the final stream part.
