@@ -536,6 +536,31 @@ export class LangtailChatLanguageModel<
 
     // Track reasoning details to preserve for multi-turn conversations
     const accumulatedReasoningDetails: ReasoningDetailUnion[] = []
+    let hasActiveReasoningText = false
+    const enqueueReasoning = (
+      controller: TransformStreamDefaultController<LanguageModelV1StreamPart>,
+      textDelta: string | null | undefined,
+    ) => {
+      if (textDelta != null) {
+        controller.enqueue({
+          type: "reasoning",
+          textDelta,
+        })
+        hasActiveReasoningText = true
+      }
+    }
+    const enqueueReasoningSignature = (
+      controller: TransformStreamDefaultController<LanguageModelV1StreamPart>,
+      signature: string | null | undefined,
+    ) => {
+      if (signature != null && hasActiveReasoningText) {
+        controller.enqueue({
+          type: "reasoning-signature",
+          signature,
+        })
+        hasActiveReasoningText = false
+      }
+    }
     const toolCallDiagnostics = {
       toolCallDeltaCount: 0,
       toolCallStartCount: 0,
@@ -651,10 +676,7 @@ export class LangtailChatLanguageModel<
 
             // Handle reasoning_content (used by Fireworks/Kimi K2.5 and similar providers)
             if (delta.reasoning_content != null) {
-              controller.enqueue({
-                type: "reasoning",
-                textDelta: delta.reasoning_content,
-              })
+              enqueueReasoning(controller, delta.reasoning_content)
             }
 
             // Handle reasoning_details if present (takes precedence over reasoning)
@@ -668,27 +690,12 @@ export class LangtailChatLanguageModel<
                 const typedDetail = detail as ReasoningDetailUnion
                 switch (typedDetail.type) {
                   case ReasoningDetailType.Text: {
-                    if (typedDetail.signature != null) {
-                      controller.enqueue({
-                        type: "reasoning-signature",
-                        signature: typedDetail.signature,
-                      })
-                    }
-                    if (typedDetail.text != null) {
-                      controller.enqueue({
-                        type: "reasoning",
-                        textDelta: typedDetail.text,
-                      })
-                    }
+                    enqueueReasoning(controller, typedDetail.text)
+                    enqueueReasoningSignature(controller, typedDetail.signature)
                     break
                   }
                   case ReasoningDetailType.Summary: {
-                    if (typedDetail.summary != null) {
-                      controller.enqueue({
-                        type: "reasoning",
-                        textDelta: typedDetail.summary,
-                      })
-                    }
+                    enqueueReasoning(controller, typedDetail.summary)
                     break
                   }
                   case ReasoningDetailType.Encrypted: {
@@ -710,26 +717,16 @@ export class LangtailChatLanguageModel<
               // Fallback to legacy reasoning field if reasoning_details not present
               const reasoningDelta = delta.reasoning
               if (typeof reasoningDelta === "string") {
-                controller.enqueue({
-                  type: "reasoning",
-                  textDelta: reasoningDelta,
-                })
+                enqueueReasoning(controller, reasoningDelta)
               } else if (Array.isArray(reasoningDelta)) {
                 // Handle the reasoning array
                 for (const reasoningItem of reasoningDelta) {
                   if (reasoningItem.type === "text") {
-                    if (reasoningItem.signature != null) {
-                      controller.enqueue({
-                        type: "reasoning-signature",
-                        signature: reasoningItem.signature,
-                      })
-                    }
-                    if (reasoningItem.text != null) {
-                      controller.enqueue({
-                        type: "reasoning",
-                        textDelta: reasoningItem.text,
-                      })
-                    }
+                    enqueueReasoning(controller, reasoningItem.text)
+                    enqueueReasoningSignature(
+                      controller,
+                      reasoningItem.signature,
+                    )
                   } else if (reasoningItem.type === "redacted") {
                     controller.enqueue({
                       type: "redacted-reasoning",
@@ -740,18 +737,11 @@ export class LangtailChatLanguageModel<
               } else {
                 // Handle as direct object
                 if (reasoningDelta.type === "text") {
-                  if (reasoningDelta.signature != null) {
-                    controller.enqueue({
-                      type: "reasoning-signature",
-                      signature: reasoningDelta.signature,
-                    })
-                  }
-                  if (reasoningDelta.text != null) {
-                    controller.enqueue({
-                      type: "reasoning",
-                      textDelta: reasoningDelta.text,
-                    })
-                  }
+                  enqueueReasoning(controller, reasoningDelta.text)
+                  enqueueReasoningSignature(
+                    controller,
+                    reasoningDelta.signature,
+                  )
                 } else if (reasoningDelta.type === "redacted") {
                   controller.enqueue({
                     type: "redacted-reasoning",
