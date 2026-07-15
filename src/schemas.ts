@@ -137,6 +137,7 @@ export interface Message {
   role: "assistant" | "user" | "system" | "function" | "tool"
   name?: string
   content: string | ContentArray | null
+  refusal?: string | null
   reasoning?: MessageReasoning[] | null
   reasoning_details?: ReasoningDetail[] | null
   provider_metadata?: MessageProviderMetadata
@@ -263,6 +264,7 @@ export const MessageSchema = z.object({
   ]),
   name: z.string().optional(),
   content: ContentArraySchema.or(z.string().nullable()),
+  refusal: z.string().nullable().optional(),
   function_call: FunctionCallSchema.optional(),
   tool_calls: z.array(ToolCallSchema).optional(),
   tool_choice: ToolChoiceSchema.optional(),

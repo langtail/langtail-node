@@ -2,6 +2,7 @@ import type { LanguageModelV1StreamPart } from "@ai-sdk/provider"
 import nock from "nock"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { LangtailPrompts } from "../LangtailPrompts"
+import { convertToOpenAIChatMessages } from "./convert-to-openai-chat-messages"
 import { LangtailChatLanguageModel } from "./langtail-language-model"
 
 const BASE_URL = "https://api.langtail.com"
@@ -29,6 +30,23 @@ const responsesProviderMetadata = {
               annotations: [],
             },
           ],
+        },
+      ],
+    },
+  },
+}
+
+const refusal = "I cannot help with that request."
+const refusalProviderMetadata = {
+  openai: {
+    responses: {
+      output_items: [
+        {
+          id: "msg_refusal",
+          type: "message",
+          role: "assistant",
+          status: "completed",
+          content: [{ type: "refusal", refusal }],
         },
       ],
     },
@@ -73,6 +91,48 @@ async function collectStreamParts(
     parts.push(value)
   }
   return parts
+}
+
+function convertToolCallWithMetadata({
+  args,
+  rawArguments,
+}: {
+  args: Record<string, unknown>
+  rawArguments: string
+}) {
+  return convertToOpenAIChatMessages({
+    prompt: [
+      {
+        role: "assistant",
+        content: [
+          {
+            type: "tool-call",
+            toolCallId: "call_weather",
+            toolName: "get_weather",
+            args,
+          },
+        ],
+        providerMetadata: {
+          langtail: {
+            provider_metadata: {
+              openai: {
+                responses: {
+                  output_items: [
+                    {
+                      type: "function_call",
+                      call_id: "call_weather",
+                      name: "get_weather",
+                      arguments: rawArguments,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    ],
+  })
 }
 
 describe("OpenAI Responses metadata round-trip", () => {
@@ -154,6 +214,67 @@ describe("OpenAI Responses metadata round-trip", () => {
           role: "user",
           content: [{ type: "text", text: "Continue" }],
         },
+      ],
+    })
+    secondRequest.done()
+  })
+
+  it("preserves a non-streamed refusal in the next request", async () => {
+    nock(BASE_URL)
+      .post(/\/project-prompt\/test-prompt\/production/)
+      .reply(200, {
+        id: "chatcmpl-refusal",
+        choices: [
+          {
+            message: {
+              role: "assistant",
+              content: null,
+              refusal,
+              provider_metadata: refusalProviderMetadata,
+            },
+            finish_reason: "stop",
+            index: 0,
+          },
+        ],
+        usage: { prompt_tokens: 10, completion_tokens: 5 },
+      })
+
+    const model = createModel()
+    const result = await model.doGenerate({
+      inputFormat: "prompt",
+      mode: { type: "regular" },
+      prompt: [{ role: "user", content: [{ type: "text", text: "Request" }] }],
+    })
+
+    expect(result.providerMetadata?.langtail).toMatchObject({ refusal })
+
+    const secondRequest = nock(BASE_URL)
+      .post(/\/project-prompt\/test-prompt\/production/, (body) => {
+        expect(body.messages[0].refusal).toBe(refusal)
+        return true
+      })
+      .reply(200, {
+        id: "chatcmpl-after-refusal",
+        choices: [
+          {
+            message: { role: "assistant", content: "Continued." },
+            finish_reason: "stop",
+            index: 0,
+          },
+        ],
+        usage: { prompt_tokens: 20, completion_tokens: 2 },
+      })
+
+    await model.doGenerate({
+      inputFormat: "prompt",
+      mode: { type: "regular" },
+      prompt: [
+        {
+          role: "assistant",
+          content: [],
+          providerMetadata: result.providerMetadata,
+        },
+        { role: "user", content: [{ type: "text", text: "Continue" }] },
       ],
     })
     secondRequest.done()
@@ -255,5 +376,113 @@ describe("OpenAI Responses metadata round-trip", () => {
       ],
     })
     secondRequest.done()
+  })
+
+  it("preserves a streamed refusal in the next request", async () => {
+    nock(BASE_URL)
+      .post(/\/project-prompt\/test-prompt\/production/)
+      .reply(
+        200,
+        createSSEResponse([
+          {
+            id: "chatcmpl-refusal-stream",
+            choices: [{ index: 0, delta: { refusal } }],
+          },
+          {
+            id: "chatcmpl-refusal-stream",
+            choices: [
+              {
+                index: 0,
+                delta: { provider_metadata: refusalProviderMetadata },
+              },
+            ],
+          },
+          {
+            id: "chatcmpl-refusal-stream",
+            choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
+            usage: { prompt_tokens: 10, completion_tokens: 5 },
+          },
+        ]),
+        { "content-type": "text/event-stream" },
+      )
+
+    const model = createModel()
+    const { stream } = await model.doStream({
+      inputFormat: "prompt",
+      mode: { type: "regular" },
+      prompt: [{ role: "user", content: [{ type: "text", text: "Request" }] }],
+    })
+    const parts = await collectStreamParts(stream)
+    const finishPart = parts.find((part) => part.type === "finish")
+
+    expect(finishPart).toMatchObject({
+      type: "finish",
+      providerMetadata: { langtail: { refusal } },
+    })
+
+    const secondRequest = nock(BASE_URL)
+      .post(/\/project-prompt\/test-prompt\/production/, (body) => {
+        expect(body.messages[0].refusal).toBe(refusal)
+        return true
+      })
+      .reply(200, {
+        id: "chatcmpl-after-refusal-stream",
+        choices: [
+          {
+            message: { role: "assistant", content: "Continued." },
+            finish_reason: "stop",
+            index: 0,
+          },
+        ],
+        usage: { prompt_tokens: 20, completion_tokens: 2 },
+      })
+
+    await model.doGenerate({
+      inputFormat: "prompt",
+      mode: { type: "regular" },
+      prompt: [
+        {
+          role: "assistant",
+          content: [],
+          providerMetadata:
+            finishPart?.type === "finish"
+              ? finishPart.providerMetadata
+              : undefined,
+        },
+        { role: "user", content: [{ type: "text", text: "Continue" }] },
+      ],
+    })
+    secondRequest.done()
+  })
+
+  it("keeps the original function-call arguments when they match semantically", () => {
+    const rawArguments = '{ "city": "Prague" }'
+    const messages = convertToolCallWithMetadata({
+      args: { city: "Prague" },
+      rawArguments,
+    })
+
+    expect(messages[0]).toMatchObject({
+      tool_calls: [
+        {
+          function: { arguments: rawArguments },
+        },
+      ],
+    })
+  })
+
+  it("does not restore original function-call arguments after they change", () => {
+    const messages = convertToolCallWithMetadata({
+      args: { city: "Brno" },
+      rawArguments: '{ "city": "Prague" }',
+    })
+
+    expect(messages[0]).toMatchObject({
+      tool_calls: [
+        {
+          function: { arguments: '{"city":"Brno"}' },
+        },
+      ],
+    })
   })
 })

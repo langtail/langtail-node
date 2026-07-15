@@ -453,7 +453,8 @@ export class LangtailChatLanguageModel<
     if (
       (choice.message.reasoning_details &&
         choice.message.reasoning_details.length > 0) ||
-      choice.message.provider_metadata
+      choice.message.provider_metadata ||
+      choice.message.refusal != null
     ) {
       if (!providerMetadata) {
         providerMetadata = {}
@@ -472,6 +473,9 @@ export class LangtailChatLanguageModel<
               provider_metadata: choice.message
                 .provider_metadata as unknown as JSONValue,
             }
+          : {}),
+        ...(choice.message.refusal != null
+          ? { refusal: choice.message.refusal }
           : {}),
       }
     }
@@ -552,6 +556,7 @@ export class LangtailChatLanguageModel<
     // Track reasoning details to preserve for multi-turn conversations
     const accumulatedReasoningDetails: ReasoningDetailUnion[] = []
     let responseProviderMetadata: MessageProviderMetadata | undefined
+    let accumulatedRefusal = ""
     let hasActiveReasoningText = false
     const enqueueReasoning = (
       controller: TransformStreamDefaultController<LanguageModelV1StreamPart>,
@@ -682,6 +687,10 @@ export class LangtailChatLanguageModel<
             }
 
             const delta = choice.delta
+
+            if (delta.refusal != null) {
+              accumulatedRefusal += delta.refusal
+            }
 
             if (delta.provider_metadata != null) {
               responseProviderMetadata = delta.provider_metadata
@@ -1001,6 +1010,16 @@ export class LangtailChatLanguageModel<
                 responseProviderMetadata as unknown as JSONValue
             }
 
+            if (accumulatedRefusal.length > 0) {
+              if (!providerMetadata) {
+                providerMetadata = {}
+              }
+              if (!providerMetadata.langtail) {
+                providerMetadata.langtail = {}
+              }
+              providerMetadata.langtail.refusal = accumulatedRefusal
+            }
+
             controller.enqueue({
               type: "finish",
               finishReason,
@@ -1053,6 +1072,7 @@ const openaiChatResponseSchema = z.object({
       message: z.object({
         role: z.literal("assistant").nullish(),
         content: z.string().nullish(),
+        refusal: z.string().nullish(),
         reasoning: z
           .union([
             z.string(),
@@ -1140,6 +1160,7 @@ const langtailChatChunksSchema = z.union([
           .object({
             role: z.enum(["assistant"]).nullish(),
             content: z.string().nullish(),
+            refusal: z.string().nullish(),
             reasoning: z
               .union([
                 z.string(),

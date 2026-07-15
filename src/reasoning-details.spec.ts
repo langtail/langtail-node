@@ -182,11 +182,13 @@ describe("Message Schema with reasoning_details", () => {
 
     const result = MessageSchema.parse({
       role: "assistant",
-      content: "Answer",
+      content: null,
+      refusal: "I cannot help with that request.",
       provider_metadata: providerMetadata,
     })
 
     expect(result.provider_metadata).toEqual(providerMetadata)
+    expect(result.refusal).toBe("I cannot help with that request.")
   })
 
   it("should validate message with reasoning_details", () => {
