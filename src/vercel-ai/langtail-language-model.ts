@@ -450,6 +450,10 @@ export class LangtailChatLanguageModel<
     }
 
     // Preserve provider-specific reasoning data for multi-turn conversations.
+    const refusalAsText =
+      choice.message.refusal != null &&
+      choice.message.refusal.length > 0 &&
+      (choice.message.content == null || choice.message.content.length === 0)
     if (
       (choice.message.reasoning_details &&
         choice.message.reasoning_details.length > 0) ||
@@ -477,11 +481,14 @@ export class LangtailChatLanguageModel<
         ...(choice.message.refusal != null
           ? { refusal: choice.message.refusal }
           : {}),
+        ...(refusalAsText ? { refusal_as_text: true } : {}),
       }
     }
 
     return {
-      text: choice.message.content ?? undefined,
+      text: refusalAsText
+        ? (choice.message.refusal ?? undefined)
+        : (choice.message.content ?? undefined),
       reasoning: reasoningContent,
       toolCalls: choice.message.tool_calls?.map((toolCall) => ({
         toolCallType: "function",
@@ -690,6 +697,12 @@ export class LangtailChatLanguageModel<
 
             if (delta.refusal != null) {
               accumulatedRefusal += delta.refusal
+              if (delta.refusal.length > 0) {
+                controller.enqueue({
+                  type: "text-delta",
+                  textDelta: delta.refusal,
+                })
+              }
             }
 
             if (delta.provider_metadata != null) {
@@ -1018,6 +1031,7 @@ export class LangtailChatLanguageModel<
                 providerMetadata.langtail = {}
               }
               providerMetadata.langtail.refusal = accumulatedRefusal
+              providerMetadata.langtail.refusal_as_text = true
             }
 
             controller.enqueue({

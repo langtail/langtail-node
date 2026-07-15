@@ -1,4 +1,5 @@
 import type { LanguageModelV1StreamPart } from "@ai-sdk/provider"
+import { generateText, streamText } from "ai"
 import nock from "nock"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { LangtailPrompts } from "../LangtailPrompts"
@@ -165,12 +166,13 @@ describe("OpenAI Responses metadata round-trip", () => {
       })
 
     const model = createModel()
-    const result = await model.doGenerate({
-      inputFormat: "prompt",
-      mode: { type: "regular" },
-      prompt: [{ role: "user", content: [{ type: "text", text: "Solve it" }] }],
+    const result = await generateText({
+      model,
+      prompt: "Solve it",
     })
 
+    expect(result.text).toBe("The answer is 42.")
+    expect(result.response.messages).toHaveLength(1)
     expect(result.providerMetadata?.langtail).toMatchObject({
       provider_metadata: responsesProviderMetadata,
       usage: {
@@ -180,6 +182,8 @@ describe("OpenAI Responses metadata round-trip", () => {
         reasoningTokens: 0,
       },
     })
+    const assistantMessage = result.response.messages[0]
+    assistantMessage.providerOptions = result.providerMetadata
     firstResponse.done()
 
     const secondRequest = nock(BASE_URL)
@@ -201,25 +205,14 @@ describe("OpenAI Responses metadata round-trip", () => {
         usage: { prompt_tokens: 20, completion_tokens: 2 },
       })
 
-    await model.doGenerate({
-      inputFormat: "prompt",
-      mode: { type: "regular" },
-      prompt: [
-        {
-          role: "assistant",
-          content: [{ type: "text", text: result.text ?? "" }],
-          providerMetadata: result.providerMetadata,
-        },
-        {
-          role: "user",
-          content: [{ type: "text", text: "Continue" }],
-        },
-      ],
+    await generateText({
+      model,
+      messages: [assistantMessage, { role: "user", content: "Continue" }],
     })
     secondRequest.done()
   })
 
-  it("preserves a non-streamed refusal in the next request", async () => {
+  it("exposes and preserves a non-streamed refusal in the next request", async () => {
     nock(BASE_URL)
       .post(/\/project-prompt\/test-prompt\/production/)
       .reply(200, {
@@ -240,17 +233,32 @@ describe("OpenAI Responses metadata round-trip", () => {
       })
 
     const model = createModel()
-    const result = await model.doGenerate({
-      inputFormat: "prompt",
-      mode: { type: "regular" },
-      prompt: [{ role: "user", content: [{ type: "text", text: "Request" }] }],
+    const result = await generateText({
+      model,
+      prompt: "Request",
     })
 
-    expect(result.providerMetadata?.langtail).toMatchObject({ refusal })
+    expect(result.text).toBe(refusal)
+    expect(result.response.messages).toHaveLength(1)
+    expect(result.providerMetadata?.langtail).toMatchObject({
+      refusal,
+      refusal_as_text: true,
+    })
+
+    const assistantMessage = result.response.messages[0]
+    expect(assistantMessage).toMatchObject({
+      role: "assistant",
+      content: [{ type: "text", text: refusal }],
+    })
+    assistantMessage.providerOptions = result.providerMetadata
 
     const secondRequest = nock(BASE_URL)
       .post(/\/project-prompt\/test-prompt\/production/, (body) => {
         expect(body.messages[0].refusal).toBe(refusal)
+        expect(body.messages[0].content).toBe("")
+        expect(body.messages[0].provider_metadata).toEqual(
+          refusalProviderMetadata,
+        )
         return true
       })
       .reply(200, {
@@ -265,17 +273,9 @@ describe("OpenAI Responses metadata round-trip", () => {
         usage: { prompt_tokens: 20, completion_tokens: 2 },
       })
 
-    await model.doGenerate({
-      inputFormat: "prompt",
-      mode: { type: "regular" },
-      prompt: [
-        {
-          role: "assistant",
-          content: [],
-          providerMetadata: result.providerMetadata,
-        },
-        { role: "user", content: [{ type: "text", text: "Continue" }] },
-      ],
+    await generateText({
+      model,
+      messages: [assistantMessage, { role: "user", content: "Continue" }],
     })
     secondRequest.done()
   })
@@ -378,7 +378,7 @@ describe("OpenAI Responses metadata round-trip", () => {
     secondRequest.done()
   })
 
-  it("preserves a streamed refusal in the next request", async () => {
+  it("exposes and preserves a streamed refusal in the next request", async () => {
     nock(BASE_URL)
       .post(/\/project-prompt\/test-prompt\/production/)
       .reply(
@@ -407,22 +407,38 @@ describe("OpenAI Responses metadata round-trip", () => {
       )
 
     const model = createModel()
-    const { stream } = await model.doStream({
-      inputFormat: "prompt",
-      mode: { type: "regular" },
-      prompt: [{ role: "user", content: [{ type: "text", text: "Request" }] }],
+    const result = streamText({
+      model,
+      prompt: "Request",
     })
-    const parts = await collectStreamParts(stream)
-    const finishPart = parts.find((part) => part.type === "finish")
+    await result.consumeStream()
+    const [text, response, providerMetadata] = await Promise.all([
+      result.text,
+      result.response,
+      result.providerMetadata,
+    ])
 
-    expect(finishPart).toMatchObject({
-      type: "finish",
-      providerMetadata: { langtail: { refusal } },
+    expect(text).toBe(refusal)
+    expect(response.messages).toHaveLength(1)
+    expect(providerMetadata?.langtail).toMatchObject({
+      refusal,
+      refusal_as_text: true,
     })
+
+    const assistantMessage = response.messages[0]
+    expect(assistantMessage).toMatchObject({
+      role: "assistant",
+      content: [{ type: "text", text: refusal }],
+    })
+    assistantMessage.providerOptions = providerMetadata
 
     const secondRequest = nock(BASE_URL)
       .post(/\/project-prompt\/test-prompt\/production/, (body) => {
         expect(body.messages[0].refusal).toBe(refusal)
+        expect(body.messages[0].content).toBe("")
+        expect(body.messages[0].provider_metadata).toEqual(
+          refusalProviderMetadata,
+        )
         return true
       })
       .reply(200, {
@@ -437,20 +453,9 @@ describe("OpenAI Responses metadata round-trip", () => {
         usage: { prompt_tokens: 20, completion_tokens: 2 },
       })
 
-    await model.doGenerate({
-      inputFormat: "prompt",
-      mode: { type: "regular" },
-      prompt: [
-        {
-          role: "assistant",
-          content: [],
-          providerMetadata:
-            finishPart?.type === "finish"
-              ? finishPart.providerMetadata
-              : undefined,
-        },
-        { role: "user", content: [{ type: "text", text: "Continue" }] },
-      ],
+    await generateText({
+      model,
+      messages: [assistantMessage, { role: "user", content: "Continue" }],
     })
     secondRequest.done()
   })

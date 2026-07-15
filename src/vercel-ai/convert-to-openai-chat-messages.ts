@@ -177,6 +177,7 @@ export function convertToOpenAIChatMessages({
         let reasoningDetails: ReasoningDetail[] | undefined
         let responseProviderMetadata: MessageProviderMetadata | undefined
         let refusal: string | undefined
+        let refusalAsText = false
         const toolCalls: Array<{
           id: string
           type: "function"
@@ -189,6 +190,7 @@ export function convertToOpenAIChatMessages({
               reasoning_details?: ReasoningDetail[]
               provider_metadata?: MessageProviderMetadata
               refusal?: string | null
+              refusal_as_text?: boolean
             }
           | undefined
         if (langtailMetadata?.reasoning_details) {
@@ -199,6 +201,9 @@ export function convertToOpenAIChatMessages({
         }
         if (langtailMetadata?.refusal != null) {
           refusal = langtailMetadata.refusal
+        }
+        if (langtailMetadata?.refusal_as_text === true) {
+          refusalAsText = true
         }
 
         for (const part of content) {
@@ -251,7 +256,8 @@ export function convertToOpenAIChatMessages({
         addMessage(
           {
             role: "assistant",
-            content: text,
+            content:
+              refusalAsText && refusal != null && text === refusal ? "" : text,
             refusal,
             reasoning: reasoning.length > 0 ? reasoning : undefined,
             reasoning_details: reasoningDetails,
