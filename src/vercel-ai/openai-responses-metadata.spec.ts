@@ -471,6 +471,22 @@ describe("OpenAI Responses metadata round-trip", () => {
     })
   })
 
+  it("keeps the original function-call arguments when object keys are reordered", () => {
+    const rawArguments = '{ "latitude": 50, "longitude": 14 }'
+    const messages = convertToolCallWithMetadata({
+      args: { longitude: 14, latitude: 50 },
+      rawArguments,
+    })
+
+    expect(messages[0]).toMatchObject({
+      tool_calls: [
+        {
+          function: { arguments: rawArguments },
+        },
+      ],
+    })
+  })
+
   it("does not restore original function-call arguments after they change", () => {
     const messages = convertToolCallWithMetadata({
       args: { city: "Brno" },
