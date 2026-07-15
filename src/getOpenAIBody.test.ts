@@ -44,6 +44,55 @@ describe("getOpenAIBody", () => {
     expect(openAIbody).toEqual(expectedOpenAIbody)
   })
 
+  it("strips Responses provider metadata from Chat Completions messages", () => {
+    const openAIbody = getOpenAIBody(
+      {
+        state: {
+          type: "chat",
+          args: {
+            model: "gpt-4.1-mini",
+            max_tokens: 100,
+            temperature: 0.8,
+            top_p: 1,
+            presence_penalty: 0,
+            frequency_penalty: 0,
+            jsonmode: false,
+            seed: null,
+            stop: [],
+          },
+          template: [],
+        },
+        chatInput: {},
+      },
+      {
+        variables: {},
+        messages: [
+          {
+            role: "assistant",
+            content: "Previous Responses answer",
+            provider_metadata: {
+              openai: {
+                responses: {
+                  output_items: [
+                    {
+                      id: "rs_123",
+                      type: "reasoning",
+                      encrypted_content: "encrypted-reasoning",
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      },
+    )
+
+    expect(openAIbody.messages).toEqual([
+      { role: "assistant", content: "Previous Responses answer" },
+    ])
+  })
+
   it("should extend variables from playground", () => {
     const completionConfig = {
       state: {
