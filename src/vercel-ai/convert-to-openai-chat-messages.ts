@@ -7,7 +7,7 @@ import {
   OpenAIChatPrompt,
   ChatCompletionContentPart,
 } from "./openai-chat-prompt"
-import { MessageReasoning } from "../schemas"
+import type { MessageProviderMetadata, MessageReasoning } from "../schemas"
 import { ReasoningDetail } from "../reasoning-details-schema"
 
 export function convertToOpenAIChatMessages({
@@ -100,6 +100,7 @@ export function convertToOpenAIChatMessages({
         let text = ""
         let reasoning: MessageReasoning[] = []
         let reasoningDetails: ReasoningDetail[] | undefined
+        let responseProviderMetadata: MessageProviderMetadata | undefined
         const toolCalls: Array<{
           id: string
           type: "function"
@@ -108,10 +109,16 @@ export function convertToOpenAIChatMessages({
 
         // Check if providerMetadata contains preserved reasoning_details
         const langtailMetadata = providerMetadata?.langtail as
-          | { reasoning_details?: ReasoningDetail[] }
+          | {
+              reasoning_details?: ReasoningDetail[]
+              provider_metadata?: MessageProviderMetadata
+            }
           | undefined
         if (langtailMetadata?.reasoning_details) {
           reasoningDetails = langtailMetadata.reasoning_details
+        }
+        if (langtailMetadata?.provider_metadata) {
+          responseProviderMetadata = langtailMetadata.provider_metadata
         }
 
         for (const part of content) {
@@ -161,6 +168,7 @@ export function convertToOpenAIChatMessages({
             content: text,
             reasoning: reasoning.length > 0 ? reasoning : undefined,
             reasoning_details: reasoningDetails,
+            provider_metadata: responseProviderMetadata,
             tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
           },
           cacheEnabled,

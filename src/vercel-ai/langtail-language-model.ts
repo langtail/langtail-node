@@ -40,6 +40,8 @@ import {
   ReasoningDetailType,
   ReasoningDetailUnion,
 } from "../reasoning-details-schema"
+import { MessageProviderMetadataSchema } from "../schemas"
+import type { MessageProviderMetadata } from "../schemas"
 
 type LangtailChatConfig = {
   provider: string
@@ -447,17 +449,30 @@ export class LangtailChatLanguageModel<
       }
     }
 
-    // Add reasoning_details to providerMetadata for preservation in multi-turn conversations
+    // Preserve provider-specific reasoning data for multi-turn conversations.
     if (
-      choice.message.reasoning_details &&
-      choice.message.reasoning_details.length > 0
+      (choice.message.reasoning_details &&
+        choice.message.reasoning_details.length > 0) ||
+      choice.message.provider_metadata
     ) {
       if (!providerMetadata) {
         providerMetadata = {}
       }
       providerMetadata.langtail = {
-        reasoning_details: choice.message
-          .reasoning_details as ReasoningDetailUnion[],
+        ...((providerMetadata.langtail as Record<string, JSONValue>) ?? {}),
+        ...(choice.message.reasoning_details &&
+        choice.message.reasoning_details.length > 0
+          ? {
+              reasoning_details: choice.message
+                .reasoning_details as ReasoningDetailUnion[],
+            }
+          : {}),
+        ...(choice.message.provider_metadata
+          ? {
+              provider_metadata: choice.message
+                .provider_metadata as unknown as JSONValue,
+            }
+          : {}),
       }
     }
 
@@ -536,6 +551,7 @@ export class LangtailChatLanguageModel<
 
     // Track reasoning details to preserve for multi-turn conversations
     const accumulatedReasoningDetails: ReasoningDetailUnion[] = []
+    let responseProviderMetadata: MessageProviderMetadata | undefined
     let hasActiveReasoningText = false
     const enqueueReasoning = (
       controller: TransformStreamDefaultController<LanguageModelV1StreamPart>,
@@ -666,6 +682,10 @@ export class LangtailChatLanguageModel<
             }
 
             const delta = choice.delta
+
+            if (delta.provider_metadata != null) {
+              responseProviderMetadata = delta.provider_metadata
+            }
 
             if (delta.content != null) {
               controller.enqueue({
@@ -970,6 +990,17 @@ export class LangtailChatLanguageModel<
                 accumulatedReasoningDetails
             }
 
+            if (responseProviderMetadata != null) {
+              if (!providerMetadata) {
+                providerMetadata = {}
+              }
+              if (!providerMetadata.langtail) {
+                providerMetadata.langtail = {}
+              }
+              providerMetadata.langtail.provider_metadata =
+                responseProviderMetadata as unknown as JSONValue
+            }
+
             controller.enqueue({
               type: "finish",
               finishReason,
@@ -1051,6 +1082,7 @@ const openaiChatResponseSchema = z.object({
           .nullish(),
         reasoning_content: z.string().nullish(),
         reasoning_details: ReasoningDetailArraySchema.nullish(),
+        provider_metadata: MessageProviderMetadataSchema.optional(),
         function_call: z
           .object({
             arguments: z.string(),
@@ -1137,6 +1169,7 @@ const langtailChatChunksSchema = z.union([
               .nullish(),
             reasoning_content: z.string().nullish(),
             reasoning_details: ReasoningDetailArraySchema.nullish(),
+            provider_metadata: MessageProviderMetadataSchema.optional(),
             function_call: z
               .object({
                 name: z.string().optional(),

@@ -120,12 +120,26 @@ export interface MessageReasoningRedacted {
 
 export type MessageReasoning = MessageReasoningText | MessageReasoningRedacted
 
+export type ProviderResponseOutputItem = {
+  type: string
+  [key: string]: unknown
+}
+
+export interface MessageProviderMetadata {
+  openai?: {
+    responses?: {
+      output_items: ProviderResponseOutputItem[]
+    }
+  }
+}
+
 export interface Message {
   role: "assistant" | "user" | "system" | "function" | "tool"
   name?: string
   content: string | ContentArray | null
   reasoning?: MessageReasoning[] | null
   reasoning_details?: ReasoningDetail[] | null
+  provider_metadata?: MessageProviderMetadata
   function_call?: {
     name: string
     arguments: string
@@ -223,6 +237,22 @@ export const MessageReasoningSchema = z.union([
   MessageReasoningRedactedSchema,
 ]) satisfies z.ZodType<MessageReasoning>
 
+export const ProviderResponseOutputItemSchema = z
+  .object({ type: z.string() })
+  .passthrough() satisfies z.ZodType<ProviderResponseOutputItem>
+
+export const MessageProviderMetadataSchema = z.object({
+  openai: z
+    .object({
+      responses: z
+        .object({
+          output_items: z.array(ProviderResponseOutputItemSchema),
+        })
+        .optional(),
+    })
+    .optional(),
+}) satisfies z.ZodType<MessageProviderMetadata>
+
 export const MessageSchema = z.object({
   role: z.union([
     z.literal("assistant"),
@@ -241,6 +271,7 @@ export const MessageSchema = z.object({
   cache_ttl: z.string().optional(),
   reasoning: z.array(MessageReasoningSchema).optional(),
   reasoning_details: z.array(ReasoningDetailUnionSchema).nullish(),
+  provider_metadata: MessageProviderMetadataSchema.optional(),
 }) satisfies z.ZodType<Message>
 
 const FunctionSchema = z.object({

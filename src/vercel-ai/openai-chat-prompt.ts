@@ -1,4 +1,5 @@
 import { ReasoningDetail } from "../reasoning-details-schema"
+import type { MessageProviderMetadata } from "../schemas"
 
 export type OpenAIChatPrompt = Array<ChatCompletionMessageParam>
 
@@ -38,6 +39,7 @@ export interface ChatCompletionAssistantMessageParam {
   role: "assistant"
   content?: string | null
   reasoning_details?: ReasoningDetail[] | null
+  provider_metadata?: MessageProviderMetadata
   tool_calls?: Array<ChatCompletionMessageToolCall>
 }
 
