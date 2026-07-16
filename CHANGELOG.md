@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.16.18
+
+- Preserve OpenAI Responses reasoning metadata across tool steps in the Vercel AI bridge. The response's `provider_metadata` (including encrypted reasoning items) is now carried on `providerMetadata.langtail.provider_metadata` and replayed on the next request, so OpenAI reasoning models can continue a multi-step conversation. See the new "OpenAI reasoning across tool steps" section in the README for how to attach it when using `maxSteps`.
+- Expose OpenAI Responses refusals through the AI SDK. A `refusal` message is now surfaced as text (streamed as a `text-delta`) and preserved on `providerMetadata.langtail.refusal` so it survives multi-turn conversations.
+- Preserve the original OpenAI-serialized tool-call `arguments` when replaying assistant messages, falling back to `JSON.stringify` only when they are unavailable. Arguments are compared semantically so a re-serialized-but-equal payload still reuses the exact original string.
+- Strip internal `provider_metadata` from messages before sending them to the Chat Completions endpoint, so preserved Responses metadata never leaks into a Chat Completions request body.
+
 ## 0.16.17
 
 - Emit streamed reasoning `textDelta` before its `reasoning-signature` and only emit a signature once reasoning text has actually been streamed, so providers can no longer produce a `reasoning-signature` with no preceding reasoning content.
