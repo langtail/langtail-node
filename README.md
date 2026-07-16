@@ -287,6 +287,27 @@ tools(ltModel, {
 })
 ```
 
+### OpenAI reasoning across tool steps
+
+OpenAI Responses reasoning items must be sent back together with tool results.
+AI SDK 4 does not copy provider metadata into assistant messages created by its
+automatic `maxSteps` loop. When using OpenAI reasoning models, run tool steps
+explicitly and attach `result.providerMetadata` to the assistant message before
+the next call:
+
+```typescript
+const assistantMessage = result.response.messages.find(
+  message => message.role === 'assistant',
+)
+
+if (assistantMessage) {
+  assistantMessage.providerOptions = result.providerMetadata
+}
+```
+
+Without this metadata, encrypted reasoning cannot be returned to OpenAI on the
+next step.
+
 ## Stream helpers
 
 The AI streams are delivered as JSON objects, which are split into chunks. This can pose a challenge because JSON objects might be distributed across multiple chunks. We have provide you with helper functions to manage these JSON streams more effectively.

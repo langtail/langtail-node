@@ -36,6 +36,7 @@ export const CommonReasoningDetailSchema = z.object({
     ])
     .nullish(),
   index: z.number().optional(),
+  part_index: z.number().optional(),
 })
 
 export const ReasoningDetailSummarySchema = z

@@ -40,6 +40,8 @@ import {
   ReasoningDetailType,
   ReasoningDetailUnion,
 } from "../reasoning-details-schema"
+import { MessageProviderMetadataSchema } from "../schemas"
+import type { MessageProviderMetadata } from "../schemas"
 
 type LangtailChatConfig = {
   provider: string
@@ -447,22 +449,46 @@ export class LangtailChatLanguageModel<
       }
     }
 
-    // Add reasoning_details to providerMetadata for preservation in multi-turn conversations
+    // Preserve provider-specific reasoning data for multi-turn conversations.
+    const refusalAsText =
+      choice.message.refusal != null &&
+      choice.message.refusal.length > 0 &&
+      (choice.message.content == null || choice.message.content.length === 0)
     if (
-      choice.message.reasoning_details &&
-      choice.message.reasoning_details.length > 0
+      (choice.message.reasoning_details &&
+        choice.message.reasoning_details.length > 0) ||
+      choice.message.provider_metadata ||
+      choice.message.refusal != null
     ) {
       if (!providerMetadata) {
         providerMetadata = {}
       }
       providerMetadata.langtail = {
-        reasoning_details: choice.message
-          .reasoning_details as ReasoningDetailUnion[],
+        ...((providerMetadata.langtail as Record<string, JSONValue>) ?? {}),
+        ...(choice.message.reasoning_details &&
+        choice.message.reasoning_details.length > 0
+          ? {
+              reasoning_details: choice.message
+                .reasoning_details as ReasoningDetailUnion[],
+            }
+          : {}),
+        ...(choice.message.provider_metadata
+          ? {
+              provider_metadata: choice.message
+                .provider_metadata as unknown as JSONValue,
+            }
+          : {}),
+        ...(choice.message.refusal != null
+          ? { refusal: choice.message.refusal }
+          : {}),
+        ...(refusalAsText ? { refusal_as_text: true } : {}),
       }
     }
 
     return {
-      text: choice.message.content ?? undefined,
+      text: refusalAsText
+        ? (choice.message.refusal ?? undefined)
+        : (choice.message.content ?? undefined),
       reasoning: reasoningContent,
       toolCalls: choice.message.tool_calls?.map((toolCall) => ({
         toolCallType: "function",
@@ -536,6 +562,8 @@ export class LangtailChatLanguageModel<
 
     // Track reasoning details to preserve for multi-turn conversations
     const accumulatedReasoningDetails: ReasoningDetailUnion[] = []
+    let responseProviderMetadata: MessageProviderMetadata | undefined
+    let accumulatedRefusal = ""
     let hasActiveReasoningText = false
     const enqueueReasoning = (
       controller: TransformStreamDefaultController<LanguageModelV1StreamPart>,
@@ -666,6 +694,20 @@ export class LangtailChatLanguageModel<
             }
 
             const delta = choice.delta
+
+            if (delta.refusal != null) {
+              accumulatedRefusal += delta.refusal
+              if (delta.refusal.length > 0) {
+                controller.enqueue({
+                  type: "text-delta",
+                  textDelta: delta.refusal,
+                })
+              }
+            }
+
+            if (delta.provider_metadata != null) {
+              responseProviderMetadata = delta.provider_metadata
+            }
 
             if (delta.content != null) {
               controller.enqueue({
@@ -970,6 +1012,28 @@ export class LangtailChatLanguageModel<
                 accumulatedReasoningDetails
             }
 
+            if (responseProviderMetadata != null) {
+              if (!providerMetadata) {
+                providerMetadata = {}
+              }
+              if (!providerMetadata.langtail) {
+                providerMetadata.langtail = {}
+              }
+              providerMetadata.langtail.provider_metadata =
+                responseProviderMetadata as unknown as JSONValue
+            }
+
+            if (accumulatedRefusal.length > 0) {
+              if (!providerMetadata) {
+                providerMetadata = {}
+              }
+              if (!providerMetadata.langtail) {
+                providerMetadata.langtail = {}
+              }
+              providerMetadata.langtail.refusal = accumulatedRefusal
+              providerMetadata.langtail.refusal_as_text = true
+            }
+
             controller.enqueue({
               type: "finish",
               finishReason,
@@ -1022,6 +1086,7 @@ const openaiChatResponseSchema = z.object({
       message: z.object({
         role: z.literal("assistant").nullish(),
         content: z.string().nullish(),
+        refusal: z.string().nullish(),
         reasoning: z
           .union([
             z.string(),
@@ -1051,6 +1116,7 @@ const openaiChatResponseSchema = z.object({
           .nullish(),
         reasoning_content: z.string().nullish(),
         reasoning_details: ReasoningDetailArraySchema.nullish(),
+        provider_metadata: MessageProviderMetadataSchema.optional(),
         function_call: z
           .object({
             arguments: z.string(),
@@ -1108,6 +1174,7 @@ const langtailChatChunksSchema = z.union([
           .object({
             role: z.enum(["assistant"]).nullish(),
             content: z.string().nullish(),
+            refusal: z.string().nullish(),
             reasoning: z
               .union([
                 z.string(),
@@ -1137,6 +1204,7 @@ const langtailChatChunksSchema = z.union([
               .nullish(),
             reasoning_content: z.string().nullish(),
             reasoning_details: ReasoningDetailArraySchema.nullish(),
+            provider_metadata: MessageProviderMetadataSchema.optional(),
             function_call: z
               .object({
                 name: z.string().optional(),

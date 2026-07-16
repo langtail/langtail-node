@@ -6,6 +6,14 @@ import { ChatCompletionsCreateParams, PlaygroundMessage } from "./schemas"
 import { IncomingBodyType, PlaygroundState } from "./schemas"
 import { ChatCompletionMessageParam } from "openai/resources"
 
+function stripProviderMetadata(
+  message: ChatCompletionMessageParam,
+): ChatCompletionMessageParam {
+  const { provider_metadata: _, ...chatCompletionMessage } = message as
+    ChatCompletionMessageParam & { provider_metadata?: unknown }
+  return chatCompletionMessage as ChatCompletionMessageParam
+}
+
 function compileMessages(
   messages: PlaygroundMessage[],
   variables: Record<string, any>,
@@ -55,7 +63,7 @@ export function getOpenAIBody(
     model: parsedBody.model ?? completionArgs.model,
     temperature: parsedBody.temperature ?? completionArgs.temperature,
     ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
-    messages: inputMessages,
+    messages: inputMessages.map(stripProviderMetadata),
     top_p: parsedBody.top_p ?? completionArgs.top_p,
     ...(parsedBody.parallelToolCalls !== undefined
       ? { parallel_tool_calls: parsedBody.parallelToolCalls }

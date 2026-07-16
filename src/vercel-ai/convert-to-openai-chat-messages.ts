@@ -7,8 +7,83 @@ import {
   OpenAIChatPrompt,
   ChatCompletionContentPart,
 } from "./openai-chat-prompt"
-import { MessageReasoning } from "../schemas"
+import type { MessageProviderMetadata, MessageReasoning } from "../schemas"
 import { ReasoningDetail } from "../reasoning-details-schema"
+
+function areJsonValuesEqual(left: unknown, right: unknown): boolean {
+  if (left === right) {
+    return true
+  }
+
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return (
+      Array.isArray(left) &&
+      Array.isArray(right) &&
+      left.length === right.length &&
+      left.every((value, index) => areJsonValuesEqual(value, right[index]))
+    )
+  }
+
+  if (
+    left === null ||
+    right === null ||
+    typeof left !== "object" ||
+    typeof right !== "object"
+  ) {
+    return false
+  }
+
+  const leftRecord = left as Record<string, unknown>
+  const rightRecord = right as Record<string, unknown>
+  const leftKeys = Object.keys(leftRecord)
+  const rightKeys = Object.keys(rightRecord)
+
+  return (
+    leftKeys.length === rightKeys.length &&
+    leftKeys.every(
+      (key) =>
+        Object.prototype.hasOwnProperty.call(rightRecord, key) &&
+        areJsonValuesEqual(leftRecord[key], rightRecord[key]),
+    )
+  )
+}
+
+function getOriginalToolCallArguments({
+  providerMetadata,
+  toolCallId,
+  toolName,
+  args,
+}: {
+  providerMetadata: MessageProviderMetadata | undefined
+  toolCallId: string
+  toolName: string
+  args: unknown
+}): string | undefined {
+  const outputItem = providerMetadata?.openai?.responses?.output_items.find(
+    (item) =>
+      item.type === "function_call" &&
+      item.call_id === toolCallId &&
+      item.name === toolName &&
+      typeof item.arguments === "string",
+  )
+
+  if (!outputItem || typeof outputItem.arguments !== "string") {
+    return undefined
+  }
+
+  try {
+    const serializedArgs = JSON.stringify(args)
+    return serializedArgs !== undefined &&
+      areJsonValuesEqual(
+        JSON.parse(outputItem.arguments),
+        JSON.parse(serializedArgs),
+      )
+      ? outputItem.arguments
+      : undefined
+  } catch {
+    return undefined
+  }
+}
 
 export function convertToOpenAIChatMessages({
   prompt,
@@ -100,6 +175,9 @@ export function convertToOpenAIChatMessages({
         let text = ""
         let reasoning: MessageReasoning[] = []
         let reasoningDetails: ReasoningDetail[] | undefined
+        let responseProviderMetadata: MessageProviderMetadata | undefined
+        let refusal: string | undefined
+        let refusalAsText = false
         const toolCalls: Array<{
           id: string
           type: "function"
@@ -108,10 +186,24 @@ export function convertToOpenAIChatMessages({
 
         // Check if providerMetadata contains preserved reasoning_details
         const langtailMetadata = providerMetadata?.langtail as
-          | { reasoning_details?: ReasoningDetail[] }
+          | {
+              reasoning_details?: ReasoningDetail[]
+              provider_metadata?: MessageProviderMetadata
+              refusal?: string | null
+              refusal_as_text?: boolean
+            }
           | undefined
         if (langtailMetadata?.reasoning_details) {
           reasoningDetails = langtailMetadata.reasoning_details
+        }
+        if (langtailMetadata?.provider_metadata) {
+          responseProviderMetadata = langtailMetadata.provider_metadata
+        }
+        if (langtailMetadata?.refusal != null) {
+          refusal = langtailMetadata.refusal
+        }
+        if (langtailMetadata?.refusal_as_text === true) {
+          refusalAsText = true
         }
 
         for (const part of content) {
@@ -142,7 +234,13 @@ export function convertToOpenAIChatMessages({
                 type: "function",
                 function: {
                   name: part.toolName,
-                  arguments: JSON.stringify(part.args),
+                  arguments:
+                    getOriginalToolCallArguments({
+                      providerMetadata: responseProviderMetadata,
+                      toolCallId: part.toolCallId,
+                      toolName: part.toolName,
+                      args: part.args,
+                    }) ?? JSON.stringify(part.args),
                 },
               })
               break
@@ -158,9 +256,12 @@ export function convertToOpenAIChatMessages({
         addMessage(
           {
             role: "assistant",
-            content: text,
+            content:
+              refusalAsText && refusal != null && text === refusal ? "" : text,
+            refusal,
             reasoning: reasoning.length > 0 ? reasoning : undefined,
             reasoning_details: reasoningDetails,
+            provider_metadata: responseProviderMetadata,
             tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
           },
           cacheEnabled,

@@ -20,6 +20,7 @@ describe("ReasoningDetail Schemas", () => {
         id: "reasoning-1",
         format: ReasoningFormat.AnthropicClaudeV1,
         index: 0,
+        part_index: 1,
       }
 
       const result = ReasoningDetailTextSchema.parse(detail)
@@ -164,6 +165,32 @@ describe("ReasoningDetail Schemas", () => {
 })
 
 describe("Message Schema with reasoning_details", () => {
+  it("should preserve OpenAI Responses output items", () => {
+    const providerMetadata = {
+      openai: {
+        responses: {
+          output_items: [
+            {
+              id: "rs_123",
+              type: "reasoning",
+              encrypted_content: "encrypted-reasoning",
+            },
+          ],
+        },
+      },
+    }
+
+    const result = MessageSchema.parse({
+      role: "assistant",
+      content: null,
+      refusal: "I cannot help with that request.",
+      provider_metadata: providerMetadata,
+    })
+
+    expect(result.provider_metadata).toEqual(providerMetadata)
+    expect(result.refusal).toBe("I cannot help with that request.")
+  })
+
   it("should validate message with reasoning_details", () => {
     const message = {
       role: "assistant",
