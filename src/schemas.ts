@@ -13,9 +13,27 @@ export interface ILangtailExtraProps {
   metadata?: Record<string, string>
 }
 
+export type PromptCacheOptions = {
+  mode: "implicit" | "explicit"
+  ttl?: "30m"
+}
+
+export type PromptCacheBreakpoint = {
+  mode: "explicit"
+}
+
+export type OpenAIRequestCacheFields = {
+  prompt_cache_key?: string
+  prompt_cache_options?: PromptCacheOptions
+}
+
 export type ChatCompletionsCreateParams =
-  | (ChatCompletionCreateParamsStreaming & ILangtailExtraProps)
-  | (ChatCompletionCreateParamsNonStreaming & ILangtailExtraProps)
+  | (ChatCompletionCreateParamsStreaming &
+      ILangtailExtraProps &
+      OpenAIRequestCacheFields)
+  | (ChatCompletionCreateParamsNonStreaming &
+      ILangtailExtraProps &
+      OpenAIRequestCacheFields)
 
 export interface ChatState {
   type: "chat"
@@ -78,6 +96,7 @@ export interface CompletionState {
 export interface ContentItemText {
   type: "text"
   text: string
+  prompt_cache_breakpoint?: PromptCacheBreakpoint
 }
 
 export interface ContentItemImage {
@@ -86,6 +105,7 @@ export interface ContentItemImage {
     url: string
     detail?: "auto" | "low" | "high"
   }
+  prompt_cache_breakpoint?: PromptCacheBreakpoint
 }
 
 export interface ContentItemGeminiMediaUrl {
@@ -171,9 +191,23 @@ export interface Deployment<P extends PromptSlug> {
   version?: Version<P, Environment<P>> & string
 }
 
+export const PromptCacheOptionsSchema = z
+  .object({
+    mode: z.enum(["implicit", "explicit"]),
+    ttl: z.literal("30m").optional(),
+  })
+  .strict() satisfies z.ZodType<PromptCacheOptions>
+
+export const PromptCacheBreakpointSchema = z
+  .object({
+    mode: z.literal("explicit"),
+  })
+  .strict() satisfies z.ZodType<PromptCacheBreakpoint>
+
 export const ContentItemTextSchema = z.object({
   type: z.literal("text"),
   text: z.string(),
+  prompt_cache_breakpoint: PromptCacheBreakpointSchema.optional(),
 }) satisfies z.ZodType<ContentItemText>
 
 export const ContentItemImageSchema = z.object({
@@ -182,6 +216,7 @@ export const ContentItemImageSchema = z.object({
     url: z.string(),
     detail: z.enum(["auto", "low", "high"]).default("auto"),
   }),
+  prompt_cache_breakpoint: PromptCacheBreakpointSchema.optional(),
 }) satisfies z.ZodType<ContentItemImage>
 
 export const ContentItemGeminiMediaUrlSchema = z.object({
@@ -303,12 +338,16 @@ export const langtailBodySchema = z.object({
 export const openAIBodySchemaObjectDefinition = {
   stream: z.boolean().optional(),
   user: z.string().optional(),
+  prompt_cache_key: z.string().optional(),
+  prompt_cache_options: PromptCacheOptionsSchema.optional(),
 
   seed: z.number().optional(),
   max_tokens: z.number().optional(),
   max_thinking_tokens: z.number().optional(),
   temperature: z.number().optional(),
-  reasoning_effort: z.enum(["minimal", "low", "medium", "high", "max"]).optional(),
+  reasoning_effort: z
+    .enum(["minimal", "low", "medium", "high", "max"])
+    .optional(),
   top_p: z.number().optional(),
   parallel_tool_calls: z.boolean().optional(),
   presence_penalty: z.number().optional(),

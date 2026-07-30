@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { getOpenAIBody } from "./getOpenAIBody"
+import { bothBodySchema } from "./schemas"
 
 describe("getOpenAIBody", () => {
   const parsedBody = {
@@ -93,6 +94,132 @@ describe("getOpenAIBody", () => {
     ])
   })
 
+  it("preserves explicit prompt cache request fields and content breakpoints", () => {
+    const parsedCacheBody = bothBodySchema.parse({
+      prompt_cache_key: "chat:test:main",
+      prompt_cache_options: {
+        mode: "explicit",
+        ttl: "30m",
+      },
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Describe this image",
+              prompt_cache_breakpoint: { mode: "explicit" },
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: "https://example.com/image.png",
+                detail: "high",
+              },
+              prompt_cache_breakpoint: { mode: "explicit" },
+            },
+          ],
+          provider_metadata: {
+            openai: {
+              responses: {
+                output_items: [
+                  {
+                    id: "rs_123",
+                    type: "reasoning",
+                    encrypted_content: "encrypted-reasoning",
+                  },
+                ],
+              },
+            },
+          },
+        },
+      ],
+    })
+
+    const openAIbody = getOpenAIBody(
+      {
+        state: {
+          type: "chat",
+          args: {
+            model: "gpt-5.6",
+            max_tokens: 100,
+            temperature: 0.8,
+            top_p: 1,
+            presence_penalty: 0,
+            frequency_penalty: 0,
+            jsonmode: false,
+            seed: null,
+            stop: [],
+          },
+          template: [],
+        },
+        chatInput: {},
+      },
+      parsedCacheBody,
+    )
+
+    expect(openAIbody).toMatchObject({
+      prompt_cache_key: "chat:test:main",
+      prompt_cache_options: {
+        mode: "explicit",
+        ttl: "30m",
+      },
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Describe this image",
+              prompt_cache_breakpoint: { mode: "explicit" },
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: "https://example.com/image.png",
+                detail: "high",
+              },
+              prompt_cache_breakpoint: { mode: "explicit" },
+            },
+          ],
+        },
+      ],
+    })
+    expect(openAIbody.messages[0]).not.toHaveProperty("provider_metadata")
+  })
+
+  it.each([
+    {
+      name: "request mode",
+      body: { prompt_cache_options: { mode: "automatic" } },
+    },
+    {
+      name: "request TTL",
+      body: {
+        prompt_cache_options: { mode: "explicit", ttl: "1h" },
+      },
+    },
+    {
+      name: "content breakpoint mode",
+      body: {
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Hello",
+                prompt_cache_breakpoint: { mode: "implicit" },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ])("rejects an invalid prompt cache $name", ({ body }) => {
+    expect(bothBodySchema.safeParse(body).success).toBe(false)
+  })
+
   it("should extend variables from playground", () => {
     const completionConfig = {
       state: {
@@ -166,7 +293,6 @@ describe("getOpenAIBody", () => {
     `)
   })
 
-
   it("should add parallel_tool_calls param when it is set in parsedBody", () => {
     const completionConfig = {
       state: {
@@ -196,7 +322,7 @@ describe("getOpenAIBody", () => {
       parallelToolCalls: true,
     })
 
-    expect(openAIbody).toHaveProperty('parallel_tool_calls', true)
+    expect(openAIbody).toHaveProperty("parallel_tool_calls", true)
   })
 
   it("should override parameters from the playground with the ones in parsedBody", () => {
@@ -329,9 +455,8 @@ describe("getOpenAIBody", () => {
     `) // template is overridden by the one in parsedBody
   })
 
-
-  describe('thread messages', () => {
-    it('should compile thread messages with passed variables', () => {
+  describe("thread messages", () => {
+    it("should compile thread messages with passed variables", () => {
       const completionConfig = {
         state: {
           type: "chat" as const,
@@ -351,24 +476,29 @@ describe("getOpenAIBody", () => {
               role: "user" as const,
               content: "TEAMPLTE: This use previous user message.",
             },
-          ]
+          ],
         },
         chatInput: {},
       }
 
-      const openAIbody = getOpenAIBody(completionConfig, {
-        variables: {
-          footballClub: "Slavia Praha",
-        },
-        messages: [],
-      }, {
-        threadMessages: [
-          {
-            role: "system" as const,
-            content: "THREAD: Your favourite football club is {{ footballClub }}",
+      const openAIbody = getOpenAIBody(
+        completionConfig,
+        {
+          variables: {
+            footballClub: "Slavia Praha",
           },
-        ]
-      })
+          messages: [],
+        },
+        {
+          threadMessages: [
+            {
+              role: "system" as const,
+              content:
+                "THREAD: Your favourite football club is {{ footballClub }}",
+            },
+          ],
+        },
+      )
 
       expect(openAIbody).toMatchInlineSnapshot(`
         {
@@ -392,7 +522,7 @@ describe("getOpenAIBody", () => {
       `)
     })
 
-    it('should combine template messages with other messages', () => {
+    it("should combine template messages with other messages", () => {
       const completionConfig = {
         state: {
           type: "chat" as const,
@@ -410,26 +540,32 @@ describe("getOpenAIBody", () => {
           template: [
             {
               role: "system" as const,
-              content: "TEMPLATE MESSAGE: This use previous user message. With variable {{ footballClub }}",
+              content:
+                "TEMPLATE MESSAGE: This use previous user message. With variable {{ footballClub }}",
             },
-          ]
+          ],
         },
         chatInput: {
           footballClub: "Sparta Praha",
         },
       }
 
-      const openAIbody = getOpenAIBody(completionConfig, {
-        variables: {},
-        messages: [],
-      }, {
-        threadMessages: [
-          {
-            role: "user" as const,
-            content: "THREAD message: Your favourite football club is NOT SPARTA",
-          },
-        ]
-      })
+      const openAIbody = getOpenAIBody(
+        completionConfig,
+        {
+          variables: {},
+          messages: [],
+        },
+        {
+          threadMessages: [
+            {
+              role: "user" as const,
+              content:
+                "THREAD message: Your favourite football club is NOT SPARTA",
+            },
+          ],
+        },
+      )
 
       expect(openAIbody).toMatchInlineSnapshot(`
         {
@@ -453,7 +589,7 @@ describe("getOpenAIBody", () => {
       `)
     })
 
-    it('should NOT compile thread messages with variables', () => {
+    it("should NOT compile thread messages with variables", () => {
       const completionConfig = {
         state: {
           type: "chat" as const,
@@ -468,24 +604,29 @@ describe("getOpenAIBody", () => {
             seed: null,
             stop: [],
           },
-          template: []
+          template: [],
         },
         chatInput: {
           footballClub: "Sparta Praha",
         },
       }
 
-      const openAIbody = getOpenAIBody(completionConfig, {
-        variables: {},
-        messages: [],
-      }, {
-        threadMessages: [
-          {
-            role: "user" as const,
-            content: "THREAD message: Your favourite football club is {{ footballClub }}",
-          },
-        ]
-      })
+      const openAIbody = getOpenAIBody(
+        completionConfig,
+        {
+          variables: {},
+          messages: [],
+        },
+        {
+          threadMessages: [
+            {
+              role: "user" as const,
+              content:
+                "THREAD message: Your favourite football club is {{ footballClub }}",
+            },
+          ],
+        },
+      )
 
       expect(openAIbody).toMatchInlineSnapshot(`
         {

@@ -7,7 +7,11 @@ import {
   OpenAIChatPrompt,
   ChatCompletionContentPart,
 } from "./openai-chat-prompt"
-import type { MessageProviderMetadata, MessageReasoning } from "../schemas"
+import type {
+  MessageProviderMetadata,
+  MessageReasoning,
+  PromptCacheBreakpoint,
+} from "../schemas"
 import { ReasoningDetail } from "../reasoning-details-schema"
 
 function areJsonValuesEqual(left: unknown, right: unknown): boolean {
@@ -110,6 +114,8 @@ export function convertToOpenAIChatMessages({
 
   for (const { role, content, providerMetadata } of prompt) {
     const anthropicCacheControl = providerMetadata?.anthropic?.cacheControl
+    const promptCacheBreakpoint = providerMetadata?.openai
+      ?.promptCacheBreakpoint as PromptCacheBreakpoint | undefined
     const cacheEnabled = Boolean(anthropicCacheControl)
     const cacheTtl =
       typeof anthropicCacheControl === "object" &&
@@ -119,51 +125,94 @@ export function convertToOpenAIChatMessages({
 
     switch (role) {
       case "system": {
-        addMessage({ role: "system", content }, cacheEnabled, cacheTtl)
+        addMessage(
+          {
+            role: "system",
+            content:
+              promptCacheBreakpoint === undefined
+                ? content
+                : [
+                    {
+                      type: "text",
+                      text: content,
+                      prompt_cache_breakpoint: promptCacheBreakpoint,
+                    },
+                  ],
+          },
+          cacheEnabled,
+          cacheTtl,
+        )
         break
       }
 
       case "user": {
         if (content.length === 1 && content[0].type === "text") {
           addMessage(
-            { role: "user", content: content[0].text },
+            {
+              role: "user",
+              content:
+                promptCacheBreakpoint === undefined
+                  ? content[0].text
+                  : [
+                      {
+                        type: "text",
+                        text: content[0].text,
+                        prompt_cache_breakpoint: promptCacheBreakpoint,
+                      },
+                    ],
+            },
             cacheEnabled,
             cacheTtl,
           )
           break
         }
 
+        const convertedContent: ChatCompletionContentPart[] = content.map(
+          (part) => {
+            switch (part.type) {
+              case "text": {
+                return { type: "text", text: part.text }
+              }
+              case "image": {
+                return {
+                  type: "image_url",
+                  image_url: {
+                    url:
+                      part.image instanceof URL
+                        ? part.image.toString()
+                        : `data:${
+                            part.mimeType ?? "image/jpeg"
+                          };base64,${convertUint8ArrayToBase64(part.image)}`,
+
+                    // OpenAI specific extension: image detail
+                    detail: part.providerMetadata?.openai?.imageDetail as
+                      | "auto"
+                      | "low"
+                      | "high"
+                      | undefined,
+                  },
+                }
+              }
+              case "file": {
+                throw new UnsupportedFunctionalityError({
+                  functionality: "File content parts in user messages",
+                })
+              }
+            }
+          },
+        )
+
+        if (promptCacheBreakpoint !== undefined) {
+          const finalContentPart = convertedContent[convertedContent.length - 1]
+          if (finalContentPart !== undefined) {
+            finalContentPart.prompt_cache_breakpoint = promptCacheBreakpoint
+          }
+        }
+
         addMessage(
           {
             role: "user",
-            content: content.map((part) => {
-              switch (part.type) {
-                case "text": {
-                  return { type: "text", text: part.text }
-                }
-                case "image": {
-                  return {
-                    type: "image_url",
-                    image_url: {
-                      url:
-                        part.image instanceof URL
-                          ? part.image.toString()
-                          : `data:${
-                              part.mimeType ?? "image/jpeg"
-                            };base64,${convertUint8ArrayToBase64(part.image)}`,
-
-                      // OpenAI specific extension: image detail
-                      detail: part.providerMetadata?.openai?.imageDetail,
-                    },
-                  }
-                }
-                case "file": {
-                  throw new UnsupportedFunctionalityError({
-                    functionality: "File content parts in user messages",
-                  })
-                }
-              }
-            }),
+            content: convertedContent,
           },
           cacheEnabled,
           cacheTtl,
