@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.16.19
+
+- Add complete OpenAI explicit prompt caching support, including request-wide `prompt_cache_key` and `prompt_cache_options` fields and content-block `prompt_cache_breakpoint` markers with strict validation.
+- Map Vercel AI SDK `providerOptions.openai.promptCacheBreakpoint` metadata to the final cacheable system or user content block without affecting Anthropic cache control.
+- Expose OpenAI `cache_write_tokens` as `providerMetadata.langtail.usage.cacheWriteInputTokens` for both generated and streamed responses.
+
 ## 0.16.18
 
 - Preserve OpenAI Responses reasoning metadata across tool steps in the Vercel AI bridge. The response's `provider_metadata` (including encrypted reasoning items) is now carried on `providerMetadata.langtail.provider_metadata` and replayed on the next request, so OpenAI reasoning models can continue a multi-step conversation. See the new "OpenAI reasoning across tool steps" section in the README for how to attach it when using `maxSteps`.

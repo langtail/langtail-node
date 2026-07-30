@@ -1,5 +1,5 @@
 import { ReasoningDetail } from "../reasoning-details-schema"
-import type { MessageProviderMetadata } from "../schemas"
+import type { MessageProviderMetadata, PromptCacheBreakpoint } from "../schemas"
 
 export type OpenAIChatPrompt = Array<ChatCompletionMessageParam>
 
@@ -11,7 +11,7 @@ export type ChatCompletionMessageParam =
 
 export interface ChatCompletionSystemMessageParam {
   role: "system"
-  content: string
+  content: string | Array<ChatCompletionContentPartText>
 }
 
 export interface ChatCompletionUserMessageParam {
@@ -27,12 +27,15 @@ export interface ChatCompletionContentPartImage {
   type: "image_url"
   image_url: {
     url: string
+    detail?: "auto" | "low" | "high"
   }
+  prompt_cache_breakpoint?: PromptCacheBreakpoint
 }
 
 export interface ChatCompletionContentPartText {
   type: "text"
   text: string
+  prompt_cache_breakpoint?: PromptCacheBreakpoint
 }
 
 export interface ChatCompletionAssistantMessageParam {

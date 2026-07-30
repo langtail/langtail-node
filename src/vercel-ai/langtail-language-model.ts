@@ -205,6 +205,8 @@ export class LangtailChatLanguageModel<
       // model specific settings:
       user: this.settings.user,
       parallel_tool_calls: true,
+      prompt_cache_key: this.settings.prompt_cache_key,
+      prompt_cache_options: this.settings.prompt_cache_options,
 
       // standardized settings:
       max_tokens: maxTokens,
@@ -371,6 +373,8 @@ export class LangtailChatLanguageModel<
           completionTokens: response.usage.completion_tokens ?? 0,
           cachedInputTokens:
             response.usage.prompt_tokens_details?.cached_tokens ?? 0,
+          cacheWriteInputTokens:
+            response.usage.prompt_tokens_details?.cache_write_tokens ?? 0,
           reasoningTokens:
             response.usage.completion_tokens_details?.reasoning_tokens ?? 0,
           ...(response.usage.raw_usage
@@ -385,7 +389,8 @@ export class LangtailChatLanguageModel<
       | string
       | { type: "text"; text: string; signature?: string }[]
       | { type: "redacted"; data: string }[]
-      | undefined = (choice.message.reasoning ?? choice.message.reasoning_content) as
+      | undefined = (choice.message.reasoning ??
+      choice.message.reasoning_content) as
       | string
       | { type: "text"; text: string; signature?: string }[]
       | { type: "redacted"; data: string }[]
@@ -487,8 +492,8 @@ export class LangtailChatLanguageModel<
 
     return {
       text: refusalAsText
-        ? (choice.message.refusal ?? undefined)
-        : (choice.message.content ?? undefined),
+        ? choice.message.refusal ?? undefined
+        : choice.message.content ?? undefined,
       reasoning: reasoningContent,
       toolCalls: choice.message.tool_calls?.map((toolCall) => ({
         toolCallType: "function",
@@ -670,6 +675,8 @@ export class LangtailChatLanguageModel<
                   promptTokens: value.usage.prompt_tokens ?? 0,
                   completionTokens: value.usage.completion_tokens ?? 0,
                   cachedInputTokens: promptTokenDetails?.cached_tokens ?? 0,
+                  cacheWriteInputTokens:
+                    promptTokenDetails?.cache_write_tokens ?? 0,
                   reasoningTokens:
                     completionTokenDetails?.reasoning_tokens ?? 0,
                   ...(value.usage.raw_usage
@@ -1062,6 +1069,7 @@ const openaiTokenUsageSchema = z
     prompt_tokens_details: z
       .object({
         cached_tokens: z.number().nullish(),
+        cache_write_tokens: z.number().nullish(),
       })
       .nullish(),
     completion_tokens_details: z

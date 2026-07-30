@@ -1,16 +1,19 @@
-
 import type OpenAI from "openai"
 
 import { compileLTTemplate } from "./template"
-import { ChatCompletionsCreateParams, PlaygroundMessage } from "./schemas"
+import {
+  ChatCompletionsCreateParams,
+  PlaygroundMessage,
+  PromptCacheOptions,
+} from "./schemas"
 import { IncomingBodyType, PlaygroundState } from "./schemas"
 import { ChatCompletionMessageParam } from "openai/resources"
 
 function stripProviderMetadata(
   message: ChatCompletionMessageParam,
 ): ChatCompletionMessageParam {
-  const { provider_metadata: _, ...chatCompletionMessage } = message as
-    ChatCompletionMessageParam & { provider_metadata?: unknown }
+  const { provider_metadata: _, ...chatCompletionMessage } =
+    message as ChatCompletionMessageParam & { provider_metadata?: unknown }
   return chatCompletionMessage as ChatCompletionMessageParam
 }
 
@@ -46,23 +49,41 @@ export function getOpenAIBody(
 ): ChatCompletionsCreateParams {
   const completionArgs = completionConfig.state.args
 
-  const reasoningEffort = parsedBody.reasoning_effort ?? completionArgs.reasoning_effort
+  const reasoningEffort =
+    parsedBody.reasoning_effort ?? completionArgs.reasoning_effort
   const template = parsedBody.template ?? completionConfig.state.template
-  const compiledTemplate = compileMessages(template, Object.assign(
-    completionConfig.chatInput,
-    parsedBody.variables ?? {},
-  ))
+  const compiledTemplate = compileMessages(
+    template,
+    Object.assign(completionConfig.chatInput, parsedBody.variables ?? {}),
+  )
   const bodyMessages = [
-    ...[...(threadParams?.threadMessages ?? []) as ChatCompletionMessageParam[]],
-    ...(parsedBody.messages ?? []) as ChatCompletionMessageParam[]
+    ...[
+      ...((threadParams?.threadMessages ?? []) as ChatCompletionMessageParam[]),
+    ],
+    ...((parsedBody.messages ?? []) as ChatCompletionMessageParam[]),
   ]
 
-  const inputMessages = options?.appendTemplate ? [...bodyMessages, ...compiledTemplate] : [...compiledTemplate, ...bodyMessages]
+  const inputMessages = options?.appendTemplate
+    ? [...bodyMessages, ...compiledTemplate]
+    : [...compiledTemplate, ...bodyMessages]
 
-  const openAIbody: Omit<OpenAI.Chat.ChatCompletionCreateParams, 'stream' | 'reasoning_effort'> & { reasoning_effort?: string } = {
+  const openAIbody: Omit<
+    OpenAI.Chat.ChatCompletionCreateParams,
+    "stream" | "reasoning_effort"
+  > & {
+    reasoning_effort?: string
+    prompt_cache_key?: string
+    prompt_cache_options?: PromptCacheOptions
+  } = {
     model: parsedBody.model ?? completionArgs.model,
     temperature: parsedBody.temperature ?? completionArgs.temperature,
     ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {}),
+    ...(parsedBody.prompt_cache_key !== undefined
+      ? { prompt_cache_key: parsedBody.prompt_cache_key }
+      : {}),
+    ...(parsedBody.prompt_cache_options !== undefined
+      ? { prompt_cache_options: parsedBody.prompt_cache_options }
+      : {}),
     messages: inputMessages.map(stripProviderMetadata),
     top_p: parsedBody.top_p ?? completionArgs.top_p,
     ...(parsedBody.parallelToolCalls !== undefined
@@ -74,14 +95,18 @@ export function getOpenAIBody(
       parsedBody.frequency_penalty ?? completionArgs.frequency_penalty,
     ...(parsedBody.seed || completionArgs.seed
       ? {
-        seed: parsedBody.seed ?? completionArgs.seed,
-      }
+          seed: parsedBody.seed ?? completionArgs.seed,
+        }
       : {}),
     ...(Array.isArray(completionArgs.stop) && completionArgs.stop.length > 0
       ? { stop: completionArgs.stop }
       : {}),
     ...(parsedBody.max_thinking_tokens || completionArgs.max_thinking_tokens
-      ? { max_thinking_tokens: parsedBody.max_thinking_tokens ?? completionArgs.max_thinking_tokens }
+      ? {
+          max_thinking_tokens:
+            parsedBody.max_thinking_tokens ??
+            completionArgs.max_thinking_tokens,
+        }
       : {}),
   }
 

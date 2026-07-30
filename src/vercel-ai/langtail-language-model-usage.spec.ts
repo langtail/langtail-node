@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest"
 import nock from "nock"
+import { generateText } from "ai"
 import { LangtailChatLanguageModel } from "./langtail-language-model"
 import { LangtailPrompts } from "../LangtailPrompts"
 import type { LanguageModelV1StreamPart } from "@ai-sdk/provider"
@@ -12,20 +13,29 @@ function createModel() {
     baseURL: BASE_URL,
   })
 
-  return new LangtailChatLanguageModel("test-prompt", {}, {
-    provider: "langtail.chat",
-    langtailPrompts,
-    headers: {
-      "X-API-Key": "test-api-key",
-      "content-type": "application/json",
+  return new LangtailChatLanguageModel(
+    "test-prompt",
+    {},
+    {
+      provider: "langtail.chat",
+      langtailPrompts,
+      headers: {
+        "X-API-Key": "test-api-key",
+        "content-type": "application/json",
+      },
     },
-  })
+  )
 }
 
 const defaultCallOptions = {
   inputFormat: "prompt" as const,
   mode: { type: "regular" as const },
-  prompt: [{ role: "user" as const, content: [{ type: "text" as const, text: "Hello" }] }],
+  prompt: [
+    {
+      role: "user" as const,
+      content: [{ type: "text" as const, text: "Hello" }],
+    },
+  ],
 }
 
 describe("Adaptive thinking and reasoning_effort", () => {
@@ -65,11 +75,13 @@ describe("Adaptive thinking and reasoning_effort", () => {
       })
       .reply(200, {
         id: "chatcmpl-123",
-        choices: [{
-          message: { role: "assistant", content: "Hello!" },
-          finish_reason: "stop",
-          index: 0,
-        }],
+        choices: [
+          {
+            message: { role: "assistant", content: "Hello!" },
+            finish_reason: "stop",
+            index: 0,
+          },
+        ],
         usage: { prompt_tokens: 10, completion_tokens: 5 },
       })
 
@@ -87,11 +99,13 @@ describe("Adaptive thinking and reasoning_effort", () => {
       })
       .reply(200, {
         id: "chatcmpl-123",
-        choices: [{
-          message: { role: "assistant", content: "Hello!" },
-          finish_reason: "stop",
-          index: 0,
-        }],
+        choices: [
+          {
+            message: { role: "assistant", content: "Hello!" },
+            finish_reason: "stop",
+            index: 0,
+          },
+        ],
         usage: { prompt_tokens: 10, completion_tokens: 5 },
       })
 
@@ -116,11 +130,13 @@ describe("Adaptive thinking and reasoning_effort", () => {
       })
       .reply(200, {
         id: "chatcmpl-123",
-        choices: [{
-          message: { role: "assistant", content: "Hello!" },
-          finish_reason: "stop",
-          index: 0,
-        }],
+        choices: [
+          {
+            message: { role: "assistant", content: "Hello!" },
+            finish_reason: "stop",
+            index: 0,
+          },
+        ],
         usage: { prompt_tokens: 10, completion_tokens: 5 },
       })
 
@@ -131,6 +147,88 @@ describe("Adaptive thinking and reasoning_effort", () => {
           thinking: { type: "enabled", budgetTokens: 1025 },
         },
       },
+    })
+    scope.done()
+  })
+})
+
+describe("Explicit prompt caching request", () => {
+  beforeAll(() => {
+    nock.disableNetConnect()
+  })
+
+  afterAll(() => {
+    nock.enableNetConnect()
+    nock.cleanAll()
+  })
+
+  it("forwards request settings and message breakpoints to Langtail", async () => {
+    const langtailPrompts = new LangtailPrompts({
+      apiKey: "test-api-key",
+      baseURL: BASE_URL,
+    })
+    const model = new LangtailChatLanguageModel(
+      "test-prompt",
+      {
+        prompt_cache_key: "chat:test:main",
+        prompt_cache_options: { mode: "explicit", ttl: "30m" },
+      },
+      {
+        provider: "langtail.chat",
+        langtailPrompts,
+        headers: {
+          "X-API-Key": "test-api-key",
+          "content-type": "application/json",
+        },
+      },
+    )
+
+    const scope = nock(BASE_URL)
+      .post(/\/project-prompt\/test-prompt\/production/, (body) => {
+        expect(body.prompt_cache_key).toBe("chat:test:main")
+        expect(body.prompt_cache_options).toEqual({
+          mode: "explicit",
+          ttl: "30m",
+        })
+        expect(body.messages).toEqual([
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Stable history",
+                prompt_cache_breakpoint: { mode: "explicit" },
+              },
+            ],
+          },
+        ])
+        return true
+      })
+      .reply(200, {
+        id: "chatcmpl-123",
+        choices: [
+          {
+            message: { role: "assistant", content: "Hello!" },
+            finish_reason: "stop",
+            index: 0,
+          },
+        ],
+        usage: { prompt_tokens: 10, completion_tokens: 5 },
+      })
+
+    await generateText({
+      model,
+      messages: [
+        {
+          role: "user",
+          content: "Stable history",
+          providerOptions: {
+            openai: {
+              promptCacheBreakpoint: { mode: "explicit" },
+            },
+          },
+        },
+      ],
     })
     scope.done()
   })
@@ -152,11 +250,13 @@ describe("Usage reporting", () => {
         .post(/\/project-prompt\/test-prompt\/production/)
         .reply(200, {
           id: "chatcmpl-123",
-          choices: [{
-            message: { role: "assistant", content: "Hello!" },
-            finish_reason: "stop",
-            index: 0,
-          }],
+          choices: [
+            {
+              message: { role: "assistant", content: "Hello!" },
+              finish_reason: "stop",
+              index: 0,
+            },
+          ],
           usage: {
             prompt_tokens: 10,
             completion_tokens: 5,
@@ -178,16 +278,19 @@ describe("Usage reporting", () => {
         .post(/\/project-prompt\/test-prompt\/production/)
         .reply(200, {
           id: "chatcmpl-123",
-          choices: [{
-            message: { role: "assistant", content: "Hello!" },
-            finish_reason: "stop",
-            index: 0,
-          }],
+          choices: [
+            {
+              message: { role: "assistant", content: "Hello!" },
+              finish_reason: "stop",
+              index: 0,
+            },
+          ],
           usage: {
             prompt_tokens: 16454,
             completion_tokens: 333,
             prompt_tokens_details: {
               cached_tokens: 13128,
+              cache_write_tokens: 2622,
             },
             completion_tokens_details: {
               reasoning_tokens: 50,
@@ -203,6 +306,7 @@ describe("Usage reporting", () => {
           promptTokens: 16454,
           completionTokens: 333,
           cachedInputTokens: 13128,
+          cacheWriteInputTokens: 2622,
           reasoningTokens: 50,
         },
       })
@@ -226,11 +330,13 @@ describe("Usage reporting", () => {
         .post(/\/project-prompt\/test-prompt\/production/)
         .reply(200, {
           id: "chatcmpl-123",
-          choices: [{
-            message: { role: "assistant", content: "Hello!" },
-            finish_reason: "stop",
-            index: 0,
-          }],
+          choices: [
+            {
+              message: { role: "assistant", content: "Hello!" },
+              finish_reason: "stop",
+              index: 0,
+            },
+          ],
           usage: {
             prompt_tokens: 16454,
             completion_tokens: 333,
@@ -244,11 +350,15 @@ describe("Usage reporting", () => {
       const model = createModel()
       const result = await model.doGenerate(defaultCallOptions)
 
-      const langtailMeta = result.providerMetadata?.langtail as Record<string, any>
+      const langtailMeta = result.providerMetadata?.langtail as Record<
+        string,
+        any
+      >
       expect(langtailMeta.usage.rawUsage).toEqual(rawUsage)
       expect(langtailMeta.usage.promptTokens).toBe(16454)
       expect(langtailMeta.usage.completionTokens).toBe(333)
       expect(langtailMeta.usage.cachedInputTokens).toBe(13128)
+      expect(langtailMeta.usage.cacheWriteInputTokens).toBe(0)
       scope.done()
     })
 
@@ -257,11 +367,13 @@ describe("Usage reporting", () => {
         .post(/\/project-prompt\/test-prompt\/production/)
         .reply(200, {
           id: "chatcmpl-123",
-          choices: [{
-            message: { role: "assistant", content: "Hello!" },
-            finish_reason: "stop",
-            index: 0,
-          }],
+          choices: [
+            {
+              message: { role: "assistant", content: "Hello!" },
+              finish_reason: "stop",
+              index: 0,
+            },
+          ],
           usage: {
             prompt_tokens: 100,
             completion_tokens: 20,
@@ -289,6 +401,7 @@ describe("Usage reporting", () => {
           promptTokens: 100,
           completionTokens: 20,
           cachedInputTokens: 50,
+          cacheWriteInputTokens: 0,
           reasoningTokens: 10,
         },
       })
@@ -300,11 +413,13 @@ describe("Usage reporting", () => {
         .post(/\/project-prompt\/test-prompt\/production/)
         .reply(200, {
           id: "chatcmpl-123",
-          choices: [{
-            message: { role: "assistant", content: "Hello!" },
-            finish_reason: "stop",
-            index: 0,
-          }],
+          choices: [
+            {
+              message: { role: "assistant", content: "Hello!" },
+              finish_reason: "stop",
+              index: 0,
+            },
+          ],
           usage: {
             prompt_tokens: 100,
             completion_tokens: 20,
@@ -314,8 +429,12 @@ describe("Usage reporting", () => {
       const model = createModel()
       const result = await model.doGenerate(defaultCallOptions)
 
-      const langtailMeta = result.providerMetadata?.langtail as Record<string, any>
+      const langtailMeta = result.providerMetadata?.langtail as Record<
+        string,
+        any
+      >
       expect(langtailMeta.usage.cachedInputTokens).toBe(0)
+      expect(langtailMeta.usage.cacheWriteInputTokens).toBe(0)
       expect(langtailMeta.usage.reasoningTokens).toBe(0)
       expect(langtailMeta.usage.rawUsage).toBeUndefined()
       scope.done()
@@ -346,29 +465,37 @@ describe("Usage reporting", () => {
     it("should emit usage in the finish event", async () => {
       const scope = nock(BASE_URL)
         .post(/\/project-prompt\/test-prompt\/production/)
-        .reply(200, createSSEResponse([
-          {
-            id: "chatcmpl-123",
-            choices: [{
-              delta: { role: "assistant", content: "Hi" },
-              index: 0,
-            }],
-          },
-          {
-            id: "chatcmpl-123",
-            choices: [{
-              delta: {},
-              finish_reason: "stop",
-              index: 0,
-            }],
-            usage: {
-              prompt_tokens: 10,
-              completion_tokens: 5,
+        .reply(
+          200,
+          createSSEResponse([
+            {
+              id: "chatcmpl-123",
+              choices: [
+                {
+                  delta: { role: "assistant", content: "Hi" },
+                  index: 0,
+                },
+              ],
             },
+            {
+              id: "chatcmpl-123",
+              choices: [
+                {
+                  delta: {},
+                  finish_reason: "stop",
+                  index: 0,
+                },
+              ],
+              usage: {
+                prompt_tokens: 10,
+                completion_tokens: 5,
+              },
+            },
+          ]),
+          {
+            "content-type": "text/event-stream",
           },
-        ]), {
-          "content-type": "text/event-stream",
-        })
+        )
 
       const model = createModel()
       const { stream } = await model.doStream(defaultCallOptions)
@@ -396,36 +523,45 @@ describe("Usage reporting", () => {
 
       const scope = nock(BASE_URL)
         .post(/\/project-prompt\/test-prompt\/production/)
-        .reply(200, createSSEResponse([
-          {
-            id: "chatcmpl-123",
-            choices: [{
-              delta: { role: "assistant", content: "Hi" },
-              index: 0,
-            }],
-          },
-          {
-            id: "chatcmpl-123",
-            choices: [{
-              delta: {},
-              finish_reason: "stop",
-              index: 0,
-            }],
-            usage: {
-              prompt_tokens: 16454,
-              completion_tokens: 333,
-              prompt_tokens_details: {
-                cached_tokens: 13128,
-              },
-              completion_tokens_details: {
-                reasoning_tokens: 0,
-              },
-              raw_usage: rawUsage,
+        .reply(
+          200,
+          createSSEResponse([
+            {
+              id: "chatcmpl-123",
+              choices: [
+                {
+                  delta: { role: "assistant", content: "Hi" },
+                  index: 0,
+                },
+              ],
             },
+            {
+              id: "chatcmpl-123",
+              choices: [
+                {
+                  delta: {},
+                  finish_reason: "stop",
+                  index: 0,
+                },
+              ],
+              usage: {
+                prompt_tokens: 16454,
+                completion_tokens: 333,
+                prompt_tokens_details: {
+                  cached_tokens: 13128,
+                  cache_write_tokens: 2622,
+                },
+                completion_tokens_details: {
+                  reasoning_tokens: 0,
+                },
+                raw_usage: rawUsage,
+              },
+            },
+          ]),
+          {
+            "content-type": "text/event-stream",
           },
-        ]), {
-          "content-type": "text/event-stream",
-        })
+        )
 
       const model = createModel()
       const { stream } = await model.doStream(defaultCallOptions)
@@ -434,11 +570,15 @@ describe("Usage reporting", () => {
       const finishPart = parts.find((p) => p.type === "finish")
       expect(finishPart).toBeDefined()
       if (finishPart?.type === "finish") {
-        const langtailMeta = finishPart.providerMetadata?.langtail as Record<string, any>
+        const langtailMeta = finishPart.providerMetadata?.langtail as Record<
+          string,
+          any
+        >
         expect(langtailMeta.usage).toEqual({
           promptTokens: 16454,
           completionTokens: 333,
           cachedInputTokens: 13128,
+          cacheWriteInputTokens: 2622,
           reasoningTokens: 0,
           rawUsage,
         })
@@ -449,35 +589,43 @@ describe("Usage reporting", () => {
     it("should preserve providerMetadata.openai in stream finish", async () => {
       const scope = nock(BASE_URL)
         .post(/\/project-prompt\/test-prompt\/production/)
-        .reply(200, createSSEResponse([
-          {
-            id: "chatcmpl-123",
-            choices: [{
-              delta: { role: "assistant", content: "Hi" },
-              index: 0,
-            }],
-          },
-          {
-            id: "chatcmpl-123",
-            choices: [{
-              delta: {},
-              finish_reason: "stop",
-              index: 0,
-            }],
-            usage: {
-              prompt_tokens: 100,
-              completion_tokens: 20,
-              prompt_tokens_details: {
-                cached_tokens: 50,
-              },
-              completion_tokens_details: {
-                reasoning_tokens: 10,
+        .reply(
+          200,
+          createSSEResponse([
+            {
+              id: "chatcmpl-123",
+              choices: [
+                {
+                  delta: { role: "assistant", content: "Hi" },
+                  index: 0,
+                },
+              ],
+            },
+            {
+              id: "chatcmpl-123",
+              choices: [
+                {
+                  delta: {},
+                  finish_reason: "stop",
+                  index: 0,
+                },
+              ],
+              usage: {
+                prompt_tokens: 100,
+                completion_tokens: 20,
+                prompt_tokens_details: {
+                  cached_tokens: 50,
+                },
+                completion_tokens_details: {
+                  reasoning_tokens: 10,
+                },
               },
             },
+          ]),
+          {
+            "content-type": "text/event-stream",
           },
-        ]), {
-          "content-type": "text/event-stream",
-        })
+        )
 
       const model = createModel()
       const { stream } = await model.doStream(defaultCallOptions)
@@ -494,6 +642,7 @@ describe("Usage reporting", () => {
           promptTokens: 100,
           completionTokens: 20,
           cachedInputTokens: 50,
+          cacheWriteInputTokens: 0,
           reasoningTokens: 10,
         })
       }
