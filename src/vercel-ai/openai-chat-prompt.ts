@@ -40,7 +40,7 @@ export interface ChatCompletionContentPartText {
 
 export interface ChatCompletionAssistantMessageParam {
   role: "assistant"
-  content?: string | null
+  content?: string | Array<ChatCompletionContentPart> | null
   refusal?: string | null
   reasoning_details?: ReasoningDetail[] | null
   provider_metadata?: MessageProviderMetadata

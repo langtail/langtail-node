@@ -1,6 +1,6 @@
 {
   "name": "langtail",
-  "version": "0.16.19",
+  "version": "0.16.20",
   "description": "",
   "main": "./Langtail.js",
   "packageManager": "pnpm@8.15.6",
@@ -12,6 +12,7 @@
   },
   "scripts": {
     "test": "vitest",
+    "test:package": "node --test test/package/*.package.cjs test/package/*.package.mjs",
     "ts": "tsc --noEmit",
     "format": "prettier --write .",
     "build": "pnpm run clean && tsup && copyfiles -u 1 src/bin/*.template dist/ && node src/buildHelpers/moveFiles.js",

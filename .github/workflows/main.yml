@@ -53,6 +53,12 @@ jobs:
           TEST_LIVE: true
         run: pnpm test
 
+      - name: build package
+        run: pnpm build
+
+      - name: test CommonJS and ESM package conversions
+        run: pnpm test:package
+
   publish:
     runs-on: ubuntu-latest
     name: Publish to NPM
@@ -96,3 +102,4 @@ jobs:
         name: Publish package
         with:
           token: ${{ secrets.NPM_TOKEN }}
+          tag: latest

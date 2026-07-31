@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.20
+
+- Preserve Vercel AI SDK `providerOptions.openai.promptCacheBreakpoint` on assistant message content and on the final emitted tool-result message/content block, enabling explicit caching across multi-step agent turns.
+
 ## 0.16.19
 
 - Add complete OpenAI explicit prompt caching support, including request-wide `prompt_cache_key` and `prompt_cache_options` fields and content-block `prompt_cache_breakpoint` markers with strict validation.
