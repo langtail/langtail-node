@@ -96,6 +96,33 @@ export function convertToOpenAIChatMessages({
 }): OpenAIChatPrompt {
   const messages: OpenAIChatPrompt = []
 
+  const addPromptCacheBreakpoint = (
+    content: string | Array<ChatCompletionContentPart>,
+    promptCacheBreakpoint: PromptCacheBreakpoint | undefined,
+  ): string | Array<ChatCompletionContentPart> => {
+    if (promptCacheBreakpoint === undefined) {
+      return content
+    }
+
+    if (typeof content === "string") {
+      return [
+        {
+          type: "text",
+          text: content,
+          prompt_cache_breakpoint: promptCacheBreakpoint,
+        },
+      ]
+    }
+
+    const convertedContent = content.map((part) => ({ ...part }))
+    const finalContentPart = convertedContent[convertedContent.length - 1]
+    if (finalContentPart !== undefined) {
+      finalContentPart.prompt_cache_breakpoint = promptCacheBreakpoint
+    }
+
+    return convertedContent
+  }
+
   // Helper function to add a message with cacheControl if needed
   const addMessage = (
     message: any,
@@ -305,8 +332,10 @@ export function convertToOpenAIChatMessages({
         addMessage(
           {
             role: "assistant",
-            content:
+            content: addPromptCacheBreakpoint(
               refusalAsText && refusal != null && text === refusal ? "" : text,
+              promptCacheBreakpoint,
+            ),
             refusal,
             reasoning: reasoning.length > 0 ? reasoning : undefined,
             reasoning_details: reasoningDetails,
@@ -320,7 +349,7 @@ export function convertToOpenAIChatMessages({
       }
 
       case "tool": {
-        for (const toolResponse of content) {
+        for (const [toolResponseIndex, toolResponse] of content.entries()) {
           let toolContent: string | Array<ChatCompletionContentPart>
 
           // Check if result is already in message array format
@@ -365,7 +394,12 @@ export function convertToOpenAIChatMessages({
             {
               role: "tool",
               tool_call_id: toolResponse.toolCallId,
-              content: toolContent,
+              content: addPromptCacheBreakpoint(
+                toolContent,
+                toolResponseIndex === content.length - 1
+                  ? promptCacheBreakpoint
+                  : undefined,
+              ),
             },
             cacheEnabled,
             cacheTtl,

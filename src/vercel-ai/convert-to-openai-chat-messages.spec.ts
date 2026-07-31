@@ -70,6 +70,139 @@ describe("convertToOpenAIChatMessages explicit prompt caching", () => {
     ])
   })
 
+  it("marks assistant content while preserving tool calls", () => {
+    const prompt: LanguageModelV1Prompt = [
+      {
+        role: "assistant",
+        content: [
+          { type: "text", text: "I will check both sources." },
+          {
+            type: "tool-call",
+            toolCallId: "call-weather",
+            toolName: "weather",
+            args: { city: "Prague" },
+          },
+        ],
+        providerMetadata: {
+          openai: {
+            promptCacheBreakpoint: { mode: "explicit" },
+          },
+        },
+      },
+    ]
+
+    expect(convertToOpenAIChatMessages({ prompt })).toEqual([
+      {
+        role: "assistant",
+        content: [
+          {
+            type: "text",
+            text: "I will check both sources.",
+            prompt_cache_breakpoint: { mode: "explicit" },
+          },
+        ],
+        tool_calls: [
+          {
+            id: "call-weather",
+            type: "function",
+            function: {
+              name: "weather",
+              arguments: '{"city":"Prague"}',
+            },
+          },
+        ],
+      },
+    ])
+  })
+
+  it("marks only the final emitted tool message", () => {
+    const prompt: LanguageModelV1Prompt = [
+      {
+        role: "tool",
+        content: [
+          {
+            type: "tool-result",
+            toolCallId: "call-weather",
+            toolName: "weather",
+            result: { temperature: 25 },
+          },
+          {
+            type: "tool-result",
+            toolCallId: "call-time",
+            toolName: "time",
+            result: { time: "21:15" },
+          },
+        ],
+        providerMetadata: {
+          openai: {
+            promptCacheBreakpoint: { mode: "explicit" },
+          },
+        },
+      },
+    ]
+
+    expect(convertToOpenAIChatMessages({ prompt })).toEqual([
+      {
+        role: "tool",
+        tool_call_id: "call-weather",
+        content: '{"temperature":25}',
+      },
+      {
+        role: "tool",
+        tool_call_id: "call-time",
+        content: [
+          {
+            type: "text",
+            text: '{"time":"21:15"}',
+            prompt_cache_breakpoint: { mode: "explicit" },
+          },
+        ],
+      },
+    ])
+  })
+
+  it("marks the final block of rich tool content", () => {
+    const prompt: LanguageModelV1Prompt = [
+      {
+        role: "tool",
+        content: [
+          {
+            type: "tool-result",
+            toolCallId: "call-map",
+            toolName: "map",
+            result: [
+              { type: "text", text: "Map result" },
+              {
+                type: "image_url",
+                image_url: { url: "https://example.com/map.png" },
+              },
+            ],
+          },
+        ],
+        providerMetadata: {
+          openai: {
+            promptCacheBreakpoint: { mode: "explicit" },
+          },
+        },
+      },
+    ]
+
+    expect(convertToOpenAIChatMessages({ prompt })).toEqual([
+      {
+        role: "tool",
+        tool_call_id: "call-map",
+        content: [
+          { type: "text", text: "Map result" },
+          {
+            type: "image_url",
+            image_url: { url: "https://example.com/map.png" },
+            prompt_cache_breakpoint: { mode: "explicit" },
+          },
+        ],
+      },
+    ])
+  })
+
   it("leaves unmarked content and Anthropic cache control unchanged", () => {
     const prompt: LanguageModelV1Prompt = [
       {
