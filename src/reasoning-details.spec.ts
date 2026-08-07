@@ -109,6 +109,20 @@ describe("ReasoningDetail Schemas", () => {
       const result = ReasoningDetailUnionSchema.parse(detail)
       expect(result.type).toBe(ReasoningDetailType.Encrypted)
     })
+
+    it("should parse encrypted type in Meta's format", () => {
+      const detail = {
+        type: ReasoningDetailType.Encrypted,
+        data: "encrypted_data",
+        id: "rs_1",
+        // Raw literal on purpose: this is what arrives over the wire, so the
+        // test still exercises the enum if the constant is missing.
+        format: "meta-responses-v1",
+      }
+
+      const result = ReasoningDetailUnionSchema.parse(detail)
+      expect(result.format).toBe("meta-responses-v1")
+    })
   })
 
   describe("ReasoningDetailArraySchema", () => {
@@ -155,6 +169,21 @@ describe("ReasoningDetail Schemas", () => {
       expect(result).toHaveLength(2)
       expect(result[0].type).toBe(ReasoningDetailType.Text)
       expect(result[1].type).toBe(ReasoningDetailType.Summary)
+    })
+
+    it("should keep Meta reasoning details instead of filtering them out", () => {
+      const details = [
+        {
+          type: ReasoningDetailType.Encrypted,
+          data: "encrypted_data",
+          id: "rs_1",
+          format: "meta-responses-v1",
+        },
+      ]
+
+      const result = ReasoningDetailArraySchema.parse(details)
+      expect(result).toHaveLength(1)
+      expect(result[0].format).toBe("meta-responses-v1")
     })
 
     it("should handle empty array", () => {
