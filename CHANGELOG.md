@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.21
+
+- Add Meta's `meta-responses-v1` to the `reasoning_details` format union. It was missing, and since `ReasoningDetailArraySchema` drops entries it cannot parse, Meta reasoning details (e.g. from Muse Spark 1.2) were silently discarded instead of erroring — losing reasoning continuity across turns.
+
 ## 0.16.20
 
 - Preserve Vercel AI SDK `providerOptions.openai.promptCacheBreakpoint` on assistant message content and on the final emitted tool-result message/content block, enabling explicit caching across multi-step agent turns.
