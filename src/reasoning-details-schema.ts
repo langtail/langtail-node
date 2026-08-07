@@ -6,6 +6,7 @@ export const ReasoningFormat = {
   XAIResponsesV1: "xai-responses-v1",
   AnthropicClaudeV1: "anthropic-claude-v1",
   GoogleGeminiV1: "google-gemini-v1",
+  MetaResponsesV1: "meta-responses-v1",
 } as const
 
 export type ReasoningFormat =
@@ -33,6 +34,7 @@ export const CommonReasoningDetailSchema = z.object({
       ReasoningFormat.XAIResponsesV1,
       ReasoningFormat.AnthropicClaudeV1,
       ReasoningFormat.GoogleGeminiV1,
+      ReasoningFormat.MetaResponsesV1,
     ])
     .nullish(),
   index: z.number().optional(),
