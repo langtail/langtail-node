@@ -75,6 +75,11 @@ describe.skipIf(!liveTesting)(
         const completion = await lt.invoke({
           prompt,
           environment: "staging",
+          // Override the deployed fixture's retired model for live inference.
+          model: "gpt-6.1-luna",
+          temperature: 1,
+          reasoning_effort: "low",
+          max_tokens: 512,
           variables: {
             about: "cowboy Bebop",
           },
@@ -91,6 +96,11 @@ describe.skipIf(!liveTesting)(
         const completion = await lt.invoke({
           prompt: "short-story-teller",
           environment: "staging",
+          // Override the deployed fixture's retired model for live inference.
+          model: "gpt-6.1-luna",
+          temperature: 1,
+          reasoning_effort: "low",
+          max_tokens: 512,
           variables: {
             about: "Aragorn",
           },
@@ -107,6 +117,11 @@ describe.skipIf(!liveTesting)(
         const proxyCompletion = await lt.invoke({
           prompt,
           environment: "staging",
+          // Override the deployed fixture's retired model for live inference.
+          model: "gpt-6.1-luna",
+          temperature: 1,
+          reasoning_effort: "low",
+          max_tokens: 512,
           variables: {
             about: "napoleon",
           },
