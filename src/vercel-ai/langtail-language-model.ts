@@ -18,6 +18,7 @@ import {
   postJsonToApi,
 } from "@ai-sdk/provider-utils"
 import { z } from "zod/v4"
+import { closeOnSseDone } from "./close-on-sse-done"
 import { convertToOpenAIChatMessages } from "./convert-to-openai-chat-messages"
 import { mapLangtailFinishReason } from "./map-langtail-finish-reason"
 import { LangtailChatSettings } from "./langtail-chat-settings"
@@ -413,9 +414,21 @@ export class LangtailChatLanguageModel<
       headers: this.headers,
       body: body,
       failedResponseHandler: openaiFailedResponseHandler,
-      successfulResponseHandler: createEventSourceResponseHandler(
-        langtailChatChunksSchema,
-      ),
+      successfulResponseHandler: async ({ response, ...context }) => {
+        const handler = createEventSourceResponseHandler(
+          langtailChatChunksSchema,
+        )
+        return handler({
+          ...context,
+          response: response.body
+            ? new Response(closeOnSseDone(response.body), {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers,
+              })
+            : response,
+        })
+      },
       abortSignal: options.abortSignal,
     })
 
