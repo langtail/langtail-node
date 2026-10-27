@@ -19,7 +19,7 @@ describe("Langtail Proxy", () => {
           { role: "user", content: "What is the weather like?" },
         ],
         stream: true,
-        model: "gpt-6.1-luna",
+        model: "gpt-6-luna",
         reasoning_effort: "low",
         max_tokens: 512,
         doNotRecord: false,

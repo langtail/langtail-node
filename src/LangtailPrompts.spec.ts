@@ -76,7 +76,7 @@ describe.skipIf(!liveTesting)(
           prompt,
           environment: "staging",
           // Override the deployed fixture's retired model for live inference.
-          model: "gpt-6.1-luna",
+          model: "gpt-6-luna",
           temperature: 1,
           reasoning_effort: "low",
           max_tokens: 512,
@@ -97,7 +97,7 @@ describe.skipIf(!liveTesting)(
           prompt: "short-story-teller",
           environment: "staging",
           // Override the deployed fixture's retired model for live inference.
-          model: "gpt-6.1-luna",
+          model: "gpt-6-luna",
           temperature: 1,
           reasoning_effort: "low",
           max_tokens: 512,
@@ -118,7 +118,7 @@ describe.skipIf(!liveTesting)(
           prompt,
           environment: "staging",
           // Override the deployed fixture's retired model for live inference.
-          model: "gpt-6.1-luna",
+          model: "gpt-6-luna",
           temperature: 1,
           reasoning_effort: "low",
           max_tokens: 512,
