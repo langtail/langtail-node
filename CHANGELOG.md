@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3
+
+- Finish Vercel AI SDK streams when a complete `[DONE]` event arrives, preserving tool calls and usage without waiting for the HTTP connection to close.
+- Handle split SSE records and a leading UTF-8 BOM; cancel the response body without delaying completion when cancellation stalls or fails.
+
 ## 1.0.2
 
 - Added TTL support for Anthropic cache control (`cache_ttl` field)
