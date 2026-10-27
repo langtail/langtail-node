@@ -175,3 +175,62 @@ it("does not wait for hung cancellation when the caller stops a silent read", as
   await expect(pending).resolves.toEqual({ done: true, value: undefined })
   expect(cancel).toHaveBeenCalledWith("caller stopped")
 })
+
+it("recognizes a leading UTF-8 BOM even when it is split across chunks", async () => {
+  const bytes = encoder.encode("\uFEFFdata: [DONE]\n\n")
+  for (let split = 0; split <= bytes.length; split++) {
+    const cancel = vi.fn()
+    const source = new ReadableStream<Uint8Array>({
+      start(c) {
+        c.enqueue(bytes.slice(0, split))
+        c.enqueue(bytes.slice(split))
+      },
+      cancel,
+    })
+    const reader = closeOnSseDone(source).getReader()
+    try {
+      let received = 0
+      while (received < bytes.length) {
+        const { value } = await reader.read()
+        received += value?.length ?? 0
+      }
+      expect(cancel).toHaveBeenCalledOnce()
+      expect((await reader.read()).done).toBe(true)
+    } finally {
+      await reader.cancel()
+    }
+  }
+})
+
+it("preserves framing across 200 reproducible random chunk layouts", async () => {
+  let seed = 873
+  const next = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0)
+  for (let run = 0; run < 200; run++) {
+    const newline = ["\n", "\r", "\r\n"][next() % 3]!
+    const prefix =
+      (run % 2 ? "\uFEFF" : "") +
+      ': [DONE]\r\ndata: {"text":"💓 [DONE]"}\n\ndata: [DONE]\ndata: extra\n\n'
+    const expected =
+      prefix + "data:[DONE]" + newline + (newline === "\r\n" ? "\r" : newline)
+    const bytes = encoder.encode(
+      prefix + "data:[DONE]" + newline + newline + "data: ignored\n\n",
+    )
+    let offset = 0
+    const cancel = vi.fn()
+    const source = new ReadableStream<Uint8Array>({
+      pull(c) {
+        if (offset < bytes.length) {
+          const end = offset + 1 + (next() % 23)
+          c.enqueue(bytes.slice(offset, end))
+          offset = end
+        }
+      },
+      cancel,
+    })
+    const actual = new Uint8Array(
+      await new Response(closeOnSseDone(source)).arrayBuffer(),
+    )
+    expect(actual).toEqual(encoder.encode(expected))
+    expect(cancel).toHaveBeenCalledOnce()
+  }
+})

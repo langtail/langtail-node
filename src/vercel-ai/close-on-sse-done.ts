@@ -13,6 +13,7 @@ export function closeOnSseDone(
   let data: string | undefined
   let afterCr = false
   let finished = false
+  let initialBytes = 0
 
   function endLine() {
     if (!line && !longLine) {
@@ -34,6 +35,15 @@ export function closeOnSseDone(
   function terminalOffset(bytes: Uint8Array) {
     for (let i = 0; i < bytes.length; i++) {
       const byte = bytes[i]!
+      // TextDecoder strips one leading UTF-8 BOM. Match that behavior in the
+      // framing scanner too, even when the three bytes arrive separately.
+      if (initialBytes < 3) {
+        initialBytes++
+        if (initialBytes === 3 && line === "\xEF\xBB" && byte === 0xbf) {
+          line = ""
+          continue
+        }
+      }
       if (afterCr && byte === 10) {
         afterCr = false
         continue
