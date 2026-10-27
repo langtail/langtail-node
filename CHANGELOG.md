@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.16.22
+
+- Finish Vercel AI SDK streams when a complete `[DONE]` event arrives, preserving tool calls and usage without waiting for the HTTP connection to close.
+- Handle split SSE records and a leading UTF-8 BOM; cancel the response body without delaying completion when cancellation stalls or fails.
+
 ## 0.16.21
 
 - Add Meta's `meta-responses-v1` to the `reasoning_details` format union. It was missing, and since `ReasoningDetailArraySchema` drops entries it cannot parse, Meta reasoning details (e.g. from Muse Spark 1.2) were silently discarded instead of erroring — losing reasoning continuity across turns.
